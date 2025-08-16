@@ -23,6 +23,6 @@
   "author": "courtney.hurt",
   "license": "MIT",
   "publishConfig": {
-    "registry": "https://arti.checkrhq.net/artifactory/api/npm/npm/"
+    "registry": "https://registry.npmjs.org/"
   }
 }

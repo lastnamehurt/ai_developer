@@ -16,7 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Installation and Updates
 - `./install.sh` - Install/update the AI development environment from local files
-- `ai install` - Update from GitLab repository (if already installed)
+- `ai install` - Update from GitHub repository (if already installed)
 
 ### Development Commands
 - `ai init` - Initialize project with AI tool configurations
@@ -115,7 +115,7 @@ The system includes **Claude Sub Agents** as specialized workflow assistants tha
 The `install.sh` script supports two installation modes:
 
 1. **Local Installation**: When run from cloned repository directory
-2. **Remote Installation**: Downloads from GitLab repository automatically
+2. **Remote Installation**: Downloads from GitHub repository automatically
 
 #### File Structure Management
 - **Global Directory**: `~/.local/ai-dev/` contains all shared configurations

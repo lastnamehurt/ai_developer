@@ -9,12 +9,12 @@ Universal AI Development Environment launcher with **profile-based MCP configura
 **One-line Installation**
 ```bash
 # Quick install (tries SSH first, then HTTPS)
-git clone --depth 1 git@gitlab.checkrhq.net:foundations/delivery-platform/dev-productivity/ai-developer.git /tmp/ai-dev-install && cd /tmp/ai-dev-install && ./install.sh && cd - && rm -rf /tmp/ai-dev-install
+git clone --depth 1 git@github.com:lastnamehurt/ai_developer.git /tmp/ai-dev-install && cd /tmp/ai-dev-install && ./install.sh && cd - && rm -rf /tmp/ai-dev-install
 ```
 
 **Manual Installation (if one-liner fails)**
 ```bash
-git clone git@gitlab.checkrhq.net:foundations/delivery-platform/dev-productivity/ai-developer.git
+git clone git@github.com:lastnamehurt/ai_developer.git
 cd ai-developer
 ./install.sh
 ```
@@ -95,7 +95,7 @@ your-project/
 - **Universal Launcher**: One `ai` command for all AI tools with profile support
 - **Claude Sub Agents**: Specialized workflow assistants for deployment, QA, code review, and research
 - **Single Environment File**: Centralized `~/.local/ai-dev/.env` with variable expansion
-- **Self-Updating**: `ai install` updates from GitLab automatically
+- **Self-Updating**: `ai install` updates from GitHub automatically
 - **Environment Management**: Automatic loading of API credentials
 - **MCP Integration**: Consistent API access (GitLab, Atlassian, etc.)
 - **Claude Integration**: Smart Claude /init workflow with config synchronization

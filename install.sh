@@ -12,7 +12,7 @@ INSTALL_DIR="$BASE_DIR"
 BIN_DIR="$BASE_DIR/bin"
 ENV_FILE="$BASE_DIR/.env"
 MCP_FILE="$BASE_DIR/mcp.json"
-REPO_URL="${AI_DEV_REPO_URL:-https://gitlab.checkrhq.net/foundations/delivery-platform/dev-productivity/ai-developer}"
+REPO_URL="${AI_DEV_REPO_URL:-https://github.com/lastnamehurt/ai_developer}"
 SCRIPT_NAME="ai"
 
 # Colors for output
@@ -254,7 +254,7 @@ install_from_remote() {
     cd "$temp_dir"
     
     # Try SSH first, then HTTPS
-    local ssh_url="git@gitlab.checkrhq.net:foundations/delivery-platform/dev-productivity/ai-developer.git"
+    local ssh_url="git@github.com:lastnamehurt/ai_developer.git"
     local https_url="$REPO_URL.git"
     
     if command -v git >/dev/null 2>&1; then
@@ -266,8 +266,8 @@ install_from_remote() {
             log_info "Cloning from $https_url"
             if ! git clone --depth 1 "$https_url" .; then
                 log_error "Both SSH and HTTPS clone failed."
-                log_error "For internal GitLab repos, you need either:"
-                log_error "  1. SSH keys configured: ssh-keygen -t ed25519 -C 'your_email@checkr.com'"
+                log_error "For internal GitHub repos, you need either:"
+                log_error "  1. SSH keys configured: ssh-keygen -t ed25519 -C 'your_email@example.com'"
                 log_error "  2. Personal access token configured in git credentials"
                 log_error "  3. Clone the repo manually and run ./install.sh from the project directory"
                 log_error ""
@@ -740,7 +740,7 @@ case "${1:-}" in
         echo "  --version VERSION    Install specific version (default: main)"
         echo ""
         echo "Environment Variables:"
-        echo "  AI_DEV_REPO_URL     GitLab repository URL"
+        echo "  AI_DEV_REPO_URL     GitHub repository URL"
         echo "  AI_DEV_VERSION      Version/tag to install"
         echo ""
         echo "Examples:"

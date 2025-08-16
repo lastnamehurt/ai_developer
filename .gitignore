@@ -82,3 +82,7 @@ coverage.xml
 
 # Local development files (not for sharing)
 CLAUDE.local.md
+
+# Unused directories
+test-project/
+tools/

@@ -157,7 +157,7 @@ ai cursor-app  # Launch Cursor app (full editor)
 **Contains:** Personal API keys and tokens for AI development
 ```bash
 GITLAB_PERSONAL_ACCESS_TOKEN=your-gitlab-token
-GITLAB_API_URL=https://gitlab.checkrhq.net
+GITLAB_API_URL=https://gitlab.example.com
 GIT_AUTHOR_NAME="Your Name"
 GIT_AUTHOR_EMAIL="your-email@company.com"
 ```

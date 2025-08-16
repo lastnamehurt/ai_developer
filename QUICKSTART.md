@@ -7,10 +7,10 @@ Get Claude Code and Cursor set up with powerful AI development tools in 3 simple
 ### 1. Install
 ```bash
 # One-line installation
-git clone --depth 1 git@gitlab.checkrhq.net:foundations/delivery-platform/dev-productivity/ai-developer.git /tmp/ai-dev-install && cd /tmp/ai-dev-install && ./install.sh && cd - && rm -rf /tmp/ai-dev-install
+git clone --depth 1 git@github.com:lastnamehurt/ai_developer.git /tmp/ai-dev-install && cd /tmp/ai-dev-install && ./install.sh && cd - && rm -rf /tmp/ai-dev-install
 
 # Or manual installation
-git clone git@gitlab.checkrhq.net:foundations/delivery-platform/dev-productivity/ai-developer.git
+git clone git@github.com:lastnamehurt/ai_developer.git
 cd ai-developer
 ./install.sh
 ```

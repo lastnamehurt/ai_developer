@@ -246,7 +246,7 @@ Make sure your `~/.local/ai-dev/.env` has the required variables:
 ```bash
 # Required for devops and qa profiles
 GITLAB_PERSONAL_ACCESS_TOKEN=your-gitlab-token
-GITLAB_API_URL=https://gitlab.checkrhq.net/api/v4
+GITLAB_API_URL=https://gitlab.example.com/api/v4
 
 # Optional but recommended
 KUBECONFIG=/path/to/your/kubeconfig
