@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mv:*)",
+      "Bash(bash:*)",
+      "mcp__git__git_add"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -1,0 +1,315 @@
+#!/bin/bash
+
+# Universal AI Development Environment Launcher
+# Refactored version using modular components
+# Usage: ai [init|claude|cursor|<command>] [arguments...]
+
+set -euo pipefail
+
+# Configuration
+CONFIG_DIR="$HOME/.local/ai-dev"
+AI_SYSTEM_DIR="$CONFIG_DIR"
+ENV_FILE=".env"
+GLOBAL_ENV_FILE="$CONFIG_DIR/.env"
+MCP_FILE=".mcp.json"
+AI_PROFILES_DIR="$CONFIG_DIR/mcp-profiles"
+
+# Source modular components
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/ai-utils.sh"
+source "$SCRIPT_DIR/ai-core.sh"
+source "$SCRIPT_DIR/ai-project.sh"
+
+# Show help
+show_help() {
+    echo "Universal AI Development Environment"
+    echo ""
+    echo "Usage: ai [command] [arguments...]"
+    echo ""
+    echo "Commands:"
+    echo "  install           Install/update the AI development environment"
+    echo "  setup             Configure your AI development credentials"
+    echo "  init              Initialize project with templates"
+    echo "  workflow          Add/update engineering workflow in CLAUDE.md"
+    echo "  claude [args...]  Start Claude Code with env loading"
+    echo "  claude-app [args...] Start Claude Desktop app with env loading"
+    echo "  cursor [args...]  Start Cursor CLI (cursor-agent) with env loading"
+    echo "  cursor-app [args...] Start Cursor app with env loading"
+    echo "  load              Just load env vars (for current shell)"
+    echo "  check             Check current environment setup"
+    echo "  sync              Sync Claude configs to Cursor format"
+    echo "  env-sync          Sync local .env variables to global AI environment"
+    echo ""
+    echo "Profile & Agent support:"
+    echo "  claude --profile <name>         Use specific MCP profile"
+    echo "  claude --agent <name>           Launch with agent guidance (auto-maps profile)"
+    echo "  claude --profile <name> --agent <name>  Use specific profile + agent guidance"
+    echo "  claude-app --profile <name>     Use specific MCP profile (Claude Desktop)"
+    echo "  cursor --profile <name>         Use specific MCP profile (Cursor CLI)"
+    echo "  cursor-app --profile <name>     Use specific MCP profile (Cursor App)"
+    echo ""
+    echo "Available Profiles:"
+    echo "  default          Basic tools (filesystem, git, atlassian, gitlab)"
+    echo "  persistent       Default + conversational AI + memory storage"
+    echo "  devops           Core + GitLab (RW) + Kubernetes + conversational AI"
+    echo "  qa               Core + GitLab (RO) + test tools + conversational AI"
+    echo "  research         Core + search tools + memory + conversational AI"
+    echo ""
+    echo "Available Agents (auto-map to profiles):"
+    echo "  devops               - K8s & GitLab deployment (→ devops profile)"
+    echo "  qa                   - E2E/API testing & coverage (→ qa profile)"  
+    echo "  code-reviewer        - Code review & security (→ persistent profile)"
+    echo "  researcher           - Research & docs (→ persistent profile)"
+    echo ""
+    echo "Examples:"
+    echo "  ai install                      # Install/update AI environment"
+    echo "  ai init                         # Setup new project with agents"
+    echo "  ai claude                       # Start Claude Code (default profile)"
+    echo "  ai claude --agent devops        # Launch devops profile + show '/agents devops' guidance"
+    echo "  ai claude --agent qa            # Launch qa profile + show '/agents qa' guidance"
+    echo "  ai claude --profile persistent --agent code-reviewer # Custom combo"
+    echo ""
+    echo "Manual workflow:"
+    echo "  ai claude --profile devops      # Then type: /agents devops"
+}
+
+# Install system
+install_system() {
+    log_info "Installing/updating AI development environment..."
+    
+    local install_script
+    if install_script=$(find_install_script); then
+        log_info "Running install script: $install_script"
+        bash "$install_script"
+    else
+        log_error "Install script not found"
+        log_info ""
+        log_info "💡 To fix this:"
+        log_info "   1. Clone or download the ai-dev repository"
+        log_info "   2. Run the install script directly from the project directory"
+        log_info "   3. Or set up a symlink: ln -s /path/to/ai-dev/install.sh ~/.local/ai-dev/install.sh"
+        exit 1
+    fi
+}
+
+# Profile-aware claude command with agent guidance
+cmd_claude() {
+    local profile="default" agent="" pass_args=()
+    while [[ $# -gt 0 ]]; do case "$1" in
+        --profile) profile="${2:?}"; shift 2 ;;
+        --agent) agent="${2:?}"; shift 2 ;;
+        *) pass_args+=("$1"); shift ;;
+    esac; done
+    
+    # Auto-map agent to best profile if agent specified but no explicit profile
+    if [[ -n "$agent" && "$profile" == "default" ]]; then
+        case "$agent" in
+            devops) profile="devops" ;;
+            qa) profile="qa" ;;
+            code-reviewer|researcher) profile="persistent" ;;
+        esac
+        log_info "🎯 Auto-mapped agent '$agent' to profile '$profile'"
+    fi
+    
+    load_env_vars
+    _load_env_once
+    _require_env "$profile"
+    local cfg; cfg="$(_resolve_profile_cfg "$profile")"
+    
+    # Detect which Claude tool is available and launch appropriately
+    if command -v claude >/dev/null 2>&1; then
+        # Claude Code is available - use MCP config
+        local launch_msg="🤖 Launching Claude Code with profile: $profile"
+        [[ -n "$agent" ]] && launch_msg+=" (agent: $agent)"
+        log_info "$launch_msg"
+        
+        # Launch Claude Code with MCP config
+        claude --mcp-config "$cfg" "${pass_args[@]+${pass_args[@]}}"
+        
+        # Show agent guidance if agent was specified
+        if [[ -n "$agent" ]]; then
+            echo ""
+            log_info "💡 Once Claude Code starts, type: /agents $agent"
+            echo ""
+        fi
+    elif command -v claude-cli >/dev/null 2>&1; then
+        # Claude CLI is available - different launch method
+        log_info "🤖 Launching Claude CLI with profile: $profile (Note: MCP config may not be supported)"
+        log_warning "Claude CLI detected. For full MCP support, install Claude Code from https://claude.ai/code"
+        claude-cli "${pass_args[@]+${pass_args[@]}}"
+    else
+        log_error "Neither Claude Code nor Claude CLI found."
+        log_info "Please install one of the following:"
+        log_info "  • Claude Code: https://claude.ai/code"
+        log_info "  • Claude CLI: https://claude.ai/cli"
+        log_info "Or run 'ai install' to install both automatically"
+        exit 1
+    fi
+}
+
+# Profile-aware cursor command with agent auto-mapping
+cmd_cursor() {
+    local profile="default" agent="" pass_args=()
+    while [[ $# -gt 0 ]]; do case "$1" in
+        --profile) profile="${2:?}"; shift 2 ;;
+        --agent) agent="${2:?}"; shift 2 ;;
+        *) pass_args+=("$1"); shift ;;
+    esac; done
+    
+    # Auto-map agent to best profile if agent specified but no explicit profile
+    if [[ -n "$agent" && "$profile" == "default" ]]; then
+        case "$agent" in
+            devops) profile="devops" ;;
+            qa) profile="qa" ;;
+            code-reviewer|researcher) profile="persistent" ;;
+        esac
+        log_info "🎯 Auto-mapped agent '$agent' to profile '$profile'"
+    fi
+    
+    load_env_vars
+    _load_env_once
+    _require_env "$profile"
+    local cfg; cfg="$(_resolve_profile_cfg "$profile")"
+    
+    local launch_msg="🎯 Launching Cursor CLI (cursor-agent) with profile: $profile"
+    [[ -n "$agent" ]] && launch_msg+=" (agent: $agent)"
+    log_info "$launch_msg"
+    
+    # Ensure .cursor directory exists in current directory
+    mkdir -p .cursor
+    cp "$cfg" .cursor/mcp.json
+    
+    # Check if cursor-agent is available
+    if command -v cursor-agent >/dev/null 2>&1; then
+        cursor-agent "${pass_args[@]+${pass_args[@]}}"
+    else
+        log_error "cursor-agent not found. Please install Cursor CLI."
+        log_info "Install with: curl https://cursor.com/install -fsS | bash"
+        exit 1
+    fi
+}
+
+cmd_cursor_app() {
+    local profile="default" pass_args=()
+    while [[ $# -gt 0 ]]; do case "$1" in
+        --profile) profile="${2:?}"; shift 2 ;;
+        *) pass_args+=("$1"); shift ;;
+    esac; done
+    
+    load_env_vars
+    _load_env_once
+    _require_env "$profile"
+    local cfg; cfg="$(_resolve_profile_cfg "$profile")"
+    log_info "🎯 Launching Cursor App with profile: $profile"
+    
+    # Ensure .cursor directory exists in current directory
+    mkdir -p .cursor
+    cp "$cfg" .cursor/mcp.json
+    
+    # Launch Cursor app in current directory or specified paths
+    if command -v cursor >/dev/null 2>&1; then
+        if [ $# -eq 0 ]; then
+            cursor .
+        else
+            cursor "${pass_args[@]+${pass_args[@]}}"
+        fi
+    else
+        log_error "cursor not found. Please install Cursor app."
+        exit 1
+    fi
+}
+
+cmd_claude_app() {
+    local profile="default" pass_args=()
+    while [[ $# -gt 0 ]]; do case "$1" in
+        --profile) profile="${2:?}"; shift 2 ;;
+        *) pass_args+=("$1"); shift ;;
+    esac; done
+    
+    load_env_vars
+    _load_env_once
+    _require_env "$profile"
+    local cfg; cfg="$(_resolve_profile_cfg "$profile")"
+    log_info "🤖 Launching Claude Desktop App with profile: $profile"
+    
+    # Check if Claude Desktop app is available
+    if command -v claude-desktop >/dev/null 2>&1; then
+        claude-desktop --mcp-config "$cfg" "${pass_args[@]+${pass_args[@]}}"
+    elif [[ -d "/Applications/Claude.app" ]]; then
+        # macOS: Launch via app bundle
+        open -a "Claude" --args --mcp-config "$cfg" "${pass_args[@]+${pass_args[@]}}"
+    else
+        log_error "Claude Desktop app not found."
+        log_info "Please install Claude Desktop from https://claude.ai/download"
+        exit 1
+    fi
+}
+
+# Main command router
+main() {
+    # Handle special commands
+    case "${1:-}" in
+        "help"|"--help"|"-h")
+            show_help
+            exit 0
+            ;;
+        "install")
+            install_system
+            ;;
+        "init")
+            init_project
+            ;;
+        "workflow")
+            add_engineering_workflow
+            ;;
+        "check")
+            check_environment
+            exit 0
+            ;;
+        "setup")
+            setup_credentials
+            exit 0
+            ;;
+        "load")
+            load_env_for_shell
+            exit 0
+            ;;
+        "sync")
+            sync_configs
+            exit 0
+            ;;
+        "env-sync")
+            copy_env_to_global
+            exit 0
+            ;;
+        "claude")
+            shift
+            cmd_claude "$@"
+            ;;
+        "claude-app")
+            shift
+            cmd_claude_app "$@"
+            ;;
+        "cursor")
+            shift
+            cmd_cursor "$@"
+            ;;
+        "cursor-app")
+            shift
+            cmd_cursor_app "$@"
+            ;;
+        "")
+            log_error "No command specified"
+            show_help
+            exit 1
+            ;;
+        *)
+            log_error "Unknown command: $1"
+            show_help
+            exit 1
+            ;;
+    esac
+}
+
+# Run main function with all arguments
+main "$@"

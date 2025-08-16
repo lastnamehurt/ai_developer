@@ -1,0 +1,110 @@
+{
+  "mcpServers": {
+    "git": {
+      "command": "git-mcp-server",
+      "args": []
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem"
+      ]
+    },
+    "gitlab": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@zereight/mcp-gitlab"
+      ],
+      "env": {
+        "GITLAB_PERSONAL_ACCESS_TOKEN": "${GITLAB_PERSONAL_ACCESS_TOKEN}",
+        "GITLAB_API_URL": "${GITLAB_API_URL:-https://gitlab.com/api/v4}",
+        "GITLAB_READ_ONLY_MODE": "${GITLAB_READ_ONLY_MODE:-false}",
+        "USE_GITLAB_WIKI": "${USE_GITLAB_WIKI:-true}",
+        "USE_MILESTONE": "${USE_MILESTONE:-true}",
+        "USE_PIPELINE": "${USE_PIPELINE:-true}"
+      }
+    },
+    "cypress": {
+      "command": "node",
+      "args": [
+        "${HOME}/.local/share/cypress-mcp-server/src/index.js"
+      ]
+    },
+    "atlassian": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.atlassian.com/v1/sse"
+      ]
+    },
+    "test-overlap-analyzer": {
+      "command": "npx",
+      "args": [
+        "tsx",
+        "${HOME}/.local/ai-dev/mcp-servers/retire-e2e-tests/index.ts"
+      ]
+    },
+    "k8s": {
+      "command": "k8s-mcp-server",
+      "args": [
+        "--mode",
+        "stdio"
+      ],
+      "env": {
+        "KUBECONFIG": "${KUBECONFIG:-${HOME}/.kube/config}"
+      }
+    },
+    "serena": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@oraios/serena"
+      ]
+    },
+    "heimdall": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@shinzo-labs/heimdall"
+      ]
+    },
+    "memory-bank": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@alioshr/memory-bank-mcp"
+      ],
+      "env": {
+        "MEMORY_BANK_ROOT": "${MEMORY_BANK_ROOT:-${HOME}/.local/ai-dev/memory-banks}"
+      }
+    },
+    "duckduckgo": {
+      "command": "uvx",
+      "args": ["duckduckgo-mcp-server"]
+    },
+    "sequentialthinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequentialthinking"
+      ]
+    },
+    "memory": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ]
+    },
+    "compass": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@liuyoshio/mcp-compass"
+      ]
+    }
+  }
+}

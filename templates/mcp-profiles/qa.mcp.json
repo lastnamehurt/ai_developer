@@ -1,0 +1,25 @@
+{
+  "layers": ["common", "conversational"],
+  "mcpServers": {
+    "gitlab": {
+      "command": "npx",
+      "args": ["-y", "@zereight/mcp-gitlab"],
+      "env": {
+        "GITLAB_PERSONAL_ACCESS_TOKEN": "${GITLAB_PERSONAL_ACCESS_TOKEN}",
+        "GITLAB_API_URL": "${GITLAB_API_URL:-https://gitlab.com/api/v4}",
+        "GITLAB_READ_ONLY_MODE": "true",
+        "USE_GITLAB_WIKI": "${USE_GITLAB_WIKI:-true}",
+        "USE_MILESTONE": "${USE_MILESTONE:-true}",
+        "USE_PIPELINE": "${USE_PIPELINE:-true}"
+      }
+    },
+    "cypress": {
+      "command": "node",
+      "args": ["${HOME}/.local/share/cypress-mcp-server/src/index.js"]
+    },
+    "test-overlap-analyzer": {
+      "command": "npx",
+      "args": ["tsx", "${HOME}/.local/ai-dev/mcp-servers/retire-e2e-tests/index.ts"]
+    }
+  }
+}

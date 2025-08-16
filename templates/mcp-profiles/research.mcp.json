@@ -1,0 +1,17 @@
+{
+  "layers": ["common", "conversational", "persistent"],
+  "mcpServers": {
+    "duckduckgo": {
+      "command": "uvx",
+      "args": ["duckduckgo-mcp-server"]
+    },
+    "sequentialthinking": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequentialthinking"]
+    },
+    "compass": {
+      "command": "npx",
+      "args": ["-y", "@liuyoshio/mcp-compass"]
+    }
+  }
+}

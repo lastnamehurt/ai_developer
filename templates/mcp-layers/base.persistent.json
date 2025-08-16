@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "memory-bank": {
+      "command": "npx",
+      "args": ["-y", "@alioshr/memory-bank-mcp"],
+      "env": {
+        "MEMORY_BANK_ROOT": "${MEMORY_BANK_ROOT:-${HOME}/.local/ai-dev/memory-banks}"
+      }
+    }
+  }
+}
