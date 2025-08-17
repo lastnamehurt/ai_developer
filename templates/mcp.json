@@ -73,23 +73,28 @@
     },
     "memory-bank": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@alioshr/memory-bank-mcp"
-      ],
+      "args": ["-y", "@allpepper/memory-bank-mcp"],
       "env": {
         "MEMORY_BANK_ROOT": "${MEMORY_BANK_ROOT:-${HOME}/.local/ai-dev/memory-banks}"
-      }
+      },
+      "disabled": false,
+      "autoApprove": [
+        "memory_bank_read",
+        "memory_bank_write",
+        "memory_bank_update",
+        "list_projects",
+        "list_project_files"
+      ]
     },
     "duckduckgo": {
       "command": "uvx",
       "args": ["duckduckgo-mcp-server"]
     },
-    "sequentialthinking": {
+    "sequential-thinking": {
       "command": "npx",
       "args": [
         "-y",
-        "@modelcontextprotocol/server-sequentialthinking"
+        "@modelcontextprotocol/server-sequential-thinking"
       ]
     },
     "memory": {
