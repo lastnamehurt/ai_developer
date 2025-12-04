@@ -34,20 +34,20 @@ cd aidev
 
 ```bash
 # 1. Set up aidev (interactive wizard)
-aidev setup
+ai setup
 
 # 2. Configure your API keys
-aidev env set GITHUB_TOKEN ghp_your_token_here
-aidev env set ANTHROPIC_API_KEY sk-ant-your-key-here
+ai env set GITHUB_TOKEN ghp_your_token_here
+ai env set ANTHROPIC_API_KEY sk-ant-your-key-here
 
 # 3. Navigate to a project and initialize
 cd ~/my-project
-aidev init
+ai init
 
 # 4. Launch your AI tool with a profile
-aidev cursor                      # Default profile
-aidev cursor --profile devops     # DevOps profile (K8s, Docker, Git)
-aidev claude --profile researcher # Research profile (web search, memory)
+ai cursor                      # Default profile
+ai cursor --profile devops     # DevOps profile (K8s, Docker, Git)
+ai claude --profile researcher # Research profile (web search, memory)
 ```
 
 ## Core Features
@@ -57,9 +57,9 @@ aidev claude --profile researcher # Research profile (web search, memory)
 Profiles are pre-configured sets of MCP servers and environment variables for different workflows:
 
 ```bash
-aidev profile list                # List all profiles
-aidev profile show devops         # Show profile details
-aidev profile create my-profile   # Create custom profile
+ai profile list                # List all profiles
+ai profile show devops         # Show profile details
+ai profile create my-profile   # Create custom profile
 ```
 
 **Built-in Profiles:**
@@ -78,10 +78,10 @@ aidev profile create my-profile   # Create custom profile
 Single source of truth for API keys and credentials:
 
 ```bash
-aidev env set GITHUB_TOKEN ghp_xxx     # Set global variable
-aidev env set ANTHROPIC_API_KEY sk-ant-xxx
-aidev env list                          # List all (masks secrets)
-aidev env get GITHUB_TOKEN              # Get specific variable
+ai env set GITHUB_TOKEN ghp_xxx     # Set global variable
+ai env set ANTHROPIC_API_KEY sk-ant-xxx
+ai env list                          # List all (masks secrets)
+ai env get GITHUB_TOKEN              # Get specific variable
 ```
 
 ### 3. MCP Server Registry
@@ -89,11 +89,11 @@ aidev env get GITHUB_TOKEN              # Get specific variable
 Discover and install community MCP servers:
 
 ```bash
-aidev mcp search kubernetes        # Search registry
-aidev mcp install kubernetes       # Install server
-aidev mcp list                     # List installed
-aidev mcp test kubernetes          # Test connectivity
-aidev mcp remove kubernetes        # Remove server
+ai mcp search kubernetes        # Search registry
+ai mcp install kubernetes       # Install server
+ai mcp list                     # List installed
+ai mcp test kubernetes          # Test connectivity
+ai mcp remove kubernetes        # Remove server
 ```
 
 ### 4. Tool Launcher
@@ -101,11 +101,13 @@ aidev mcp remove kubernetes        # Remove server
 Launch AI tools with automatic configuration injection:
 
 ```bash
-aidev cursor                       # Launch Cursor
-aidev cursor --profile devops      # Launch with devops profile
-aidev claude                       # Launch Claude Code
-aidev zed                          # Launch Zed
-aidev tool <name>                  # Launch any registered tool
+ai cursor                       # Launch Cursor
+ai cursor --profile devops      # Launch with devops profile
+ai claude                       # Launch Claude Code
+ai zed                          # Launch Zed
+ai gemini                       # Launch Gemini Code Assist
+ai codex                        # Launch Codex CLI
+ai tool <name>                  # Launch any registered tool
 ```
 
 ### 5. Backup & Restore
@@ -113,10 +115,10 @@ aidev tool <name>                  # Launch any registered tool
 Easy machine migration and configuration sharing:
 
 ```bash
-aidev backup                       # Create backup (aidev-hostname-timestamp.tar.gz)
-aidev backup --output backup.tar.gz
+ai backup                       # Create backup (aidev-hostname-timestamp.tar.gz)
+ai backup --output backup.tar.gz
 
-aidev restore backup.tar.gz        # Restore on new machine
+ai restore backup.tar.gz        # Restore on new machine
 
 aidev export config.json           # Export without secrets (for sharing)
 aidev import config.json           # Import shared config
