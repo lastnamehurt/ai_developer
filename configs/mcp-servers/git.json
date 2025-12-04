@@ -2,6 +2,6 @@
   "name": "git",
   "description": "Git repository operations",
   "type": "stdio",
-  "command": "git-mcp-server",
-  "args": []
+  "command": "git-mcp-go",
+  "args": ["serve", "-r", "."]
 }

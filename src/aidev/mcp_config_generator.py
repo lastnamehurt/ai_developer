@@ -105,6 +105,19 @@ class MCPConfigGenerator:
             if "args" in server_def:
                 entry["args"] = server_def["args"]
 
+            # Skip servers that have no runnable transport configured
+            has_transport = any(
+                [
+                    entry.get("command"),
+                    entry.get("url"),
+                    entry.get("httpUrl"),
+                    entry.get("http_url"),
+                ]
+            )
+            if not has_transport:
+                console.print(f"[yellow]Skipping MCP server '{server_name}' because no command/url/httpUrl is available[/yellow]")
+                continue
+
             # Environment expansion
             if "env" in server_def:
                 env_vars = {}

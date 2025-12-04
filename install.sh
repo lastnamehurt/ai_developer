@@ -156,6 +156,19 @@ else
     echo -e "${GREEN}✓${NC} Gemini settings detected at $GEMINI_SETTINGS"
 fi
 
+# Install git MCP server (Go)
+echo
+echo -e "${CYAN}Installing git MCP server...${NC}"
+if command -v go >/dev/null 2>&1; then
+    GOPATH="${GOPATH:-$(go env GOPATH)}"
+    GOBIN="${GOBIN:-$GOPATH/bin}"
+    go install github.com/geropl/git-mcp-go@latest >/dev/null 2>&1 && \
+      echo -e "${GREEN}✓${NC} git-mcp-go installed to ${GOBIN:-$GOPATH/bin}" || \
+      echo -e "${YELLOW}!${NC} git-mcp-go installation failed (ensure Go is set up)"
+else
+    echo -e "${YELLOW}!${NC} Go not found; skipping git-mcp-go install"
+fi
+
 # Summary
 echo
 echo -e "${GREEN}========================================${NC}"
