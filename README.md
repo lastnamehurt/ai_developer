@@ -1,4 +1,4 @@
-# aidev - Universal AI Development Environment Manager
+# Universal AI Development Environment Manager
 
 A universal, profile-based configuration manager for AI development tools that makes onboarding to new machines, projects, and contexts fast and consistent.
 
@@ -23,8 +23,8 @@ Managing AI development tools (Cursor, Claude Code, Zed) across different projec
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/aidev.git
-cd aidev
+git clone https://github.com/yourusername/ai_developer.git
+cd ai_developer
 
 # Run installation script
 ./install.sh
@@ -264,8 +264,8 @@ aidev backup --output aidev-backup.tar.gz
 On new machine:
 ```bash
 # Install aidev
-git clone https://github.com/yourusername/aidev.git
-cd aidev && ./install.sh
+git clone https://github.com/yourusername/ai_developer.git
+cd ai_developer && ./install.sh
 
 # Restore configuration
 aidev restore aidev-backup.tar.gz
