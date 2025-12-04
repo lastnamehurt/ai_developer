@@ -1,0 +1,7 @@
+{
+  "name": "heimdall",
+  "description": "Heimdall monitoring and observability",
+  "type": "stdio",
+  "command": "npx",
+  "args": ["-y", "@shinzo-labs/heimdall"]
+}

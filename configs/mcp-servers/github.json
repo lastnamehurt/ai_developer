@@ -1,0 +1,18 @@
+{
+  "name": "github",
+  "description": "GitHub API integration (issues, PRs, repos) - Official GitHub MCP server",
+  "type": "stdio",
+  "command": "github-mcp-server",
+  "args": ["stdio"],
+  "env": {
+    "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN:-${GITHUB_TOKEN}}"
+  },
+  "notes": {
+    "installation": "Download from https://github.com/github/github-mcp-server/releases",
+    "scopes": "PAT requires 'repo' scope",
+    "alternatives": {
+      "docker": "docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN ghcr.io/github/github-mcp-server",
+      "remote": "Use HTTP transport to https://api.githubcopilot.com/mcp"
+    }
+  }
+}

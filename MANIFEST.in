@@ -1,0 +1,13 @@
+# Include MCP server configurations
+recursive-include configs *.json
+
+# Include documentation
+include README.md
+include LICENSE
+include CONTRIBUTING.md
+
+# Include examples
+recursive-include examples *.json *.env *.md
+
+# Include docs
+recursive-include docs *.md

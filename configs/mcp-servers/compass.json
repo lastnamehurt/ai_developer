@@ -1,0 +1,7 @@
+{
+  "name": "compass",
+  "description": "Compass navigation and code exploration",
+  "type": "stdio",
+  "command": "npx",
+  "args": ["-y", "@liuyoshio/mcp-compass"]
+}

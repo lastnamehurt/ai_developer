@@ -1,0 +1,7 @@
+{
+  "name": "atlassian",
+  "description": "Atlassian suite (JIRA, Confluence) via remote MCP",
+  "type": "stdio",
+  "command": "npx",
+  "args": ["-y", "mcp-remote", "https://mcp.atlassian.com/v1/sse"]
+}

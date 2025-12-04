@@ -1,0 +1,55 @@
+{
+  "name": "devops-gitlab",
+  "description": "DevOps workflows with GitLab CI/CD and Kubernetes",
+  "extends": "devops",
+  "mcp_servers": [
+    {
+      "name": "filesystem",
+      "enabled": true
+    },
+    {
+      "name": "git",
+      "enabled": true
+    },
+    {
+      "name": "gitlab",
+      "enabled": true,
+      "config": {
+        "readOnly": false,
+        "usePipeline": true,
+        "useWiki": true
+      }
+    },
+    {
+      "name": "k8s",
+      "enabled": true
+    },
+    {
+      "name": "atlassian",
+      "enabled": true
+    },
+    {
+      "name": "heimdall",
+      "enabled": true
+    },
+    {
+      "name": "compass",
+      "enabled": true
+    }
+  ],
+  "environment": {
+    "GITLAB_PERSONAL_ACCESS_TOKEN": "${GITLAB_PERSONAL_ACCESS_TOKEN}",
+    "GITLAB_URL": "${GITLAB_URL}",
+    "GITLAB_API_URL": "${GITLAB_API_URL}",
+    "GITLAB_READ_ONLY_MODE": "false",
+    "USE_GITLAB_WIKI": "true",
+    "USE_MILESTONE": "true",
+    "USE_PIPELINE": "true",
+    "KUBECONFIG": "${KUBECONFIG}"
+  },
+  "tools": {
+    "cursor": {
+      "enabled": true
+    }
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "name": "web-dev",
+  "description": "Full-stack web development with modern tools",
+  "extends": "fullstack",
+  "mcp_servers": [
+    {
+      "name": "filesystem",
+      "enabled": true
+    },
+    {
+      "name": "git",
+      "enabled": true,
+      "config": {
+        "allowedRepos": ["~/projects"]
+      }
+    },
+    {
+      "name": "github",
+      "enabled": true,
+      "config": {
+        "owner": "your-org"
+      }
+    },
+    {
+      "name": "postgres",
+      "enabled": true
+    },
+    {
+      "name": "redis",
+      "enabled": true
+    },
+    {
+      "name": "docker",
+      "enabled": true
+    }
+  ],
+  "environment": {
+    "GITHUB_TOKEN": "${GITHUB_TOKEN}",
+    "DATABASE_URL": "${DATABASE_URL}",
+    "REDIS_URL": "${REDIS_URL}",
+    "NODE_ENV": "development"
+  },
+  "tools": {
+    "cursor": {
+      "enabled": true,
+      "settings": {
+        "theme": "dark",
+        "fontSize": 14
+      }
+    }
+  }
+}

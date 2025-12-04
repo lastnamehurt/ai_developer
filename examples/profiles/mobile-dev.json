@@ -1,0 +1,40 @@
+{
+  "name": "mobile-dev",
+  "description": "Mobile app development (React Native, iOS, Android)",
+  "extends": "default",
+  "mcp_servers": [
+    {
+      "name": "filesystem",
+      "enabled": true
+    },
+    {
+      "name": "git",
+      "enabled": true
+    },
+    {
+      "name": "github",
+      "enabled": true
+    },
+    {
+      "name": "simulator",
+      "enabled": true,
+      "config": {
+        "platforms": ["ios", "android"]
+      }
+    }
+  ],
+  "environment": {
+    "GITHUB_TOKEN": "${GITHUB_TOKEN}",
+    "ANDROID_HOME": "${HOME}/Library/Android/sdk",
+    "JAVA_HOME": "${JAVA_HOME}",
+    "EXPO_TOKEN": "${EXPO_TOKEN}"
+  },
+  "tools": {
+    "cursor": {
+      "enabled": true
+    },
+    "zed": {
+      "enabled": true
+    }
+  }
+}

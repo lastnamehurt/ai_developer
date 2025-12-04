@@ -1,0 +1,48 @@
+{
+  "name": "documentation-writer",
+  "description": "Technical writing and documentation",
+  "extends": "minimal",
+  "mcp_servers": [
+    {
+      "name": "filesystem",
+      "enabled": true
+    },
+    {
+      "name": "git",
+      "enabled": true
+    },
+    {
+      "name": "web-search",
+      "enabled": true
+    },
+    {
+      "name": "github",
+      "enabled": true,
+      "config": {
+        "readOnly": true
+      }
+    },
+    {
+      "name": "markdown-lint",
+      "enabled": true
+    },
+    {
+      "name": "spell-check",
+      "enabled": true,
+      "config": {
+        "languages": ["en-US"]
+      }
+    }
+  ],
+  "environment": {
+    "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+  },
+  "tools": {
+    "cursor": {
+      "enabled": true
+    },
+    "zed": {
+      "enabled": true
+    }
+  }
+}

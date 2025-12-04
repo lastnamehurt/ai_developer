@@ -1,0 +1,7 @@
+{
+  "name": "git",
+  "description": "Git repository operations",
+  "type": "stdio",
+  "command": "git-mcp-server",
+  "args": []
+}

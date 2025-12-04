@@ -1,0 +1,37 @@
+{
+  "cursor": {
+    "name": "Cursor",
+    "binary": "cursor",
+    "app_name": "Cursor",
+    "config_path": "~/.cursor/mcp.json",
+    "install_url": "https://cursor.sh"
+  },
+  "claude": {
+    "name": "Claude Code",
+    "binary": "claude",
+    "app_name": "Claude",
+    "config_path": "~/.config/claude/mcp.json",
+    "install_url": "https://claude.ai/code"
+  },
+  "codex": {
+    "name": "Codex CLI",
+    "binary": "codex",
+    "app_name": "Codex",
+    "config_path": "~/.codex/config.toml",
+    "install_url": "https://github.com/microsoft/codex-cli"
+  },
+  "gemini": {
+    "name": "Gemini Code Assist",
+    "binary": "gemini",
+    "app_name": "Gemini",
+    "config_path": "~/.gemini/settings.json",
+    "install_url": "https://ai.google.dev/gemini-api"
+  },
+  "zed": {
+    "name": "Zed",
+    "binary": "zed",
+    "app_name": "Zed",
+    "config_path": "~/.config/zed/mcp.json",
+    "install_url": "https://zed.dev"
+  }
+}

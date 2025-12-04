@@ -1,0 +1,354 @@
+[
+  {
+    "name": "filesystem",
+    "description": "File system access and manipulation",
+    "author": "Anthropic",
+    "repository": "https://github.com/modelcontextprotocol/servers",
+    "version": "1.0.0",
+    "install": {
+      "type": "npm",
+      "command": "npm install -g @modelcontextprotocol/server-filesystem"
+    },
+    "configuration": {
+      "required": [],
+      "optional": ["allowedPaths"]
+    },
+    "tags": ["filesystem", "files", "core"]
+  },
+  {
+    "name": "git",
+    "description": "Git repository operations and version control",
+    "author": "Community",
+    "repository": "https://github.com/modelcontextprotocol/servers",
+    "version": "1.0.0",
+    "install": {
+      "type": "binary",
+      "command": "cargo install git-mcp-server"
+    },
+    "configuration": {
+      "required": [],
+      "optional": ["allowedRepos"]
+    },
+    "tags": ["git", "version-control", "core"]
+  },
+  {
+    "name": "github",
+    "description": "GitHub API integration for issues, PRs, and repositories",
+    "author": "Anthropic",
+    "repository": "https://github.com/modelcontextprotocol/servers",
+    "version": "1.0.0",
+    "install": {
+      "type": "npm",
+      "command": "npm install -g @modelcontextprotocol/server-github"
+    },
+    "configuration": {
+      "required": ["GITHUB_TOKEN"],
+      "optional": ["owner", "repo"]
+    },
+    "tags": ["github", "git", "api"]
+  },
+  {
+    "name": "gitlab",
+    "description": "GitLab API integration for issues, MRs, CI/CD, wikis, and pipelines",
+    "author": "@zereight",
+    "repository": "https://github.com/zereight/mcp-gitlab",
+    "version": "1.0.0",
+    "install": {
+      "type": "npm",
+      "command": "npm install -g @zereight/mcp-gitlab"
+    },
+    "configuration": {
+      "required": ["GITLAB_PERSONAL_ACCESS_TOKEN", "GITLAB_URL", "GITLAB_API_URL"],
+      "optional": ["GITLAB_READ_ONLY_MODE", "USE_GITLAB_WIKI", "USE_MILESTONE", "USE_PIPELINE"]
+    },
+    "tags": ["gitlab", "git", "api", "cicd", "wiki"]
+  },
+  {
+    "name": "postgres",
+    "description": "PostgreSQL database access and query execution",
+    "author": "Anthropic",
+    "repository": "https://github.com/modelcontextprotocol/servers",
+    "version": "1.0.0",
+    "install": {
+      "type": "npm",
+      "command": "npm install -g @modelcontextprotocol/server-postgres"
+    },
+    "configuration": {
+      "required": ["POSTGRES_URL"],
+      "optional": []
+    },
+    "tags": ["database", "postgres", "sql"]
+  },
+  {
+    "name": "redis",
+    "description": "Redis in-memory data store operations",
+    "author": "community",
+    "repository": "https://github.com/aidev/mcp-redis",
+    "version": "1.0.0",
+    "install": {
+      "type": "npm",
+      "command": "npm install -g @aidev/mcp-server-redis"
+    },
+    "configuration": {
+      "required": ["REDIS_URL"],
+      "optional": ["database"]
+    },
+    "tags": ["database", "redis", "cache"]
+  },
+  {
+    "name": "k8s",
+    "description": "Kubernetes cluster management and operations",
+    "author": "community",
+    "repository": "https://github.com/kubernetes-mcp/k8s-mcp-server",
+    "version": "1.0.0",
+    "install": {
+      "type": "binary",
+      "command": "cargo install k8s-mcp-server"
+    },
+    "configuration": {
+      "required": [],
+      "optional": ["KUBECONFIG", "context", "namespace"]
+    },
+    "tags": ["devops", "kubernetes", "infrastructure"]
+  },
+  {
+    "name": "cypress",
+    "description": "Cypress end-to-end testing integration",
+    "author": "community",
+    "repository": "https://github.com/cypress-io/cypress-mcp-server",
+    "version": "1.0.0",
+    "install": {
+      "type": "manual",
+      "command": "git clone https://github.com/cypress-io/cypress-mcp-server ~/.local/share/cypress-mcp-server && cd ~/.local/share/cypress-mcp-server && npm install"
+    },
+    "configuration": {
+      "required": [],
+      "optional": ["testDir"]
+    },
+    "tags": ["testing", "cypress", "e2e", "qa"]
+  },
+  {
+    "name": "atlassian",
+    "description": "Atlassian suite (JIRA, Confluence) via remote MCP",
+    "author": "Atlassian",
+    "repository": "https://mcp.atlassian.com",
+    "version": "1.0.0",
+    "install": {
+      "type": "remote",
+      "command": "npx -y mcp-remote https://mcp.atlassian.com/v1/sse"
+    },
+    "configuration": {
+      "required": [],
+      "optional": []
+    },
+    "tags": ["project-management", "jira", "confluence", "atlassian"]
+  },
+  {
+    "name": "docker",
+    "description": "Docker container and image management",
+    "author": "community",
+    "repository": "https://github.com/aidev/mcp-docker",
+    "version": "1.0.0",
+    "install": {
+      "type": "npm",
+      "command": "npm install -g @aidev/mcp-server-docker"
+    },
+    "configuration": {
+      "required": [],
+      "optional": ["dockerHost"]
+    },
+    "tags": ["devops", "docker", "containers"]
+  },
+  {
+    "name": "aws",
+    "description": "AWS cloud services management (EC2, S3, Lambda, etc.)",
+    "author": "community",
+    "repository": "https://github.com/aidev/mcp-aws",
+    "version": "1.0.0",
+    "install": {
+      "type": "npm",
+      "command": "npm install -g @aidev/mcp-server-aws"
+    },
+    "configuration": {
+      "required": ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"],
+      "optional": ["AWS_REGION"]
+    },
+    "tags": ["cloud", "aws", "infrastructure"]
+  },
+  {
+    "name": "s3",
+    "description": "AWS S3 bucket operations and file storage",
+    "author": "community",
+    "repository": "https://github.com/aidev/mcp-s3",
+    "version": "1.0.0",
+    "install": {
+      "type": "npm",
+      "command": "npm install -g @aidev/mcp-server-s3"
+    },
+    "configuration": {
+      "required": ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"],
+      "optional": ["buckets", "region"]
+    },
+    "tags": ["cloud", "aws", "storage"]
+  },
+  {
+    "name": "web-search",
+    "description": "Web search capabilities using multiple search engines",
+    "author": "community",
+    "repository": "https://github.com/aidev/mcp-web-search",
+    "version": "1.0.0",
+    "install": {
+      "type": "npm",
+      "command": "npm install -g @aidev/mcp-server-web-search"
+    },
+    "configuration": {
+      "required": [],
+      "optional": ["GOOGLE_API_KEY", "BING_API_KEY"]
+    },
+    "tags": ["search", "web", "research"]
+  },
+  {
+    "name": "memory",
+    "description": "Persistent memory and context preservation across sessions",
+    "author": "community",
+    "repository": "https://github.com/aidev/mcp-memory",
+    "version": "1.0.0",
+    "install": {
+      "type": "npm",
+      "command": "npm install -g @aidev/mcp-server-memory"
+    },
+    "configuration": {
+      "required": [],
+      "optional": ["MEMORY_BANK_ROOT", "retention"]
+    },
+    "tags": ["memory", "context", "persistence"]
+  },
+  {
+    "name": "jupyter",
+    "description": "Jupyter notebook execution and management",
+    "author": "community",
+    "repository": "https://github.com/aidev/mcp-jupyter",
+    "version": "1.0.0",
+    "install": {
+      "type": "npm",
+      "command": "npm install -g @aidev/mcp-server-jupyter"
+    },
+    "configuration": {
+      "required": [],
+      "optional": ["kernels", "notebookDir"]
+    },
+    "tags": ["data", "jupyter", "notebooks"]
+  },
+  {
+    "name": "jira",
+    "description": "Atlassian JIRA issue tracking and project management",
+    "author": "community",
+    "repository": "https://github.com/aidev/mcp-jira",
+    "version": "1.0.0",
+    "install": {
+      "type": "npm",
+      "command": "npm install -g @aidev/mcp-server-jira"
+    },
+    "configuration": {
+      "required": ["JIRA_URL", "JIRA_TOKEN"],
+      "optional": ["projectKey"]
+    },
+    "tags": ["project-management", "jira", "issues"]
+  },
+  {
+    "name": "slack",
+    "description": "Slack workspace integration for messages and channels",
+    "author": "community",
+    "repository": "https://github.com/aidev/mcp-slack",
+    "version": "1.0.0",
+    "install": {
+      "type": "npm",
+      "command": "npm install -g @aidev/mcp-server-slack"
+    },
+    "configuration": {
+      "required": ["SLACK_TOKEN"],
+      "optional": ["channels"]
+    },
+    "tags": ["communication", "slack", "collaboration"]
+  },
+  {
+    "name": "confluence",
+    "description": "Atlassian Confluence wiki and documentation",
+    "author": "community",
+    "repository": "https://github.com/aidev/mcp-confluence",
+    "version": "1.0.0",
+    "install": {
+      "type": "npm",
+      "command": "npm install -g @aidev/mcp-server-confluence"
+    },
+    "configuration": {
+      "required": ["CONFLUENCE_URL", "CONFLUENCE_TOKEN"],
+      "optional": ["spaceKey"]
+    },
+    "tags": ["documentation", "confluence", "wiki"]
+  },
+  {
+    "name": "mongodb",
+    "description": "MongoDB database operations and queries",
+    "author": "community",
+    "repository": "https://github.com/aidev/mcp-mongodb",
+    "version": "1.0.0",
+    "install": {
+      "type": "npm",
+      "command": "npm install -g @aidev/mcp-server-mongodb"
+    },
+    "configuration": {
+      "required": ["MONGODB_URL"],
+      "optional": ["database", "collection"]
+    },
+    "tags": ["database", "mongodb", "nosql"]
+  },
+  {
+    "name": "elasticsearch",
+    "description": "Elasticsearch search and analytics engine",
+    "author": "community",
+    "repository": "https://github.com/aidev/mcp-elasticsearch",
+    "version": "1.0.0",
+    "install": {
+      "type": "npm",
+      "command": "npm install -g @aidev/mcp-server-elasticsearch"
+    },
+    "configuration": {
+      "required": ["ELASTICSEARCH_URL"],
+      "optional": ["index", "username", "password"]
+    },
+    "tags": ["search", "elasticsearch", "analytics"]
+  },
+  {
+    "name": "terraform",
+    "description": "Terraform infrastructure as code management",
+    "author": "community",
+    "repository": "https://github.com/aidev/mcp-terraform",
+    "version": "1.0.0",
+    "install": {
+      "type": "binary",
+      "command": "brew install aidev/tap/mcp-terraform"
+    },
+    "configuration": {
+      "required": [],
+      "optional": ["workingDir", "tfVersion"]
+    },
+    "tags": ["devops", "terraform", "infrastructure"]
+  },
+  {
+    "name": "prometheus",
+    "description": "Prometheus monitoring and metrics",
+    "author": "community",
+    "repository": "https://github.com/aidev/mcp-prometheus",
+    "version": "1.0.0",
+    "install": {
+      "type": "npm",
+      "command": "npm install -g @aidev/mcp-server-prometheus"
+    },
+    "configuration": {
+      "required": ["PROMETHEUS_URL"],
+      "optional": ["timeout"]
+    },
+    "tags": ["monitoring", "prometheus", "metrics"]
+  }
+]

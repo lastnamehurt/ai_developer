@@ -1,0 +1,182 @@
+#!/usr/bin/env bash
+
+set -e  # Exit on error
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+# Installation directory
+INSTALL_DIR="$HOME/.local/aidev"
+BIN_DIR="$INSTALL_DIR/bin"
+
+echo -e "${CYAN}========================================${NC}"
+echo -e "${CYAN}  aidev Installation${NC}"
+echo -e "${CYAN}========================================${NC}"
+echo
+
+# Check Python version
+echo -e "${CYAN}Checking Python version...${NC}"
+if ! command -v python3 &> /dev/null; then
+    echo -e "${RED}Error: Python 3 is not installed${NC}"
+    echo "Please install Python 3.10 or later"
+    exit 1
+fi
+
+PYTHON_VERSION=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
+REQUIRED_VERSION="3.10"
+
+if ! python3 -c "import sys; sys.exit(0 if tuple(map(int, '$PYTHON_VERSION'.split('.'))) >= tuple(map(int, '$REQUIRED_VERSION'.split('.'))) else 1)"; then
+    echo -e "${RED}Error: Python $REQUIRED_VERSION or later is required (found $PYTHON_VERSION)${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}✓${NC} Python $PYTHON_VERSION"
+
+# Check if running in a project directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Create virtual environment
+echo
+echo -e "${CYAN}Creating virtual environment...${NC}"
+if [ ! -d "$INSTALL_DIR/venv" ]; then
+    python3 -m venv "$INSTALL_DIR/venv"
+    echo -e "${GREEN}✓${NC} Virtual environment created"
+else
+    echo -e "${YELLOW}Virtual environment already exists${NC}"
+fi
+
+# Activate virtual environment
+source "$INSTALL_DIR/venv/bin/activate"
+
+# Install/upgrade pip
+echo
+echo -e "${CYAN}Upgrading pip...${NC}"
+pip install --quiet --upgrade pip
+
+# Install aidev
+echo
+echo -e "${CYAN}Installing aidev...${NC}"
+if [ -f "$SCRIPT_DIR/pyproject.toml" ]; then
+    # Development installation from source
+    pip install --quiet -e "$SCRIPT_DIR"
+    echo -e "${GREEN}✓${NC} Installed aidev from source (development mode)"
+else
+    # Production installation from PyPI (future)
+    pip install --quiet aidev
+    echo -e "${GREEN}✓${NC} Installed aidev from PyPI"
+fi
+
+# Create bin directory and wrapper script
+echo
+echo -e "${CYAN}Creating launcher script...${NC}"
+mkdir -p "$BIN_DIR"
+
+cat > "$BIN_DIR/aidev" << 'EOFBIN'
+#!/usr/bin/env bash
+# aidev launcher script
+
+INSTALL_DIR="$HOME/.local/aidev"
+source "$INSTALL_DIR/venv/bin/activate"
+exec python -m aidev.cli "$@"
+EOFBIN
+
+chmod +x "$BIN_DIR/aidev"
+
+# Create shorter 'ai' alias
+cat > "$BIN_DIR/ai" << 'EOFBIN'
+#!/usr/bin/env bash
+# ai launcher script (alias for aidev)
+
+INSTALL_DIR="$HOME/.local/aidev"
+source "$INSTALL_DIR/venv/bin/activate"
+exec python -m aidev.cli "$@"
+EOFBIN
+
+chmod +x "$BIN_DIR/ai"
+echo -e "${GREEN}✓${NC} Created launchers: $BIN_DIR/aidev and $BIN_DIR/ai"
+
+# Check if bin directory is in PATH
+echo
+echo -e "${CYAN}Checking PATH configuration...${NC}"
+
+if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
+    echo -e "${YELLOW}! $BIN_DIR is not in your PATH${NC}"
+    echo
+    echo "Add the following line to your shell configuration file:"
+    echo
+
+    # Detect shell
+    if [ -n "$ZSH_VERSION" ]; then
+        SHELL_RC="$HOME/.zshrc"
+        echo -e "${CYAN}  echo 'export PATH=\"\$HOME/.local/aidev/bin:\$PATH\"' >> ~/.zshrc${NC}"
+    elif [ -n "$BASH_VERSION" ]; then
+        SHELL_RC="$HOME/.zshrc"
+        echo -e "${CYAN}  echo 'export PATH=\"\$HOME/.local/aidev/bin:\$PATH\"' >> ~/.zshrc${NC}"
+    else
+        echo -e "${CYAN}  export PATH=\"\$HOME/.local/aidev/bin:\$PATH\"${NC}"
+    fi
+
+    echo
+    echo "Then run:"
+    echo -e "${CYAN}  source $SHELL_RC${NC}"
+    echo
+
+    # Offer to add automatically
+    read -p "Add to PATH automatically? [y/N] " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        if [ -n "$SHELL_RC" ] && [ -f "$SHELL_RC" ]; then
+            echo "export PATH=\"\$HOME/.local/aidev/bin:\$PATH\"" >> "$SHELL_RC"
+            echo -e "${GREEN}✓${NC} Added to $SHELL_RC"
+            echo -e "${YELLOW}! Run: source $SHELL_RC${NC}"
+        fi
+    fi
+else
+    echo -e "${GREEN}✓${NC} $BIN_DIR is in PATH"
+fi
+
+# Initialize aidev
+echo
+echo -e "${CYAN}Initializing aidev...${NC}"
+"$BIN_DIR/aidev" setup --force > /dev/null 2>&1 || true
+echo -e "${GREEN}✓${NC} aidev initialized"
+
+# Prepare Gemini CLI config directory (for MCP settings)
+GEMINI_DIR="$HOME/.gemini"
+GEMINI_SETTINGS="$GEMINI_DIR/settings.json"
+mkdir -p "$GEMINI_DIR"
+if [ ! -f "$GEMINI_SETTINGS" ]; then
+    echo '{ "mcpServers": {} }' > "$GEMINI_SETTINGS"
+    echo -e "${GREEN}✓${NC} Created $GEMINI_SETTINGS"
+else
+    echo -e "${GREEN}✓${NC} Gemini settings detected at $GEMINI_SETTINGS"
+fi
+
+# Summary
+echo
+echo -e "${GREEN}========================================${NC}"
+echo -e "${GREEN}  Installation Complete!${NC}"
+echo -e "${GREEN}========================================${NC}"
+echo
+echo "Next steps:"
+echo "  1. Ensure $BIN_DIR is in your PATH"
+echo "  2. Run: ai doctor (or aidev doctor)"
+echo "  3. Configure: ai setup"
+echo "  4. In a project: ai init"
+echo "  5. Launch a tool: ai cursor"
+echo
+echo "Documentation: $SCRIPT_DIR/README.md"
+echo
+
+# Test installation
+if command -v ai &> /dev/null; then
+    echo -e "${GREEN}✓${NC} ai/aidev commands are available"
+    ai --version
+else
+    echo -e "${YELLOW}! ai command not found in current shell${NC}"
+    echo -e "${YELLOW}  Add to PATH and restart your shell${NC}"
+fi

@@ -1,0 +1,49 @@
+{
+  "name": "security-research",
+  "description": "Security research and penetration testing",
+  "extends": "researcher",
+  "mcp_servers": [
+    {
+      "name": "filesystem",
+      "enabled": true
+    },
+    {
+      "name": "git",
+      "enabled": true
+    },
+    {
+      "name": "web-search",
+      "enabled": true,
+      "config": {
+        "searchEngines": ["google", "shodan"]
+      }
+    },
+    {
+      "name": "memory",
+      "enabled": true,
+      "config": {
+        "retention": "30days"
+      }
+    },
+    {
+      "name": "vulnerability-db",
+      "enabled": true,
+      "config": {
+        "databases": ["nvd", "cve"]
+      }
+    }
+  ],
+  "environment": {
+    "SHODAN_API_KEY": "${SHODAN_API_KEY}",
+    "VIRUSTOTAL_API_KEY": "${VIRUSTOTAL_API_KEY}",
+    "NVD_API_KEY": "${NVD_API_KEY}"
+  },
+  "tools": {
+    "cursor": {
+      "enabled": true
+    },
+    "claude": {
+      "enabled": true
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "name": "default-work",
+  "description": "Work development with GitLab and enterprise tools",
+  "extends": "default",
+  "mcp_servers": [
+    {
+      "name": "filesystem",
+      "enabled": true
+    },
+    {
+      "name": "git",
+      "enabled": true
+    },
+    {
+      "name": "gitlab",
+      "enabled": true,
+      "config": {
+        "readOnly": false
+      }
+    },
+    {
+      "name": "atlassian",
+      "enabled": true
+    },
+    {
+      "name": "k8s",
+      "enabled": true
+    },
+    {
+      "name": "memory-bank",
+      "enabled": true
+    },
+    {
+      "name": "cypress",
+      "enabled": true
+    }
+  ],
+  "environment": {
+    "GITLAB_PERSONAL_ACCESS_TOKEN": "${GITLAB_PERSONAL_ACCESS_TOKEN}",
+    "GITLAB_URL": "${GITLAB_URL}",
+    "GITLAB_API_URL": "${GITLAB_API_URL}",
+    "KUBECONFIG": "${KUBECONFIG}",
+    "MEMORY_BANK_ROOT": "${HOME}/.aidev/memory-banks/work"
+  },
+  "tools": {
+    "cursor": {
+      "enabled": true
+    },
+    "claude": {
+      "enabled": true
+    }
+  }
+}

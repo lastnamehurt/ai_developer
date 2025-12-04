@@ -1,0 +1,50 @@
+{
+  "name": "qa-gitlab",
+  "description": "QA and testing workflows with GitLab (read-only) and Cypress",
+  "extends": "default",
+  "mcp_servers": [
+    {
+      "name": "filesystem",
+      "enabled": true
+    },
+    {
+      "name": "git",
+      "enabled": true
+    },
+    {
+      "name": "gitlab",
+      "enabled": true,
+      "config": {
+        "readOnly": true,
+        "usePipeline": true
+      }
+    },
+    {
+      "name": "cypress",
+      "enabled": true
+    },
+    {
+      "name": "atlassian",
+      "enabled": true
+    },
+    {
+      "name": "memory-bank",
+      "enabled": true
+    }
+  ],
+  "environment": {
+    "GITLAB_PERSONAL_ACCESS_TOKEN": "${GITLAB_PERSONAL_ACCESS_TOKEN}",
+    "GITLAB_URL": "${GITLAB_URL}",
+    "GITLAB_API_URL": "${GITLAB_API_URL}",
+    "GITLAB_READ_ONLY_MODE": "true",
+    "USE_GITLAB_WIKI": "true",
+    "USE_MILESTONE": "true",
+    "USE_PIPELINE": "true",
+    "MEMORY_BANK_ROOT": "${HOME}/.aidev/memory-banks/qa"
+  },
+  "tools": {
+    "cursor": {
+      "enabled": true
+    }
+  }
+}

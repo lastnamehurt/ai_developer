@@ -1,0 +1,58 @@
+{
+  "name": "researcher-advanced",
+  "description": "Advanced research with memory, search, and AI reasoning",
+  "extends": "researcher",
+  "mcp_servers": [
+    {
+      "name": "filesystem",
+      "enabled": true
+    },
+    {
+      "name": "git",
+      "enabled": true
+    },
+    {
+      "name": "github",
+      "enabled": true
+    },
+    {
+      "name": "duckduckgo",
+      "enabled": true
+    },
+    {
+      "name": "memory-bank",
+      "enabled": true,
+      "config": {
+        "retention": "90days"
+      }
+    },
+    {
+      "name": "memory",
+      "enabled": true
+    },
+    {
+      "name": "sequential-thinking",
+      "enabled": true
+    },
+    {
+      "name": "compass",
+      "enabled": true
+    },
+    {
+      "name": "serena",
+      "enabled": true
+    }
+  ],
+  "environment": {
+    "GITHUB_TOKEN": "${GITHUB_TOKEN}",
+    "MEMORY_BANK_ROOT": "${HOME}/.aidev/memory-banks/research"
+  },
+  "tools": {
+    "cursor": {
+      "enabled": true
+    },
+    "claude": {
+      "enabled": true
+    }
+  }
+}

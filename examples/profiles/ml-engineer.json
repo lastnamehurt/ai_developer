@@ -1,0 +1,52 @@
+{
+  "name": "ml-engineer",
+  "description": "Machine learning and AI development",
+  "extends": "data",
+  "mcp_servers": [
+    {
+      "name": "filesystem",
+      "enabled": true
+    },
+    {
+      "name": "git",
+      "enabled": true
+    },
+    {
+      "name": "jupyter",
+      "enabled": true,
+      "config": {
+        "kernels": ["python3", "julia"]
+      }
+    },
+    {
+      "name": "postgres",
+      "enabled": true
+    },
+    {
+      "name": "s3",
+      "enabled": true,
+      "config": {
+        "buckets": ["ml-datasets", "model-artifacts"]
+      }
+    },
+    {
+      "name": "mlflow",
+      "enabled": true
+    }
+  ],
+  "environment": {
+    "GITHUB_TOKEN": "${GITHUB_TOKEN}",
+    "AWS_ACCESS_KEY_ID": "${AWS_ACCESS_KEY_ID}",
+    "AWS_SECRET_ACCESS_KEY": "${AWS_SECRET_ACCESS_KEY}",
+    "MLFLOW_TRACKING_URI": "${MLFLOW_TRACKING_URI}",
+    "CUDA_VISIBLE_DEVICES": "0"
+  },
+  "tools": {
+    "cursor": {
+      "enabled": true,
+      "settings": {
+        "pythonPath": "~/.pyenv/versions/ml/bin/python"
+      }
+    }
+  }
+}
