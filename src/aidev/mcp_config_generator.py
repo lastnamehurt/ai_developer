@@ -93,6 +93,16 @@ class MCPConfigGenerator:
 
             # Resolve command path eagerly to avoid "No such file or directory"
             command = server_def.get("command")
+            args = list(server_def.get("args", [])) if server_def.get("args") else []
+
+            # Special handling for git: prefer git-mcp-go if available
+            if server_name == "git" and command in (None, "git-mcp-server"):
+                go_cmd = shutil.which("git-mcp-go")
+                if go_cmd:
+                    command = go_cmd
+                    if not args:
+                        args = ["serve", "-r", "."]
+
             if command:
                 resolved_cmd = shutil.which(command)
                 if not resolved_cmd and command == "npx":
@@ -102,8 +112,8 @@ class MCPConfigGenerator:
                             resolved_cmd = candidate
                             break
                 entry["command"] = resolved_cmd or command
-            if "args" in server_def:
-                entry["args"] = server_def["args"]
+            if args:
+                entry["args"] = args
 
             # Skip servers that have no runnable transport configured
             has_transport = any(
