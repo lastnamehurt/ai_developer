@@ -343,18 +343,6 @@ ruff src/ tests/
 mypy src/
 ```
 
-## Migration from Company Version
-
-If you're coming from the company-specific version, here's what changed:
-
-| Old | New | Notes |
-|-----|-----|-------|
-| `~/.local/ai-dev/` | `~/.aidev/` | Shorter, cleaner path |
-| `ai` command | `aidev` command | More specific name |
-| GitLab-specific | Generic Git providers | GitHub, GitLab, Bitbucket |
-| JIRA integration | Removed | Use generic issue trackers via MCP |
-| Hard-coded profiles | User-defined profiles | Full customization |
-
 ## Troubleshooting
 
 ### Command not found: aidev
