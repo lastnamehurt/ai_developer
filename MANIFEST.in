@@ -1,5 +1,6 @@
 # Include MCP server configurations
 recursive-include configs *.json
+recursive-include configs *.md
 
 # Include documentation
 include README.md

@@ -23,6 +23,7 @@ LOGS_DIR: Final[Path] = AIDEV_DIR / "logs"
 
 # Bundled data
 CONFIGS_DIR: Final[Path] = Path(__file__).parent.parent.parent / "configs"
+ENGINEERING_WORKFLOW_TEMPLATE: Final[Path] = CONFIGS_DIR / "engineering-workflow.md"
 
 # Files
 ENV_FILE: Final[Path] = AIDEV_DIR / ".env"

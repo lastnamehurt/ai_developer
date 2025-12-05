@@ -1,6 +1,7 @@
 """
 Configuration management for aidev
 """
+import json
 import os
 from pathlib import Path
 from typing import Optional
@@ -18,6 +19,7 @@ from aidev.constants import (
     ENV_FILE,
     TOOLS_CONFIG,
     SUPPORTED_TOOLS,
+    ENGINEERING_WORKFLOW_TEMPLATE,
 )
 from aidev.utils import ensure_dir, load_json, save_json, load_env, save_env
 
@@ -175,3 +177,64 @@ class ConfigManager:
 
             # Write a minimal default MCP config if no global file or symlink failed
             save_json(local_config_path, DEFAULT_PROJECT_MCP_CONFIG)
+
+        # Add shared engineering workflow guidance and ensure Cursor summarizes it
+        self._ensure_engineering_workflow(project_dir)
+
+    def _ensure_engineering_workflow(self, project_dir: Path) -> None:
+        """Place engineering workflow guidance for assistants and add to Cursor rules."""
+        claude_dir = project_dir / ".claude"
+        ensure_dir(claude_dir)
+        workflow_path = claude_dir / "engineering-workflow.md"
+
+        if ENGINEERING_WORKFLOW_TEMPLATE.exists():
+            template_content = ENGINEERING_WORKFLOW_TEMPLATE.read_text()
+        else:
+            template_content = "# Engineering Workflow\n\nDocument your standard engineering workflow here."
+
+        if workflow_path.exists():
+            workflow_content = workflow_path.read_text()
+        else:
+            workflow_content = template_content
+            workflow_path.write_text(workflow_content)
+
+        # Copy the workflow to other assistant-specific directories so it is discoverable everywhere
+        additional_targets = [
+            project_dir / ".aidev" / "engineering-workflow.md",
+            project_dir / ".cursor" / "engineering-workflow.md",
+            project_dir / ".gemini" / "engineering-workflow.md",
+            project_dir / ".codex" / "engineering-workflow.md",
+            project_dir / ".zed" / "engineering-workflow.md",
+        ]
+        for target in additional_targets:
+            ensure_dir(target.parent)
+            if not target.exists():
+                target.write_text(workflow_content)
+
+        # Ensure Cursor summarizes the workflow
+        cursor_dir = project_dir / ".cursor"
+        ensure_dir(cursor_dir)
+        rules_path = cursor_dir / "rules.json"
+        default_rules = {
+            "include": ["**/*.rb", "**/*.py", "**/*.ts", "**/*.js", "**/*.go", "**/*.md"],
+            "exclude": ["node_modules/**", "vendor/**", "log/**", "tmp/**"],
+            "summarize": [".claude/engineering-workflow.md"],
+            "link": [],
+            "rewrite": [],
+        }
+
+        rules_data: dict
+        if rules_path.exists():
+            try:
+                rules_data = json.loads(rules_path.read_text())
+            except Exception:
+                rules_data = default_rules.copy()
+        else:
+            rules_data = default_rules.copy()
+
+        summarize_list = rules_data.get("summarize", [])
+        if ".claude/engineering-workflow.md" not in summarize_list:
+            summarize_list.append(".claude/engineering-workflow.md")
+        rules_data["summarize"] = summarize_list
+
+        rules_path.write_text(json.dumps(rules_data, indent=2))
