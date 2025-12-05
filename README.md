@@ -69,12 +69,13 @@ ai profile create my-profile   # Create custom profile
 
 | Profile | Use Case | MCP Servers |
 |---------|----------|-------------|
-| `default` | General development | filesystem, git |
-| `minimal` | Bare minimum | filesystem only |
-| `researcher` | Investigation & research | filesystem, web-search, memory |
-| `fullstack` | Web development | filesystem, git, postgres, redis |
-| `devops` | Infrastructure | filesystem, git, kubernetes, docker |
-| `data` | Data science | filesystem, jupyter, postgres |
+| `default` | General development | filesystem, git, memory-bank |
+| `minimal` | Bare minimum | filesystem |
+| `researcher` | Investigation & research | filesystem, git, duckduckgo, memory, memory-bank, sequential-thinking |
+| `fullstack` | Web development | filesystem, git, github, postgres |
+| `devops` | Infrastructure | filesystem, git, gitlab, k8s, atlassian |
+| `work` | Work (GitLab/Atlassian/internal) | filesystem, git, gitlab, cypress, atlassian, k8s, serena, heimdall, memory-bank, duckduckgo, sequential-thinking, memory, compass |
+| `data` | Data science | filesystem, git, postgres, memory-bank |
 
 ### 2. Environment Management
 
@@ -267,8 +268,8 @@ aidev backup --output aidev-backup.tar.gz
 On new machine:
 ```bash
 # Install aidev
-git clone https://github.com/yourusername/ai_developer.git
-cd ai_developer && ./install.sh
+git clone https://github.com/lastnamehurt/aidev.git
+cd aidev && ./install.sh
 
 # Restore configuration
 aidev restore aidev-backup.tar.gz

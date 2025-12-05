@@ -299,6 +299,30 @@ class ProfileManager:
                 ],
             ),
             Profile(
+                name="work",
+                description="Work profile with GitLab, Atlassian, and internal MCP tools",
+                mcp_servers=[
+                    MCPServerConfig(name="filesystem", enabled=True),
+                    MCPServerConfig(name="git", enabled=True),
+                    MCPServerConfig(name="gitlab", enabled=True),
+                    MCPServerConfig(name="cypress", enabled=True),
+                    MCPServerConfig(name="atlassian", enabled=True),
+                    MCPServerConfig(name="k8s", enabled=True),
+                    MCPServerConfig(name="serena", enabled=True),
+                    MCPServerConfig(name="heimdall", enabled=True),
+                    MCPServerConfig(name="memory-bank", enabled=True),
+                    MCPServerConfig(name="duckduckgo", enabled=True),
+                    MCPServerConfig(name="sequential-thinking", enabled=True),
+                    MCPServerConfig(name="memory", enabled=True),
+                    MCPServerConfig(name="compass", enabled=True),
+                ],
+                environment={
+                    "GITLAB_URL": "https://gitlab.checkrhq.net",
+                    "GITLAB_API_URL": "https://gitlab.checkrhq.net/api/v4",
+                    "MEMORY_BANK_ROOT": "${HOME}/.local/ai-dev/memory-banks",
+                },
+            ),
+            Profile(
                 name="data",
                 description="Data science and analysis",
                 mcp_servers=[
