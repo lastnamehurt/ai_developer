@@ -11,7 +11,7 @@ Managing AI development tools (Cursor, Claude Code, Zed) across different projec
 - 🔄 No easy way to share configurations
 
 **aidev solves this** with:
-- ✅ Profile-based MCP configurations (devops, researcher, fullstack, etc.)
+- ✅ Profile-based MCP configurations (web, qa, infra)
 - ✅ Centralized environment variable management
 - ✅ One-command tool launching with full context
 - ✅ Easy backup/restore for new machine setup
@@ -47,12 +47,12 @@ ai env set ANTHROPIC_API_KEY sk-ant-your-key-here
 cd ~/my-project
 ai quickstart        # detects JS/Python/Docker/K8s signals and recommends a profile
 # or force a profile:
-# ai quickstart --profile devops --yes
+# ai quickstart --profile infra --yes
 
 # 4. Launch your AI tool with a profile
 ai cursor                      # Default/recommended profile
-ai cursor --profile devops     # DevOps profile (K8s, Docker, Git)
-ai claude --profile researcher # Research profile (web search, memory)
+ai cursor --profile infra      # Infra profile (K8s, Docker, Git)
+ai claude --profile qa         # QA profile
 ```
 
 ## Core Features
@@ -63,21 +63,20 @@ Profiles are pre-configured sets of MCP servers and environment variables for di
 
 ```bash
 ai profile list                # List all profiles
-ai profile show devops         # Show profile details
+ai profile show infra          # Show profile details
 ai profile create my-profile   # Create custom profile
+ai use web                     # Switch active profile for this project
+ai status                      # Show active profile, MCP servers, env requirements
 ```
 
 **Built-in Profiles:**
 
 | Profile | Use Case | MCP Servers |
 |---------|----------|-------------|
-| `default` | General development | filesystem, git, memory-bank |
-| `minimal` | Bare minimum | filesystem |
-| `researcher` | Investigation & research | filesystem, git, duckduckgo, memory, memory-bank, sequential-thinking |
-| `fullstack` | Web development | filesystem, git, github, postgres |
-| `devops` | Infrastructure | filesystem, git, gitlab, k8s, atlassian |
-| `work` | Work (GitLab/Atlassian/internal) | filesystem, git, gitlab, cypress, atlassian, k8s, serena, heimdall, memory-bank, duckduckgo, sequential-thinking, memory, compass |
-| `data` | Data science | filesystem, git, postgres, memory-bank |
+| `web` | Web/app development | filesystem, git, github, memory-bank |
+| `qa` | Quality/testing | filesystem, git, duckduckgo, memory-bank |
+| `infra` | Infrastructure/deployment | filesystem, git, gitlab, k8s, atlassian |
+| `default` | Alias of `web` | extends `web` |
 
 ### 2. Environment Management
 
@@ -108,12 +107,14 @@ Launch AI tools with automatic configuration injection:
 
 ```bash
 ai cursor                       # Launch Cursor
-ai cursor --profile devops      # Launch with devops profile
+ai cursor --profile infra      # Launch with infra profile
 ai claude                       # Launch Claude Code
 ai zed                          # Launch Zed
 ai gemini                       # Launch Gemini Code Assist
 ai codex                        # Launch Codex CLI
 ai tool <name>                  # Launch any registered tool
+ai status                       # Show active profile, MCP servers, env requirements
+ai use <profile>                # Switch project profile
 ```
 
 ### 5. Backup & Restore
@@ -137,7 +138,9 @@ aidev import config.json           # Import shared config
 ├── config/
 │   ├── profiles/                  # Built-in profiles
 │   │   ├── default.json
-│   │   ├── devops.json
+│   │   ├── web.json
+│   │   ├── qa.json
+│   │   ├── infra.json
 │   │   └── custom/                # Your custom profiles
 │   ├── mcp-servers/               # MCP server configurations
 │   │   ├── filesystem.json

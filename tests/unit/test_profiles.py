@@ -105,11 +105,13 @@ class TestProfileManager:
 
         assert len(builtin) > 0
 
-        # Check that default profile exists
+        # Check expected modern profiles
+        names = {p.name for p in builtin}
+        assert {"default", "web", "qa", "infra"} <= names
+
         default = next((p for p in builtin if p.name == "default"), None)
         assert default is not None
-        assert default.description
-        assert len(default.mcp_servers) > 0
+        assert default.extends == "web"
 
     def test_supported_tools_loaded(self):
         """Ensure supported tools are loaded from JSON or fallback."""

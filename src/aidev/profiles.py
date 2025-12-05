@@ -254,49 +254,32 @@ class ProfileManager:
         """Get built-in profile definitions"""
         return [
             Profile(
-                name="default",
-                description="General development with essential tools",
-                tags=["default"],
-                mcp_servers=[
-                    MCPServerConfig(name="filesystem", enabled=True),
-                    MCPServerConfig(name="git", enabled=True),
-                    MCPServerConfig(name="memory-bank", enabled=True),
-                ],
-            ),
-            Profile(
-                name="minimal",
-                description="Bare minimum configuration",
-                tags=["minimal", "qa"],
-                mcp_servers=[
-                    MCPServerConfig(name="filesystem", enabled=True),
-                ],
-            ),
-            Profile(
-                name="researcher",
-                description="Research and investigation workflows",
-                tags=["qa"],
-                mcp_servers=[
-                    MCPServerConfig(name="filesystem", enabled=True),
-                    MCPServerConfig(name="git", enabled=True),
-                    MCPServerConfig(name="duckduckgo", enabled=True),
-                    MCPServerConfig(name="memory", enabled=True),
-                    MCPServerConfig(name="memory-bank", enabled=True),
-                    MCPServerConfig(name="sequential-thinking", enabled=True),
-                ],
-            ),
-            Profile(
-                name="fullstack",
-                description="Full-stack web development",
+                name="web",
+                description="Web/app development (frontend/backend essentials)",
                 tags=["web"],
                 mcp_servers=[
                     MCPServerConfig(name="filesystem", enabled=True),
                     MCPServerConfig(name="git", enabled=True),
                     MCPServerConfig(name="github", enabled=True),
-                    MCPServerConfig(name="postgres", enabled=True),
+                    MCPServerConfig(name="memory-bank", enabled=True),
                 ],
             ),
             Profile(
-                name="devops",
+                name="qa",
+                description="Quality and testing workflows",
+                tags=["qa"],
+                mcp_servers=[
+                    MCPServerConfig(name="filesystem", enabled=True),
+                    MCPServerConfig(name="git", enabled=True),
+                    MCPServerConfig(name="duckduckgo", enabled=True),
+                    MCPServerConfig(name="memory-bank", enabled=True),
+                ],
+                environment={
+                    "PLAYWRIGHT_BROWSERS_PATH": "${HOME}/.cache/ms-playwright",
+                },
+            ),
+            Profile(
+                name="infra",
                 description="Infrastructure and deployment",
                 tags=["infra"],
                 mcp_servers=[
@@ -306,41 +289,14 @@ class ProfileManager:
                     MCPServerConfig(name="k8s", enabled=True),
                     MCPServerConfig(name="atlassian", enabled=True),
                 ],
-            ),
-            Profile(
-                name="work",
-                description="Work profile with GitLab, Atlassian, and internal MCP tools",
-                tags=["work", "infra"],
-                mcp_servers=[
-                    MCPServerConfig(name="filesystem", enabled=True),
-                    MCPServerConfig(name="git", enabled=True),
-                    MCPServerConfig(name="gitlab", enabled=True),
-                    MCPServerConfig(name="cypress", enabled=True),
-                    MCPServerConfig(name="atlassian", enabled=True),
-                    MCPServerConfig(name="k8s", enabled=True),
-                    MCPServerConfig(name="serena", enabled=True),
-                    MCPServerConfig(name="heimdall", enabled=True),
-                    MCPServerConfig(name="memory-bank", enabled=True),
-                    MCPServerConfig(name="duckduckgo", enabled=True),
-                    MCPServerConfig(name="sequential-thinking", enabled=True),
-                    MCPServerConfig(name="memory", enabled=True),
-                    MCPServerConfig(name="compass", enabled=True),
-                ],
                 environment={
-                    "GITLAB_URL": "https://gitlab.checkrhq.net",
-                    "GITLAB_API_URL": "https://gitlab.checkrhq.net/api/v4",
-                    "MEMORY_BANK_ROOT": "${HOME}/.local/ai-dev/memory-banks",
+                    "KUBECONFIG": "${HOME}/.kube/config",
                 },
             ),
             Profile(
-                name="data",
-                description="Data science and analysis",
-                tags=["data", "qa"],
-                mcp_servers=[
-                    MCPServerConfig(name="filesystem", enabled=True),
-                    MCPServerConfig(name="git", enabled=True),
-                    MCPServerConfig(name="postgres", enabled=True),
-                    MCPServerConfig(name="memory-bank", enabled=True),
-                ],
+                name="default",
+                description="Default profile (alias of web)",
+                tags=["default", "web"],
+                extends="web",
             ),
         ]

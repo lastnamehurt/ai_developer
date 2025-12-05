@@ -3,6 +3,8 @@ CLI interface for aidev
 """
 import os
 from pathlib import Path
+from typing import Optional
+
 import click
 from rich.console import Console
 from rich.table import Table
@@ -13,6 +15,7 @@ from aidev.profiles import ProfileManager
 from aidev.mcp import MCPManager
 from aidev.mcp_config_generator import MCPConfigGenerator
 from aidev.quickstart import QuickstartRunner
+from aidev.utils import load_json, save_json
 
 console = Console()
 config_manager = ConfigManager()
@@ -436,6 +439,85 @@ def mcp_test(name: str) -> None:
     """Test MCP server connectivity"""
     # TODO: Implement MCP testing
     console.print(f"Testing MCP server: {name}")
+
+
+# ============================================================================
+# Profile switching and status
+# ============================================================================
+
+
+def _resolve_active_profile(profile: Optional[str] = None) -> str:
+    """Determine the active profile using project overrides or fallback."""
+    profile_name = profile
+    if not profile_name:
+        project_config_dir = config_manager.get_project_config_path()
+        if project_config_dir:
+            profile_file = project_config_dir / "profile"
+            if profile_file.exists():
+                profile_name = profile_file.read_text().strip()
+
+    return profile_name or "default"
+
+
+@cli.command()
+@click.argument("profile")
+def use(profile: str) -> None:
+    """Switch the active profile for the current project."""
+    available = profile_manager.list_profiles()
+    if profile not in available:
+        console.print(f"[red]Profile '{profile}' not found. Available: {', '.join(available)}[/red]")
+        return
+
+    project_dir = Path.cwd()
+    config_path = config_manager.get_project_config_path(project_dir)
+    if not config_path:
+        config_path = config_manager.init_project(project_dir=project_dir, profile=profile)
+    else:
+        profile_file = config_path / "profile"
+        profile_file.write_text(profile)
+        config_file = config_path / "config.json"
+        config_data = load_json(config_file, default={"profile": profile, "environment": {}, "mcp_overrides": {}})
+        config_data["profile"] = profile
+        save_json(config_file, config_data)
+
+    console.print(f"[green]✓[/green] Active profile set to [bold]{profile}[/bold] for {project_dir}")
+
+
+@cli.command()
+@click.option("--profile", help="Profile to inspect (defaults to active project profile)")
+def status(profile: str) -> None:
+    """Show current profile, MCP servers, and environment requirements."""
+    profile_name = _resolve_active_profile(profile)
+    loaded_profile = profile_manager.load_profile(profile_name)
+    if not loaded_profile:
+        console.print(f"[red]Profile '{profile_name}' not found[/red]")
+        return
+
+    console.print(f"[bold]Status[/bold] - Project: {Path.cwd()}")
+    console.print(f"Active profile: [bold cyan]{profile_name}[/bold cyan]")
+
+    mcp_table = Table(title="MCP Servers")
+    mcp_table.add_column("Name", style="cyan")
+    mcp_table.add_column("Enabled", style="green")
+    for server in loaded_profile.mcp_servers:
+        mcp_table.add_row(server.name, "yes" if server.enabled else "no")
+    console.print(mcp_table)
+
+    required_keys = sorted(list(loaded_profile.environment.keys()))
+    if not required_keys:
+        console.print("[yellow]No env requirements declared for this profile.[/yellow]")
+        return
+
+    env_table = Table(title="Environment Requirements")
+    env_table.add_column("Key", style="yellow")
+    env_table.add_column("Status", style="green")
+    env_table.add_column("Value", style="white")
+
+    global_env = config_manager.get_env()
+    for key in required_keys:
+        is_set = key in global_env and bool(global_env[key])
+        env_table.add_row(key, "set" if is_set else "missing", "***" if is_set else "")
+    console.print(env_table)
 
 
 # ============================================================================
