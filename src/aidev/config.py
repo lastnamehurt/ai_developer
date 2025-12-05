@@ -1,6 +1,7 @@
 """
 Configuration management for aidev
 """
+import os
 from pathlib import Path
 from typing import Optional
 from aidev.constants import (
@@ -16,8 +17,17 @@ from aidev.constants import (
     LOGS_DIR,
     ENV_FILE,
     TOOLS_CONFIG,
+    SUPPORTED_TOOLS,
 )
 from aidev.utils import ensure_dir, load_json, save_json, load_env, save_env
+
+# Minimal MCP config used when no global config exists
+DEFAULT_PROJECT_MCP_CONFIG = {
+    "mcpServers": {
+        "git": {"command": "git-mcp-server", "args": []},
+        "filesystem": {"command": "npx", "args": ["-y", "@modelcontextprotocol/server-filesystem"]},
+    }
+}
 
 
 class ConfigManager:
@@ -126,4 +136,42 @@ class ConfigManager:
         if not env_file.exists():
             env_file.touch()
 
+        # Set up project-local tool config folders for legacy compatibility
+        self._init_project_tool_configs(project_dir)
+
         return config_path
+
+    def _init_project_tool_configs(self, project_dir: Path) -> None:
+        """
+        Create project-local .claude/.cursor folders with MCP configs or symlinks
+        back to the user's global MCP config if available.
+        """
+        tool_dirs = [
+            ("claude", ".claude", ".mcp.json"),
+            ("cursor", ".cursor", "mcp.json"),
+        ]
+
+        for tool_id, folder_name, filename in tool_dirs:
+            tool_def = SUPPORTED_TOOLS.get(tool_id)
+            if not tool_def:
+                continue
+
+            global_config_path = Path(os.path.expanduser(tool_def["config_path"]))
+            local_dir = project_dir / folder_name
+            ensure_dir(local_dir)
+
+            local_config_path = local_dir / filename
+            if local_config_path.exists():
+                # Respect existing files/symlinks
+                continue
+
+            if global_config_path.exists():
+                try:
+                    local_config_path.symlink_to(global_config_path)
+                    continue
+                except OSError:
+                    # Fall back to writing a local file if symlinks are not permitted
+                    pass
+
+            # Write a minimal default MCP config if no global file or symlink failed
+            save_json(local_config_path, DEFAULT_PROJECT_MCP_CONFIG)
