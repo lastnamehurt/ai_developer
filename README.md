@@ -1,6 +1,6 @@
 # Universal AI Development Environment Manager
 
-A universal, profile-based configuration manager for AI development tools that makes onboarding to new machines, projects, and contexts fast and consistent.
+A universal, profile-based configuration manager for AI development tools that makes onboarding to new machines, projects, and contexts fast and consistent. Use `ai quickstart` to auto-detect your project stack and pick a profile, or set one explicitly.
 
 ## Why aidev?
 
@@ -43,12 +43,14 @@ ai setup
 ai env set GITHUB_TOKEN ghp_your_token_here
 ai env set ANTHROPIC_API_KEY sk-ant-your-key-here
 
-# 3. Navigate to a project and initialize
+# 3. Navigate to a project and initialize (auto-detect stack)
 cd ~/my-project
-ai init
+ai quickstart        # detects JS/Python/Docker/K8s signals and recommends a profile
+# or force a profile:
+# ai quickstart --profile devops --yes
 
 # 4. Launch your AI tool with a profile
-ai cursor                      # Default profile
+ai cursor                      # Default/recommended profile
 ai cursor --profile devops     # DevOps profile (K8s, Docker, Git)
 ai claude --profile researcher # Research profile (web search, memory)
 ```
