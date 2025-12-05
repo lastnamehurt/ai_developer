@@ -13,7 +13,7 @@ NC='\033[0m' # No Color
 INSTALL_DIR="$HOME/.local/aidev"
 BIN_DIR="$INSTALL_DIR/bin"
 # Remote source for installs when not running inside the repo
-REPO_URL="${AIDEV_REPO_URL:-https://github.com/yourusername/aidev.git}"
+REPO_URL="${AIDEV_REPO_URL:-https://github.com/lastnamehurt/aidev.git}"
 PACKAGE_SOURCE="${AIDEV_INSTALL_SOURCE:-aidev}"
 
 echo -e "${CYAN}========================================${NC}"

@@ -23,11 +23,11 @@ Managing AI development tools (Cursor, Claude Code, Zed) across different projec
 
 ```bash
 # Install without cloning (recommended)
-curl -fsSL https://raw.githubusercontent.com/yourusername/aidev/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/lastnamehurt/aidev/main/install.sh | bash
 
 # Or install from a local clone
-git clone https://github.com/yourusername/ai_developer.git
-cd ai_developer
+git clone https://github.com/lastnamehurt/aidev.git
+cd aidev
 
 # Run installation script
 ./install.sh

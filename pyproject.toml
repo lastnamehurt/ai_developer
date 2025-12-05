@@ -46,9 +46,9 @@ aidev = "aidev.cli:main"
 ai = "aidev.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/yourusername/aidev"
-Repository = "https://github.com/yourusername/aidev"
-Issues = "https://github.com/yourusername/aidev/issues"
+Homepage = "https://github.com/lastnamehurt/aidev"
+Repository = "https://github.com/lastnamehurt/aidev"
+Issues = "https://github.com/lastnamehurt/aidev/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]

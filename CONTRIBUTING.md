@@ -6,7 +6,7 @@ Thank you for your interest in contributing to aidev! This guide will help you g
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/aidev.git
+git clone https://github.com/lastnamehurt/aidev.git
 cd aidev
 ```
 
