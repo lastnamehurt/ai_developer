@@ -12,6 +12,9 @@ NC='\033[0m' # No Color
 # Installation directory
 INSTALL_DIR="$HOME/.local/aidev"
 BIN_DIR="$INSTALL_DIR/bin"
+# Remote source for installs when not running inside the repo
+REPO_URL="${AIDEV_REPO_URL:-https://github.com/yourusername/aidev.git}"
+PACKAGE_SOURCE="${AIDEV_INSTALL_SOURCE:-aidev}"
 
 echo -e "${CYAN}========================================${NC}"
 echo -e "${CYAN}  aidev Installation${NC}"
@@ -65,9 +68,18 @@ if [ -f "$SCRIPT_DIR/pyproject.toml" ]; then
     pip install --quiet -e "$SCRIPT_DIR"
     echo -e "${GREEN}✓${NC} Installed aidev from source (development mode)"
 else
-    # Production installation from PyPI (future)
-    pip install --quiet aidev
-    echo -e "${GREEN}✓${NC} Installed aidev from PyPI"
+    # Install from PyPI or fallback to git without requiring a local clone
+    if pip install --quiet "$PACKAGE_SOURCE"; then
+        echo -e "${GREEN}✓${NC} Installed aidev from package source: $PACKAGE_SOURCE"
+    else
+        echo -e "${YELLOW}!${NC} Primary install source failed, trying git repository..."
+        if pip install --quiet "git+$REPO_URL"; then
+            echo -e "${GREEN}✓${NC} Installed aidev from git: $REPO_URL"
+        else
+            echo -e "${RED}Error: Failed to install aidev from both $PACKAGE_SOURCE and $REPO_URL${NC}"
+            exit 1
+        fi
+    fi
 fi
 
 # Create bin directory and wrapper script
