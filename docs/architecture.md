@@ -31,8 +31,7 @@ $ ai claude
     │  3. Write config     │
     └──────────────────────┘
               │
-              │ Writes ~/.claude/mcp.json
-              │         ~/.config/claude/mcp.json
+              │ Writes ~/.claude.json (Claude global/local scope)
               │         ~/.codex/config.toml
               ▼
     ┌──────────────────────┐

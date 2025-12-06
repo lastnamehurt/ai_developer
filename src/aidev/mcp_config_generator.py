@@ -37,6 +37,8 @@ class MCPConfigGenerator:
             self._write_codex_config(config_path, enabled_servers, disabled_servers)
         elif tool_id == "gemini":
             self._write_gemini_config(config_path, enabled_servers, disabled_servers)
+        elif tool_id == "claude":
+            self._write_claude_config(config_path, enabled_servers, disabled_servers)
         else:
             self._write_standard_config(config_path, enabled_servers)
 
@@ -261,6 +263,38 @@ class MCPConfigGenerator:
                     normalized[key] = value
 
             mcp_table[name] = normalized
+
+        existing["mcpServers"] = mcp_table
+
+        with open(config_path, "w") as f:
+            json.dump(existing, f, indent=2)
+
+    def _write_claude_config(
+        self, config_path: Path, servers: dict[str, dict], disabled_servers: set[str]
+    ) -> None:
+        """
+        Write Claude Code config at the resolved path (global ~/.claude.json) with mcpServers merged.
+        """
+        ensure_dir(config_path.parent)
+
+        existing: dict = {}
+        if config_path.exists():
+            try:
+                existing = json.loads(config_path.read_text())
+            except Exception as exc:  # pragma: no cover - defensive
+                console.print(f"[yellow]Warning: Could not parse existing Claude config: {exc}[/yellow]")
+                existing = {}
+
+        # Get or create top-level mcpServers
+        mcp_table = existing.get("mcpServers", {})
+
+        # Remove disabled servers
+        for name in disabled_servers:
+            mcp_table.pop(name, None)
+
+        # Upsert enabled servers
+        for name, data in servers.items():
+            mcp_table[name] = data
 
         existing["mcpServers"] = mcp_table
 
