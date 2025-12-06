@@ -17,6 +17,7 @@ REPO_URL="${AIDEV_REPO_URL:-https://github.com/lastnamehurt/aidev.git}"
 PACKAGE_SOURCE="${AIDEV_INSTALL_SOURCE:-aidev}"
 # Preferred installer (pipx isolates deps, no venv activation needed)
 USE_PIPX="${AIDEV_USE_PIPX:-1}"
+PIPX_BIN_DIR="$HOME/.local/bin"
 
 echo -e "${CYAN}========================================${NC}"
 echo -e "${CYAN}  aidev Installation${NC}"
@@ -106,7 +107,23 @@ mkdir -p "$BIN_DIR"
 if [ "$USE_PIPX" = "1" ]; then
     echo
     echo -e "${CYAN}pipx handles launchers (ai/aidev on PATH if pipx bin is in PATH).${NC}"
-    echo -e "${YELLOW}!${NC} Ensure pipx bin dir is on PATH (typically \$HOME/.local/bin)"
+    echo -e "${YELLOW}!${NC} Ensuring pipx bin dir is in PATH (typically $PIPX_BIN_DIR)"
+    if [[ ":$PATH:" != *":$PIPX_BIN_DIR:"* ]]; then
+        # Prepend for current session
+        export PATH="$PIPX_BIN_DIR:$PATH"
+        # Optionally append to shell rc
+        if [ -n "$ZSH_VERSION" ]; then
+            SHELL_RC="$HOME/.zshrc"
+        elif [ -n "$BASH_VERSION" ]; then
+            SHELL_RC="$HOME/.zshrc"
+        fi
+        if [ -n "$SHELL_RC" ] && [ -f "$SHELL_RC" ]; then
+            if ! grep -q "$PIPX_BIN_DIR" "$SHELL_RC"; then
+                echo "export PATH=\"$PIPX_BIN_DIR:\$PATH\"" >> "$SHELL_RC"
+                echo -e "${GREEN}✓${NC} Added $PIPX_BIN_DIR to $SHELL_RC"
+            fi
+        fi
+    fi
 else
     echo
     echo -e "${CYAN}Creating launcher script...${NC}"
