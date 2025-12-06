@@ -162,12 +162,9 @@ class ConfigManager:
         return config_path
 
     def _init_project_tool_configs(self, project_dir: Path) -> None:
-        """
-        Create project-local .claude/.cursor folders with MCP configs or symlinks
-        back to the user's global MCP config if available.
-        """
+        """Create project-local tool config folders with MCP configs or symlinks back to global configs."""
         tool_dirs = [
-            ("claude", ".claude", ".mcp.json"),
+            ("claude", "", ""),  # Claude global config lives at ~/.claude.json; no project seed
             ("cursor", ".cursor", "mcp.json"),
         ]
 
@@ -177,7 +174,11 @@ class ConfigManager:
                 continue
 
             global_config_path = Path(os.path.expanduser(tool_def["config_path"]))
-            local_dir = project_dir / folder_name
+            # If no filename, skip creating project-local config (Claude uses global ~/.claude.json)
+            if not filename:
+                continue
+
+            local_dir = project_dir / folder_name if folder_name else project_dir
             ensure_dir(local_dir)
 
             local_config_path = local_dir / filename
