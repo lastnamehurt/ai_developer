@@ -59,3 +59,6 @@ def test_config_tui_smoke(tmp_path):
         # Attempt save (should not crash)
         app.action_save()
         pilot.pause()
+    # Ensure env change is reflected in profile data
+    assert app.current_profile is not None
+    assert app.current_profile.environment.get("TEST_KEY") == "123"
