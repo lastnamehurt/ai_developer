@@ -48,6 +48,7 @@ class MCPServerRegistry(BaseModel):
     install: dict[str, str]
     configuration: dict[str, list[str]] = Field(default_factory=dict)
     tags: list[str] = Field(default_factory=list)
+    compatible_profiles: list[str] = Field(default_factory=list)
 
 
 class ProjectConfig(BaseModel):

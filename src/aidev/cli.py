@@ -412,41 +412,74 @@ def mcp() -> None:
 
 @mcp.command(name="list")
 def mcp_list() -> None:
-    """List installed MCP servers"""
-    # TODO: Implement MCP listing
-    console.print("[bold]Installed MCP Servers:[/bold]")
+    """List installed MCP servers."""
+    installed = mcp_manager.list_installed()
+    if not installed:
+        console.print("[yellow]No MCP servers installed.[/yellow]")
+        return
+    table = Table(title="Installed MCP Servers")
+    table.add_column("Name", style="cyan")
+    for name in installed:
+        table.add_row(name)
+    console.print(table)
 
 
 @mcp.command(name="search")
-@click.argument("query")
-def mcp_search(query: str) -> None:
-    """Search MCP server registry"""
-    # TODO: Implement MCP search
-    console.print(f"Searching for: {query}")
+@click.argument("query", required=False, default="")
+@click.option("--refresh", is_flag=True, help="Refresh registry cache")
+def mcp_search(query: str, refresh: bool) -> None:
+    """Search MCP server registry."""
+    registry = mcp_manager.fetch_registry(force=refresh)
+    if query:
+        registry = [r for r in registry if query.lower() in r.name.lower() or query.lower() in r.description.lower()]
+    if not registry:
+        console.print("[yellow]No registry entries found.[/yellow]")
+        return
+
+    table = Table(title="Registry")
+    table.add_column("Name", style="cyan")
+    table.add_column("Description", style="white")
+    table.add_column("Version", style="green")
+    table.add_column("Tags", style="yellow")
+    for entry in registry:
+        tags = ", ".join(entry.tags) if entry.tags else "-"
+        table.add_row(entry.name, entry.description, entry.version, tags)
+    console.print(table)
 
 
 @mcp.command(name="install")
 @click.argument("name")
-def mcp_install(name: str) -> None:
-    """Install an MCP server"""
-    # TODO: Implement MCP installation
-    console.print(f"[cyan]Installing MCP server: {name}[/cyan]")
+@click.option("--profile", help="Profile to enable this server in")
+def mcp_install(name: str, profile: str) -> None:
+    """Install an MCP server and optionally enable it in a profile."""
+    ok = mcp_manager.install_server(name)
+    if not ok:
+        return
+    target_profile = profile or _resolve_active_profile()
+    loaded_profile = profile_manager.load_profile(target_profile)
+    if loaded_profile:
+        if name not in [s.name for s in loaded_profile.mcp_servers]:
+            loaded_profile.mcp_servers.append(MCPServerConfig(name=name, enabled=True))
+            profile_manager.save_profile(loaded_profile, custom=True)
+            console.print(f"[green]✓[/green] Enabled '{name}' in profile '{target_profile}'")
 
 
 @mcp.command(name="remove")
 @click.argument("name")
 def mcp_remove(name: str) -> None:
-    """Remove an MCP server"""
-    # TODO: Implement MCP removal
-    console.print(f"[yellow]Removing MCP server: {name}[/yellow]")
+    """Remove an MCP server."""
+    if mcp_manager.remove_server(name):
+        console.print(f"[yellow]Removed MCP server: {name}[/yellow]")
 
 
 @mcp.command(name="test")
 @click.argument("name")
 def mcp_test(name: str) -> None:
-    """Test MCP server connectivity"""
-    # TODO: Implement MCP testing
-    console.print(f"Testing MCP server: {name}")
+    """Test MCP server connectivity."""
+    if mcp_manager.test_server(name):
+        console.print(f"[green]✓[/green] {name} responded")
+    else:
+        console.print(f"[red]✗[/red] {name} failed connectivity")
 
 
 # ============================================================================
