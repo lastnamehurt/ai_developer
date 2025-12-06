@@ -138,6 +138,64 @@ class ProfileManager:
         self.save_profile(profile)
         return profile
 
+    def clone_profile(
+        self,
+        source_name: str,
+        target_name: str,
+        description: Optional[str] = None,
+        mcp_servers: Optional[list[str]] = None,
+    ) -> Optional[Profile]:
+        """
+        Clone an existing profile
+
+        Args:
+            source_name: Source profile name
+            target_name: Target profile name
+            description: Optional custom description
+            mcp_servers: Optional list of MCP server names to override
+
+        Returns:
+            Cloned profile or None if source not found
+        """
+        # Check if target already exists
+        if self.get_profile_path(target_name):
+            console.print(f"[red]Profile '{target_name}' already exists[/red]")
+            return None
+
+        # Load source profile (fully resolved with inheritance)
+        source = self.load_profile(source_name)
+        if not source:
+            return None
+
+        # Create cloned profile data
+        cloned_data = source.model_dump()
+        cloned_data["name"] = target_name
+        cloned_data["extends"] = None  # Don't inherit, flatten it
+
+        # Override description if provided
+        if description:
+            cloned_data["description"] = description
+        else:
+            cloned_data["description"] = f"Cloned from {source_name}"
+
+        # Override MCP servers if provided
+        if mcp_servers:
+            cloned_data["mcp_servers"] = [
+                MCPServerConfig(name=name, enabled=True) for name in mcp_servers
+            ]
+
+        # Create and save cloned profile
+        try:
+            cloned_profile = Profile(**cloned_data)
+            self.save_profile(cloned_profile, custom=True)
+            console.print(
+                f"[green]✓[/green] Created profile '[cyan]{target_name}[/cyan]' from '[cyan]{source_name}[/cyan]'"
+            )
+            return cloned_profile
+        except Exception as e:
+            console.print(f"[red]Error cloning profile: {e}[/red]")
+            return None
+
     def delete_profile(self, name: str) -> bool:
         """
         Delete a custom profile
@@ -199,6 +257,72 @@ class ProfileManager:
         except Exception as e:
             console.print(f"[red]Error importing profile: {e}[/red]")
             return None
+
+    def diff_profiles(self, profile1_name: str, profile2_name: str) -> Optional[dict]:
+        """
+        Compare two profiles and show differences
+
+        Args:
+            profile1_name: First profile name
+            profile2_name: Second profile name
+
+        Returns:
+            Dictionary containing differences or None if profiles not found
+        """
+        # Load both profiles (fully resolved)
+        profile1 = self.load_profile(profile1_name)
+        profile2 = self.load_profile(profile2_name)
+
+        if not profile1 or not profile2:
+            return None
+
+        # Compare MCP servers
+        servers1 = {s.name for s in profile1.mcp_servers}
+        servers2 = {s.name for s in profile2.mcp_servers}
+
+        mcp_diff = {
+            "added": sorted(servers2 - servers1),  # In profile2 only
+            "removed": sorted(servers1 - servers2),  # In profile1 only
+            "common": sorted(servers1 & servers2),  # In both
+        }
+
+        # Compare environment variables
+        env1 = set(profile1.environment.keys())
+        env2 = set(profile2.environment.keys())
+
+        # Check for changed values
+        changed_env = {}
+        for key in env1 & env2:
+            if profile1.environment[key] != profile2.environment[key]:
+                changed_env[key] = {
+                    "from": profile1.environment[key],
+                    "to": profile2.environment[key],
+                }
+
+        env_diff = {
+            "added": sorted(env2 - env1),
+            "removed": sorted(env1 - env2),
+            "common": sorted(env1 & env2),
+            "changed": changed_env,
+        }
+
+        # Compare tags
+        tags1 = set(profile1.tags)
+        tags2 = set(profile2.tags)
+
+        tags_diff = {
+            "added": sorted(tags2 - tags1),
+            "removed": sorted(tags1 - tags2),
+            "common": sorted(tags1 & tags2),
+        }
+
+        return {
+            "profile1": profile1_name,
+            "profile2": profile2_name,
+            "mcp_servers": mcp_diff,
+            "environment": env_diff,
+            "tags": tags_diff,
+        }
 
     def _merge_profiles(self, base: Profile, override: Profile) -> Profile:
         """

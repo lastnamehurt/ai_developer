@@ -465,6 +465,138 @@ def profile_create(name: str, extends: str) -> None:
     console.print(f"[green]✓[/green] Created profile: {name}")
 
 
+@profile.command(name="clone")
+@click.argument("source")
+@click.argument("target")
+@click.option("--description", "-d", help="Custom description for cloned profile")
+@click.option(
+    "--mcp-servers",
+    "-m",
+    help="Comma-separated list of MCP servers to use (overrides source)",
+)
+def profile_clone(source: str, target: str, description: str, mcp_servers: str) -> None:
+    """Clone an existing profile
+
+    \b
+    Examples:
+      # Clone web profile to my-web
+      ai profile clone web my-web
+
+      # Clone with custom description
+      ai profile clone web my-web -d "My custom web profile"
+
+      # Clone with specific MCP servers
+      ai profile clone infra k8s-only -m kubernetes,docker,git
+    """
+    # Parse MCP servers if provided
+    mcp_list = None
+    if mcp_servers:
+        mcp_list = [s.strip() for s in mcp_servers.split(",")]
+
+    # Clone the profile
+    cloned = profile_manager.clone_profile(
+        source_name=source,
+        target_name=target,
+        description=description,
+        mcp_servers=mcp_list,
+    )
+
+    if cloned:
+        # Show what was cloned
+        console.print(f"\n[bold]Cloned Profile:[/bold] [cyan]{target}[/cyan]")
+        console.print(f"[dim]Description:[/dim] {cloned.description}")
+        console.print(f"[dim]MCP Servers:[/dim] {len(cloned.mcp_servers)} configured")
+
+        # Suggest next steps
+        console.print(f"\n[bold]Next steps:[/bold]")
+        console.print(f"  • Edit: [cyan]ai config[/cyan] (then select '{target}')")
+        console.print(f"  • Use:  [cyan]ai use {target}[/cyan]")
+
+
+@profile.command(name="diff")
+@click.argument("profile1")
+@click.argument("profile2")
+@click.option("--json", "json_output", is_flag=True, help="Output as JSON")
+def profile_diff(profile1: str, profile2: str, json_output: bool) -> None:
+    """Compare two profiles and show differences
+
+    \b
+    Examples:
+      # Compare web and infra profiles
+      ai profile diff web infra
+
+      # Output as JSON for scripting
+      ai profile diff web infra --json
+    """
+    import json as json_module
+    from rich.panel import Panel
+
+    # Get differences
+    diff = profile_manager.diff_profiles(profile1, profile2)
+    if not diff:
+        return
+
+    # JSON output
+    if json_output:
+        console.print(json_module.dumps(diff, indent=2))
+        return
+
+    # Human-readable output
+    console.print(f"\n[bold]Comparing:[/bold] [cyan]{profile1}[/cyan] → [cyan]{profile2}[/cyan]\n")
+
+    # MCP Servers diff
+    console.print("[bold]MCP Servers:[/bold]")
+    mcp = diff["mcp_servers"]
+    if mcp["added"]:
+        for server in mcp["added"]:
+            console.print(f"  [green]+[/green] {server} (added in {profile2})")
+    if mcp["removed"]:
+        for server in mcp["removed"]:
+            console.print(f"  [red]-[/red] {server} (only in {profile1})")
+    if mcp["common"]:
+        for server in mcp["common"]:
+            console.print(f"  [dim]=[/dim] {server} (common)")
+    if not mcp["added"] and not mcp["removed"] and not mcp["common"]:
+        console.print("  [dim](no MCP servers configured)[/dim]")
+
+    # Environment variables diff
+    console.print(f"\n[bold]Environment Variables:[/bold]")
+    env = diff["environment"]
+    if env["added"]:
+        for var in env["added"]:
+            console.print(f"  [green]+[/green] {var} (added in {profile2})")
+    if env["removed"]:
+        for var in env["removed"]:
+            console.print(f"  [red]-[/red] {var} (only in {profile1})")
+    if env["changed"]:
+        for var, values in env["changed"].items():
+            console.print(
+                f"  [yellow]±[/yellow] {var}: [dim]{values['from']}[/dim] → {values['to']}"
+            )
+    if env["common"] and not env["changed"]:
+        for var in env["common"]:
+            console.print(f"  [dim]=[/dim] {var} (common, same value)")
+    if not env["added"] and not env["removed"] and not env["changed"] and not env["common"]:
+        console.print("  [dim](no environment variables)[/dim]")
+
+    # Tags diff
+    console.print(f"\n[bold]Tags:[/bold]")
+    tags = diff["tags"]
+    if tags["added"]:
+        for tag in tags["added"]:
+            console.print(f"  [green]+[/green] {tag}")
+    if tags["removed"]:
+        for tag in tags["removed"]:
+            console.print(f"  [red]-[/red] {tag}")
+    if tags["common"]:
+        for tag in tags["common"]:
+            console.print(f"  [dim]=[/dim] {tag}")
+    if not tags["added"] and not tags["removed"] and not tags["common"]:
+        console.print("  [dim](no tags)[/dim]")
+
+    console.print()
+
+
 @profile.command(name="edit")
 @click.argument("name")
 def profile_edit(name: str) -> None:
