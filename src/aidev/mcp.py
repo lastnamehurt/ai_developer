@@ -243,10 +243,36 @@ class MCPManager:
 
         console.print(f"[cyan]Testing {name}...[/cyan]")
 
-        # TODO: Implement actual MCP server connectivity test
-        # This would involve trying to communicate with the server
+        # Connectivity heuristic: check command/url availability
+        command = config.get("command")
+        url = config.get("url") or config.get("httpUrl") or config.get("http_url")
+        args = config.get("args", [])
 
-        console.print(f"[green]✓[/green] {name} is accessible")
+        if command:
+            # Try to run a harmless command (e.g., --help) without failing hard
+            probe_args = [command] + (args if args else ["--help"])
+            code, out, err = run_command(probe_args, capture=True)
+            if code != 0:
+                console.print(f"[red]✗[/red] Command failed ({command}): {err or out}")
+                console.print("[yellow]Hint:[/yellow] Ensure the binary is installed and on PATH.")
+                return False
+            console.print(f"[green]✓[/green] Command found and runnable: {command}")
+        elif url:
+            try:
+                resp = requests.get(url, timeout=5)
+                if resp.status_code >= 400:
+                    console.print(f"[red]✗[/red] HTTP {resp.status_code} from {url}")
+                    console.print("[yellow]Hint:[/yellow] Check network/VPN and server URL.")
+                    return False
+                console.print(f"[green]✓[/green] HTTP reachable: {url}")
+            except Exception as exc:  # pragma: no cover - network dependent
+                console.print(f"[red]✗[/red] Request failed: {exc}")
+                console.print("[yellow]Hint:[/yellow] Verify URL and network access.")
+                return False
+        else:
+            console.print(f"[yellow]No command or URL to test for '{name}'.[/yellow]")
+            return False
+
         return True
 
     def init_builtin_servers(self) -> None:
