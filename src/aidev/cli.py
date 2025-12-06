@@ -925,6 +925,19 @@ def mcp_search(query: str, refresh: bool) -> None:
     console.print(table)
 
 
+@mcp.command(name="browse")
+@click.option("--refresh", is_flag=True, help="Refresh registry cache before launching")
+def mcp_browse(refresh: bool) -> None:
+    """Launch a TUI to browse and install MCP servers."""
+    try:
+        from aidev.tui_mcp_browser import MCPBrowserApp
+    except Exception as exc:  # pragma: no cover - defensive
+        console.print(f"[red]Failed to launch MCP browser: {exc}[/red]")
+        return
+    app = MCPBrowserApp(mcp_manager=mcp_manager, refresh_on_start=refresh)
+    app.run()
+
+
 @mcp.command(name="install")
 @click.argument("name")
 @click.option("--profile", help="Profile to enable this server in")

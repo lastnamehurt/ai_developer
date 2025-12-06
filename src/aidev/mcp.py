@@ -156,15 +156,17 @@ class MCPManager:
             or any(query_lower in tag.lower() for tag in server.tags)
         ]
 
-    def install_server(self, name: str) -> bool:
+    def install_server(self, name: str, *, return_output: bool = False):
         """
         Install an MCP server from registry
 
         Args:
             name: Server name
+            return_output: When True, return (ok, stdout, stderr) instead of just bool
 
         Returns:
-            True if installed successfully, False otherwise
+            True if installed successfully, False otherwise. When return_output=True,
+            returns tuple (ok, stdout, stderr).
         """
         # Search registry for server
         registry = self.fetch_registry()
@@ -184,15 +186,35 @@ class MCPManager:
 
         if not install_cmd:
             console.print("[red]No installation command provided[/red]")
-            return False
+            return (False, "", "No installation command provided") if return_output else False
 
         # Parse and run command
         cmd_parts = install_cmd.split()
         return_code, stdout, stderr = run_command(cmd_parts)
 
         if return_code != 0:
-            console.print(f"[red]Installation failed: {stderr}[/red]")
-            return False
+            # Attempt a cargo --git fallback if crate is missing from registry
+            fallback_tried = False
+            fallback_stdout = ""
+            fallback_stderr = ""
+            if (
+                install_type == "binary"
+                and install_cmd.startswith("cargo install ")
+                and server.repository
+                and "could not find" in stderr.lower()
+            ):
+                fallback_tried = True
+                console.print("[yellow]Primary install failed; trying cargo --git fallback...[/yellow]")
+                fallback_cmd = ["cargo", "install", "--git", server.repository]
+                return_code, fallback_stdout, fallback_stderr = run_command(fallback_cmd)
+
+            if return_code != 0:
+                combined_err = fallback_stderr or stderr
+                console.print(f"[red]Installation failed: {combined_err}[/red]")
+                if return_output:
+                    combined_out = f"{stdout}\n{fallback_stdout}".strip()
+                    return False, combined_out, combined_err
+                return False
 
         # Save server configuration
         config = {
@@ -205,7 +227,7 @@ class MCPManager:
         self.save_server_config(server.name, config)
 
         console.print(f"[green]✓[/green] Installed {server.name}")
-        return True
+        return (True, stdout, stderr) if return_output else True
 
     def remove_server(self, name: str, profile_manager=None) -> bool:
         """
