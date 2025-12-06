@@ -465,6 +465,54 @@ def profile_create(name: str, extends: str) -> None:
     console.print(f"[green]✓[/green] Created profile: {name}")
 
 
+@profile.command(name="clone")
+@click.argument("source")
+@click.argument("target")
+@click.option("--description", "-d", help="Custom description for cloned profile")
+@click.option(
+    "--mcp-servers",
+    "-m",
+    help="Comma-separated list of MCP servers to use (overrides source)",
+)
+def profile_clone(source: str, target: str, description: str, mcp_servers: str) -> None:
+    """Clone an existing profile
+
+    \b
+    Examples:
+      # Clone web profile to my-web
+      ai profile clone web my-web
+
+      # Clone with custom description
+      ai profile clone web my-web -d "My custom web profile"
+
+      # Clone with specific MCP servers
+      ai profile clone infra k8s-only -m kubernetes,docker,git
+    """
+    # Parse MCP servers if provided
+    mcp_list = None
+    if mcp_servers:
+        mcp_list = [s.strip() for s in mcp_servers.split(",")]
+
+    # Clone the profile
+    cloned = profile_manager.clone_profile(
+        source_name=source,
+        target_name=target,
+        description=description,
+        mcp_servers=mcp_list,
+    )
+
+    if cloned:
+        # Show what was cloned
+        console.print(f"\n[bold]Cloned Profile:[/bold] [cyan]{target}[/cyan]")
+        console.print(f"[dim]Description:[/dim] {cloned.description}")
+        console.print(f"[dim]MCP Servers:[/dim] {len(cloned.mcp_servers)} configured")
+
+        # Suggest next steps
+        console.print(f"\n[bold]Next steps:[/bold]")
+        console.print(f"  • Edit: [cyan]ai config[/cyan] (then select '{target}')")
+        console.print(f"  • Use:  [cyan]ai use {target}[/cyan]")
+
+
 @profile.command(name="edit")
 @click.argument("name")
 def profile_edit(name: str) -> None:
