@@ -54,6 +54,8 @@ def test_profile_switch_and_status(tmp_path, monkeypatch):
     assert res_status.exit_code == 0
     assert "Active profile" in res_status.output
     assert "qa" in res_status.output
+    # Ensure status lists MCP servers from the profile
+    assert "filesystem" in res_status.output
 
 
 def test_mcp_config_generation(tmp_path):
@@ -74,3 +76,6 @@ def test_mcp_config_generation(tmp_path):
     config_path = tmp_path / "cursor-mcp.json"
     generator.generate_config("cursor", profile, config_path)
     assert config_path.exists()
+    # Validate JSON structure contains mcpServers
+    content = config_path.read_text()
+    assert "mcpServers" in content
