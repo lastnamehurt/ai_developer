@@ -1,7 +1,0 @@
-{
-  "name": "memory",
-  "description": "Official MCP memory server for context preservation",
-  "type": "stdio",
-  "command": "npx",
-  "args": ["-y", "@modelcontextprotocol/server-memory"]
-}

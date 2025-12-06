@@ -1,7 +1,0 @@
-{
-  "name": "duckduckgo",
-  "description": "DuckDuckGo web search",
-  "type": "stdio",
-  "command": "uvx",
-  "args": ["duckduckgo-mcp-server"]
-}
