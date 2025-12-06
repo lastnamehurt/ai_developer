@@ -1,0 +1,10 @@
+{
+  "name": "k8s",
+  "description": "Kubernetes cluster management",
+  "type": "stdio",
+  "command": "k8s-mcp-server",
+  "args": ["--mode", "stdio"],
+  "env": {
+    "KUBECONFIG": "${KUBECONFIG:-${HOME}/.kube/config}"
+  }
+}

@@ -4,6 +4,11 @@ Constants and default values for aidev
 import json
 from pathlib import Path
 from typing import Final
+try:
+    import importlib.resources as pkg_resources
+except ImportError:
+    # Try backported to PY<37 `importlib_resources`.
+    import importlib_resources as pkg_resources
 
 # Version
 VERSION: Final[str] = "0.1.0"
@@ -22,8 +27,11 @@ CACHE_DIR: Final[Path] = AIDEV_DIR / "cache"
 LOGS_DIR: Final[Path] = AIDEV_DIR / "logs"
 
 # Bundled data
-CONFIGS_DIR: Final[Path] = Path(__file__).parent.parent.parent / "configs"
-ENGINEERING_WORKFLOW_TEMPLATE: Final[Path] = CONFIGS_DIR / "engineering-workflow.md"
+with pkg_resources.path('aidev', 'configs') as p:
+    CONFIGS_DIR: Final[Path] = p
+with pkg_resources.path('aidev.configs', 'engineering-workflow.md') as p:
+    ENGINEERING_WORKFLOW_TEMPLATE: Final[Path] = p
+
 
 # Files
 ENV_FILE: Final[Path] = AIDEV_DIR / ".env"
@@ -45,11 +53,9 @@ BUILTIN_PROFILES: Final[list[str]] = [
 
 def _load_supported_tools() -> dict[str, dict[str, str]]:
     """Load supported tool definitions from bundled JSON."""
-    config_file = CONFIGS_DIR / "supported-tools.json"
-    if not config_file.exists():
-        raise FileNotFoundError(f"Supported tools config missing: {config_file}")
     try:
-        return json.loads(config_file.read_text())
+        with pkg_resources.open_text('aidev.configs', 'supported-tools.json') as f:
+            return json.load(f)
     except Exception as exc:
         raise RuntimeError(f"Failed to load supported tools config: {exc}") from exc
 

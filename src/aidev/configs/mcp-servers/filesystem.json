@@ -1,0 +1,7 @@
+{
+  "name": "filesystem",
+  "description": "File system access and manipulation",
+  "type": "stdio",
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-filesystem"]
+}

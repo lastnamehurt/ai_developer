@@ -1,0 +1,7 @@
+{
+  "name": "serena",
+  "description": "Serena AI assistant tools",
+  "type": "stdio",
+  "command": "npx",
+  "args": ["-y", "@oraios/serena"]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "postgres",
+  "description": "PostgreSQL database access",
+  "type": "stdio",
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-postgres"],
+  "env": {
+    "POSTGRES_URL": "${POSTGRES_URL}"
+  }
+}
