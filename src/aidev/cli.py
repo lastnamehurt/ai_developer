@@ -52,7 +52,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "Utilities",
-            "commands": ["config", "doctor", "backup", "restore", "config-share"],
+            "commands": ["config", "doctor", "completion", "backup", "restore", "config-share"],
         },
     ]
 }
@@ -234,6 +234,111 @@ def doctor() -> None:
         console.print("\n[bold green]All checks passed![/bold green]")
     else:
         console.print("\n[bold yellow]Fix the above items and re-run ai doctor.[/bold yellow]")
+
+
+@cli.command()
+@click.argument("shell", type=click.Choice(["bash", "zsh", "fish"], case_sensitive=False))
+def completion(shell: str) -> None:
+    """Generate shell completion script
+
+    \b
+    Examples:
+      # Bash
+      ai completion bash >> ~/.bashrc
+      # Or for current session:
+      eval "$(ai completion bash)"
+
+      # Zsh
+      ai completion zsh >> ~/.zshrc
+      # Or for current session:
+      eval "$(ai completion zsh)"
+
+      # Fish
+      ai completion fish > ~/.config/fish/completions/ai.fish
+    """
+    import subprocess
+    import sys
+
+    shell_lower = shell.lower()
+
+    if shell_lower == "bash":
+        script = '''
+_ai_completion() {
+    local IFS=$'\\n'
+    local response
+
+    response=$(env COMP_WORDS="${COMP_WORDS[*]}" COMP_CWORD=$COMP_CWORD _AI_COMPLETE=bash_complete $1)
+
+    for completion in $response; do
+        IFS=',' read type value <<< "$completion"
+
+        if [[ $type == 'dir' ]]; then
+            COMPREPLY=()
+            compopt -o dirnames
+        elif [[ $type == 'file' ]]; then
+            COMPREPLY=()
+            compopt -o default
+        elif [[ $type == 'plain' ]]; then
+            COMPREPLY+=($value)
+        fi
+    done
+
+    return 0
+}
+
+complete -o nosort -F _ai_completion ai
+complete -o nosort -F _ai_completion aidev
+'''
+        print(script)
+
+    elif shell_lower == "zsh":
+        script = '''
+#compdef ai aidev
+
+_ai_completion() {
+    local -a completions
+    local -a completions_with_descriptions
+    local -a response
+    (( ! $+commands[ai] )) && return 1
+
+    response=("${(@f)$(env COMP_WORDS="${words[*]}" COMP_CWORD=$((CURRENT-1)) _AI_COMPLETE=zsh_complete ai)}")
+
+    for type_value in $response; do
+        completions+=("${type_value#*,}")
+    done
+
+    if [ -n "$completions" ]; then
+        compadd -U -V unsorted -a completions
+    fi
+}
+
+compdef _ai_completion ai
+compdef _ai_completion aidev
+'''
+        print(script)
+
+    elif shell_lower == "fish":
+        script = '''
+function _ai_completion
+    set -l response (env _AI_COMPLETE=fish_complete COMP_WORDS=(commandline -cp) COMP_CWORD=(commandline -t) ai)
+
+    for completion in $response
+        set -l metadata (string split "," -- $completion)
+
+        if test $metadata[1] = "dir"
+            __fish_complete_directories $metadata[2]
+        else if test $metadata[1] = "file"
+            __fish_complete_path $metadata[2]
+        else if test $metadata[1] = "plain"
+            echo $metadata[2]
+        end
+    end
+end
+
+complete --no-files --command ai --arguments "(_ai_completion)"
+complete --no-files --command aidev --arguments "(_ai_completion)"
+'''
+        print(script)
 
 
 # ============================================================================
