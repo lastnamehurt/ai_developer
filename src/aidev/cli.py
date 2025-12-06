@@ -420,11 +420,13 @@ def env() -> None:
 @click.argument("key")
 @click.argument("value")
 @click.option("--project", is_flag=True, help="Set for current project only")
-def env_set(key: str, value: str, project: bool) -> None:
+@click.option("--encrypt", is_flag=True, help="Encrypt the value before storing")
+def env_set(key: str, value: str, project: bool, encrypt: bool) -> None:
     """Set an environment variable (global by default, project with --project)."""
-    config_manager.set_env(key, value, project=project)
+    config_manager.set_env(key, value, project=project, encrypt=encrypt)
     scope = "project" if project else "global"
-    console.print(f"[green]✓[/green] Set {key} ({scope})")
+    suffix = " (encrypted)" if encrypt else ""
+    console.print(f"[green]✓[/green] Set {key} ({scope}){suffix}")
 
 
 @env.command(name="get")
@@ -451,16 +453,30 @@ def env_list(project: bool) -> None:
     table.add_column("Scope", style="yellow")
 
     # Load raw scopes for display
-    global_env = config_manager.get_env(project_dir=None)
+    from aidev.utils import load_env
+    from aidev.constants import ENV_FILE
+
+    global_env_raw = load_env(ENV_FILE)
     project_env_path = Path.cwd() / ".aidev" / ".env"
-    project_env = load_env(project_env_path) if project_env_path.exists() else {}
+    project_env_raw = load_env(project_env_path) if project_env_path.exists() else {}
 
     for key, value in sorted(env_vars.items()):
-        display_value = "***" if any(secret in key.upper() for secret in ["TOKEN", "KEY", "SECRET"]) else value
-        scope = "project" if key in project_env else "global"
+        raw_value = project_env_raw.get(key) if key in project_env_raw else global_env_raw.get(key, "")
+        is_encrypted = raw_value.startswith("ENC::")
+        display_value = "***" if is_encrypted or any(secret in key.upper() for secret in ["TOKEN", "KEY", "SECRET"]) else value
+        scope = "project" if key in project_env_raw else "global"
         table.add_row(key, display_value, scope)
 
     console.print(table)
+
+
+@env.command(name="unlock")
+def env_unlock() -> None:
+    """Ensure the encryption key exists and is ready for decrypting secrets."""
+    from aidev.secrets import unlock_env_key
+
+    key_path = unlock_env_key()
+    console.print(f"[green]✓[/green] Env key ready at {key_path}")
 
 
 @env.command(name="validate")

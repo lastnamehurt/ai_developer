@@ -22,6 +22,7 @@ from aidev.constants import (
     ENGINEERING_WORKFLOW_TEMPLATE,
 )
 from aidev.utils import ensure_dir, load_json, save_json, load_env, save_env
+from aidev.secrets import decrypt_value, encrypt_value
 
 # Minimal MCP config used when no global config exists
 DEFAULT_PROJECT_MCP_CONFIG = {
@@ -79,16 +80,24 @@ class ConfigManager:
         return self.aidev_dir.exists() and self.config_dir.exists()
 
     def get_env(self, project_dir: Optional[Path] = None) -> dict[str, str]:
-        """Get merged environment variables (global, overridden by project)."""
+        """Get merged environment variables (global, overridden by project), decrypting secrets."""
         global_env = load_env(self.env_file)
         if project_dir is None:
             project_dir = Path.cwd()
         project_env_path = project_dir / ".aidev" / ".env"
         project_env = load_env(project_env_path) if project_env_path.exists() else {}
         merged = {**global_env, **project_env}
-        return merged
 
-    def set_env(self, key: str, value: str, project: bool = False, project_dir: Optional[Path] = None) -> None:
+        # Decrypt any encrypted values
+        decrypted: dict[str, str] = {}
+        for key, value in merged.items():
+            _, plaintext = decrypt_value(value)
+            decrypted[key] = plaintext
+        return decrypted
+
+    def set_env(
+        self, key: str, value: str, project: bool = False, project_dir: Optional[Path] = None, encrypt: bool = False
+    ) -> None:
         """Set an environment variable (global by default, project if requested)."""
         if project:
             if project_dir is None:
@@ -97,7 +106,7 @@ class ConfigManager:
         else:
             env_path = self.env_file
         env_vars = load_env(env_path)
-        env_vars[key] = value
+        env_vars[key] = encrypt_value(value) if encrypt else value
         save_env(env_path, env_vars)
 
     def get_tools_config(self) -> dict:
