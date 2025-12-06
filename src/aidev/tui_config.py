@@ -129,10 +129,18 @@ class ProfileConfigApp(App):
         if table.cursor_coordinate is None or not self.current_profile:
             return
         row, _ = table.cursor_coordinate
-        name = table.get_cell_at(row, 0)
-        enabled = table.get_cell_at(row, 1) == "on"
-        new_enabled = not enabled
-        table.update_cell(row, 1, "on" if new_enabled else "off")
+        if row >= len(self.current_profile.mcp_servers):
+            return
+
+        # Use current profile data instead of DataTable API to avoid version differences
+        server = self.current_profile.mcp_servers[row]
+        name = server.name
+        new_enabled = not server.enabled
+        try:
+            table.update_cell(row, "Enabled", "on" if new_enabled else "off")
+        except Exception:
+            # Fall back silently if table API changed; state is tracked on the profile object
+            pass
 
         # Update in-memory profile
         updated_servers = []

@@ -86,7 +86,7 @@ def test_install_and_remove_updates_profiles(tmp_path, monkeypatch):
     # Remove
     custom_path = mcp_manager.custom_mcp_dir / "sample.json"
     assert custom_path.exists()
-    mcp_manager.remove_server("sample")
+    mcp_manager.remove_server("sample", profile_manager=profile_manager)
     assert not custom_path.exists()
     updated = profile_manager.load_profile("default")
     assert all(s.name != "sample" for s in updated.mcp_servers)

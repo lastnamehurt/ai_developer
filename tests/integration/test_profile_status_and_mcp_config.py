@@ -45,8 +45,11 @@ def test_profile_switch_and_status(tmp_path, monkeypatch):
     project_dir.mkdir()
     cm.init_project(project_dir=project_dir, profile="web")
 
+    # Run CLI commands from inside the project directory so Path.cwd() resolves correctly
+    monkeypatch.chdir(project_dir)
+
     runner = CliRunner()
-    res_use = runner.invoke(use, ["qa"], env={"PWD": str(project_dir)})
+    res_use = runner.invoke(use, ["qa"])
     assert res_use.exit_code == 0
     assert (project_dir / ".aidev" / "profile").read_text().strip() == "qa"
 
