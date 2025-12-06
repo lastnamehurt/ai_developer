@@ -93,6 +93,7 @@ ai env set GITHUB_TOKEN ghp_xxx     # Set global variable
 ai env set ANTHROPIC_API_KEY sk-ant-xxx
 ai env list                          # List all (masks secrets)
 ai env get GITHUB_TOKEN              # Get specific variable
+ai env validate                      # Validate against active profile requirements
 ```
 
 ### 3. MCP Server Registry
@@ -122,6 +123,18 @@ ai tool <name>                  # Launch any registered tool
 ai status                       # Show active profile, MCP servers, env requirements
 ai use <profile>                # Switch project profile
 ```
+
+## Architecture Overview
+
+The aidev CLI is composed of modular managers:
+- `config.py`: directories, env, project initialization (global + project scope merge)
+- `profiles.py`: built-in/custom profiles, tagging, inheritance, persistence
+- `mcp.py`: MCP registry, install/remove/test with cache/fallback handling
+- `mcp_config_generator.py`: renders MCP config for tools (Cursor, Claude, Codex, Gemini, Zed)
+- `errors.py`: centralized preflight checks and actionable guidance
+- `tui_config.py`: Textual TUI for profile/env editing
+
+See `docs/architecture.md` for a diagram and data flow notes.
 
 ### 5. Backup & Restore
 
