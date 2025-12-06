@@ -72,6 +72,7 @@ ai mcp search <query>          # Search MCP registry (offline fallback supported
 ai mcp install <name>          # Install server and enable in active profile
 ai mcp remove <name>           # Remove server and detach from profiles
 ai mcp test <name>             # Connectivity check with hints
+ai doctor                      # Preflight env/binary checks with guidance
 ```
 
 **Built-in Profiles:**

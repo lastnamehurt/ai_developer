@@ -16,6 +16,7 @@ from aidev.mcp import MCPManager
 from aidev.mcp_config_generator import MCPConfigGenerator
 from aidev.quickstart import QuickstartRunner
 from aidev.utils import load_json, save_json
+from aidev.errors import preflight
 
 console = Console()
 config_manager = ConfigManager()
@@ -161,21 +162,16 @@ def doctor() -> None:
         console.print("[red]✗[/red] aidev is not initialized. Run: aidev setup")
         return
 
-    # Check directories
-    console.print("[green]✓[/green] Configuration directories exist")
+    console.print("[cyan]Running preflight checks...[/cyan]")
+    env_keys = ["AIDEV_DEFAULT_PROFILE"]
+    binaries = ["git"]
+    env_lookup = lambda key: config_manager.get_env().get(key)
+    all_ok = preflight(env_keys, binaries, env_lookup)
 
-    # Check environment
-    env = config_manager.get_env()
-    if env:
-        console.print(f"[green]✓[/green] Found {len(env)} environment variables")
+    if all_ok:
+        console.print("\n[bold green]All checks passed![/bold green]")
     else:
-        console.print("[yellow]![/yellow] No environment variables configured")
-
-    # TODO: Check for installed AI tools
-    # TODO: Check MCP server connectivity
-    # TODO: Check profiles
-
-    console.print("\n[bold green]All checks passed![/bold green]")
+        console.print("\n[bold yellow]Fix the above items and re-run ai doctor.[/bold yellow]")
 
 
 # ============================================================================
