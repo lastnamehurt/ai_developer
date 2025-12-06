@@ -3,6 +3,7 @@ Textual-based TUI for editing profiles: toggle MCP servers, edit env bindings, a
 """
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -43,6 +44,7 @@ class ProfileConfigApp(App):
         self.current_profile: Optional[Profile] = None
         self.project_dir = project_dir
         self.pending_warning: bool = False
+        self.env_default_profile: Optional[str] = os.getenv("AIDEV_DEFAULT_PROFILE")
 
     def compose(self) -> ComposeResult:
         """Build layout."""
@@ -76,7 +78,11 @@ class ProfileConfigApp(App):
         profiles = self.profile_manager.list_profiles()
         select.set_options([(name, name) for name in profiles])
         if profiles:
-            initial = self._active_project_profile() or profiles[0]
+            initial = (
+                self.env_default_profile
+                or self._active_project_profile()
+                or ("default" if "default" in profiles else profiles[0])
+            )
             await self.load_profile(initial)
 
     async def load_profile(self, name: str) -> None:
