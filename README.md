@@ -4,7 +4,7 @@ A universal, profile-based configuration manager for AI development tools that m
 
 ## Why aidev?
 
-Managing AI development tools (Cursor, Claude Code, Zed) across different projects and machines is painful:
+Managing AI development tools (Cursor, Claude Code, Codex, Gemini) across different projects and machines is painful:
 - 🔐 API keys and credentials scattered everywhere
 - 🔧 Different MCP server configurations per project
 - 💻 Tedious setup on new machines
@@ -116,7 +116,6 @@ Launch AI tools with automatic configuration injection:
 ai cursor                       # Launch Cursor
 ai cursor --profile infra      # Launch with infra profile
 ai claude                       # Launch Claude Code
-ai zed                          # Launch Zed
 ai gemini                       # Launch Gemini Code Assist
 ai codex                        # Launch Codex CLI
 ai tool <name>                  # Launch any registered tool
@@ -130,7 +129,7 @@ The aidev CLI is composed of modular managers:
 - `config.py`: directories, env, project initialization (global + project scope merge)
 - `profiles.py`: built-in/custom profiles, tagging, inheritance, persistence
 - `mcp.py`: MCP registry, install/remove/test with cache/fallback handling
-- `mcp_config_generator.py`: renders MCP config for tools (Cursor, Claude, Codex, Gemini, Zed)
+- `mcp_config_generator.py`: renders MCP config for tools (Cursor, Claude, Codex, Gemini)
 - `errors.py`: centralized preflight checks and actionable guidance
 - `tui_config.py`: Textual TUI for profile/env editing
 
@@ -225,7 +224,8 @@ aidev mcp test NAME                # Test connectivity
 ```bash
 aidev cursor [--profile NAME]      # Launch Cursor
 aidev claude [--profile NAME]      # Launch Claude Code
-aidev zed [--profile NAME]         # Launch Zed
+aidev codex [--profile NAME]       # Launch Codex CLI
+aidev gemini [--profile NAME]      # Launch Gemini Code Assist
 aidev tool NAME [--profile NAME]   # Launch any tool
 ```
 

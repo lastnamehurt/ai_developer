@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**aidev** is a universal, profile-based configuration manager for AI development tools (Cursor, Claude Code, Zed, Gemini, Codex). It centralizes MCP server configurations, environment variables, and tool launching across different projects and machines.
+**aidev** is a universal, profile-based configuration manager for AI development tools (Cursor, Claude Code, Gemini, Codex). It centralizes MCP server configurations, environment variables, and tool launching across different projects and machines.
 
 ## Development Commands
 
@@ -57,7 +57,7 @@ The codebase is organized around specialized manager classes:
 - **ConfigManager** (`config.py`): Directory initialization, env variable merging (global `~/.aidev/.env` + project `.aidev/.env`), project initialization
 - **ProfileManager** (`profiles.py`): Load/save profiles with inheritance (`extends` field), tag-based recommendation, built-in vs custom profiles
 - **MCPManager** (`mcp.py`): MCP registry fetching (with cache + offline fallback), server installation/removal, connectivity testing
-- **MCPConfigGenerator** (`mcp_config_generator.py`): Renders tool-specific MCP configs (Cursor, Claude, Codex, Gemini, Zed) from profile definitions
+- **MCPConfigGenerator** (`mcp_config_generator.py`): Renders tool-specific MCP configs (Cursor, Claude, Codex, Gemini) from profile definitions
 - **ToolManager** (`tools.py`): AI tool detection, config path resolution, tool launching with environment injection
 - **QuickstartRunner** (`quickstart.py`): Stack detection (JS/Python/Docker/K8s), profile recommendation based on tags
 

@@ -5,7 +5,7 @@
 - **Config Manager (`config.py`)**: Initializes directories, merges global + project env, handles project init and tool config scaffolding.
 - **Profiles (`profiles.py`)**: Built-in/custom profiles with tags and inheritance; save/load/merge utilities.
 - **MCP (`mcp.py`)**: Registry fetch (with cache + bundled fallback), install/remove, connectivity testing, server config storage.
-- **MCP Config Generator (`mcp_config_generator.py`)**: Emits MCP configs for tools (Cursor, Claude, Codex, Gemini, Zed) from profiles.
+- **MCP Config Generator (`mcp_config_generator.py`)**: Emits MCP configs for tools (Cursor, Claude, Codex, Gemini) from profiles.
 - **Errors/Preflight (`errors.py`)**: Centralized env/binary checks with actionable hints; used by `ai doctor`.
 - **TUI (`tui_config.py`)**: Textual-based profile/env editor, loads project/active defaults.
 

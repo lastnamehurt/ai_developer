@@ -57,7 +57,7 @@ Different launch methods for different tool types:
 if is_interactive_cli:
     os.execvp(tool_info.binary, cmd)  # Replace process, stay attached to terminal
 
-# GUI apps (Cursor, Zed)
+# GUI apps (Cursor)
 else:
     subprocess.Popen(cmd, start_new_session=True)  # Background launch
 ```
@@ -158,7 +158,6 @@ ai claude --profile researcher
 
 ### GUI Applications
 - **Cursor**: GUI editor
-- **Zed**: GUI editor
 - **Launch method**: `subprocess.Popen(..., start_new_session=True)`
 - **Directory**: Passed as argument (e.g., `cursor .`)
 

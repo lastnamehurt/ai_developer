@@ -37,7 +37,7 @@ def _launch_tool_with_profile(tool_id: str, profile: str, args: tuple) -> None:
     Launch a tool with the specified profile and MCP configuration
 
     Args:
-        tool_id: Tool identifier (cursor, claude, zed)
+        tool_id: Tool identifier (cursor, claude, codex, gemini)
         profile: Profile name to use (or None for default)
         args: Additional arguments to pass to the tool
     """
@@ -85,7 +85,7 @@ def cli() -> None:
     aidev - Universal AI development environment manager
 
     Manage AI tool configurations, profiles, and MCP servers across
-    Cursor, Claude Code, Zed, and other AI-powered development tools.
+    Cursor, Claude Code, Codex, Gemini, and other AI-powered development tools.
     """
     pass
 
@@ -349,14 +349,6 @@ def codex(profile: str, args: tuple) -> None:
 def gemini(profile: str, args: tuple) -> None:
     """Launch Gemini Code Assist with aidev configuration"""
     _launch_tool_with_profile("gemini", profile, args)
-
-
-@cli.command()
-@click.option("--profile", help="Profile to use")
-@click.argument("args", nargs=-1)
-def zed(profile: str, args: tuple) -> None:
-    """Launch Zed with aidev configuration"""
-    _launch_tool_with_profile("zed", profile, args)
 
 
 @cli.command()

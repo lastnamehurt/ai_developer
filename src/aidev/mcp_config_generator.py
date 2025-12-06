@@ -156,7 +156,7 @@ class MCPConfigGenerator:
         return servers, disabled
 
     def _write_standard_config(self, config_path: Path, servers: dict[str, dict]) -> None:
-        """Write legacy JSON configs used by Cursor/Claude/Zed/etc."""
+        """Write legacy JSON configs used by Cursor/Claude/etc."""
         ensure_dir(config_path.parent)
         config = {"mcpServers": servers}
         with open(config_path, "w") as f:

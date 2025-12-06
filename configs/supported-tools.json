@@ -26,12 +26,5 @@
     "app_name": "Gemini",
     "config_path": "~/.gemini/settings.json",
     "install_url": "https://ai.google.dev/gemini-api"
-  },
-  "zed": {
-    "name": "Zed",
-    "binary": "zed",
-    "app_name": "Zed",
-    "config_path": "~/.config/zed/mcp.json",
-    "install_url": "https://zed.dev"
   }
 }
