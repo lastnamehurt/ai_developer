@@ -15,12 +15,8 @@ from aidev.profiles import ProfileManager
 from aidev.mcp import MCPManager
 from aidev.mcp_config_generator import MCPConfigGenerator
 from aidev.quickstart import QuickstartRunner
-<<<<<<< HEAD
 from aidev.utils import load_json, save_json, load_env
 from aidev.errors import preflight
-=======
-from aidev.utils import load_json, save_json, load_env
->>>>>>> 4e1d3a5 (fix: import load_env for env list command)
 
 console = Console()
 config_manager = ConfigManager()
