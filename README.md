@@ -27,6 +27,22 @@ ai use qa           # Testing workflows
 ai claude           # Launch with active profile + MCP servers + env vars
 ai claude --profile infra
 ai cursor --profile web
+
+# Lightweight local code review (heuristics)
+ai review --staged     # Review staged files
+ai review --all        # Review all tracked files
+ai review app.py util.py
+
+# External reviewer options (e.g., Aider or Ollama)
+# Configure ~/.aidev/review.json for Ollama CodeLlama:
+# {
+#   "provider": "ollama",
+#   "ollama_model": "codellama",
+#   "ollama_prompt": "You are a staff-level code reviewer..."
+# }
+# Or for a custom external command:
+# { "provider": "external", "command": ["aider", "--model", "llama3"] }
+ai review --staged --provider ollama
 ```
 
 ## Quick Start
