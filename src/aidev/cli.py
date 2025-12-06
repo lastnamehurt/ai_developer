@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 from typing import Optional
 
-import click
+import rich_click as click
 from rich.console import Console
 from rich.table import Table
 from aidev import __version__
@@ -17,6 +17,44 @@ from aidev.mcp_config_generator import MCPConfigGenerator
 from aidev.quickstart import QuickstartRunner
 from aidev.utils import load_json, save_json, load_env
 from aidev.errors import preflight
+
+# Configure rich-click
+click.rich_click.USE_RICH_MARKUP = True
+click.rich_click.USE_MARKDOWN = False
+click.rich_click.SHOW_ARGUMENTS = True
+click.rich_click.GROUP_ARGUMENTS_OPTIONS = True
+click.rich_click.STYLE_ERRORS_SUGGESTION = "yellow italic"
+click.rich_click.ERRORS_SUGGESTION = "Try running the '--help' flag for more information."
+click.rich_click.ERRORS_EPILOGUE = ""
+click.rich_click.MAX_WIDTH = 100
+click.rich_click.COMMAND_GROUPS = {
+    "aidev.cli": [
+        {
+            "name": "Getting Started",
+            "commands": ["quickstart", "setup", "init"],
+        },
+        {
+            "name": "Profiles",
+            "commands": ["profile", "use", "status"],
+        },
+        {
+            "name": "MCP Servers",
+            "commands": ["mcp"],
+        },
+        {
+            "name": "Environment",
+            "commands": ["env"],
+        },
+        {
+            "name": "AI Tools",
+            "commands": ["cursor", "claude", "codex", "gemini", "zed", "tool"],
+        },
+        {
+            "name": "Utilities",
+            "commands": ["config", "doctor", "backup", "restore"],
+        },
+    ]
+}
 
 console = Console()
 config_manager = ConfigManager()
@@ -81,11 +119,33 @@ def _launch_tool_with_profile(tool_id: str, profile: str, args: tuple) -> None:
 @click.group()
 @click.version_option(version=__version__, prog_name="aidev")
 def cli() -> None:
-    """
-    aidev - Universal AI development environment manager
+    """[bold cyan]aidev[/] - Universal AI development environment manager
 
     Manage AI tool configurations, profiles, and MCP servers across
-    Cursor, Claude Code, Zed, and other AI-powered development tools.
+    Cursor, Claude Code, Codex, Gemini, and other AI-powered development tools.
+
+    [bold]Quick Examples:[/]
+
+      [dim]# Auto-detect stack and setup[/]
+      [green]ai quickstart[/]
+
+      [dim]# Switch to web development profile[/]
+      [green]ai use web[/]
+
+      [dim]# Launch Cursor with infrastructure profile[/]
+      [green]ai cursor --profile infra[/]
+
+      [dim]# Find and install MCP servers[/]
+      [green]ai mcp search postgres[/]
+      [green]ai mcp install postgres[/]
+
+      [dim]# Manage environment variables[/]
+      [green]ai env set GITHUB_TOKEN ghp_xxx[/]
+
+      [dim]# Check system health[/]
+      [green]ai doctor[/]
+
+    [bold]Documentation:[/] https://github.com/lastnamehurt/ai_developer
     """
     pass
 
