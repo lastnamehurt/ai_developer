@@ -1,7 +1,0 @@
-{
-  "name": "cypress",
-  "description": "Cypress end-to-end testing integration",
-  "type": "stdio",
-  "command": "node",
-  "args": ["${HOME}/.local/share/cypress-mcp-server/src/index.js"]
-}

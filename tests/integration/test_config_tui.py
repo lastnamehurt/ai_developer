@@ -49,6 +49,7 @@ def test_config_tui_smoke(tmp_path):
         app = ProfileConfigApp(config_manager, profile_manager, mcp_manager, project_dir=str(tmp_path / "project"))
         # Run briefly in headless test mode to ensure it starts and basic actions work
         async with app.run_test() as pilot:
+            await pilot.pause()  # allow on_mount/load_profile to complete
             # Toggle first MCP server if present
             if app.current_profile and app.current_profile.mcp_servers:
                 app.action_toggle_mcp()
@@ -60,7 +61,7 @@ def test_config_tui_smoke(tmp_path):
             app.action_apply_env()
             # Attempt save (should not crash)
             app.action_save()
-            pilot.pause()
+            await pilot.pause()
         # Ensure env change is reflected in profile data
         assert app.current_profile is not None
         assert app.current_profile.environment.get("TEST_KEY") == "123"

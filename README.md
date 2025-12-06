@@ -31,15 +31,18 @@ ai cursor --profile web
 
 ## Quick Start
 
-### Installation
+### Installation (no virtualenv needed)
 
 ```bash
-# Install (creates ~/.local/aidev and adds to PATH)
-curl -fsSL https://raw.githubusercontent.com/lastnamehurt/ai_developer/main/install.sh | bash
+# Recommended: pipx (isolated, no activation)
+pipx install "git+https://github.com/lastnamehurt/ai_developer.git@main"
 
-# Or from source
+# Or from source with pipx
 git clone https://github.com/lastnamehurt/ai_developer.git
-cd ai_developer && ./install.sh
+cd ai_developer && pipx install .
+
+# Fallback: system/user pip (no venv required)
+pip install "git+https://github.com/lastnamehurt/ai_developer.git@main"
 ```
 
 ### First Run
