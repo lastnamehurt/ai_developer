@@ -38,11 +38,9 @@ PROJECT_PROFILE_FILE: Final[str] = "profile"
 # Built-in profiles
 BUILTIN_PROFILES: Final[list[str]] = [
     "default",
-    "minimal",
-    "researcher",
-    "fullstack",
-    "devops",
-    "data",
+    "web",
+    "qa",
+    "infra",
 ]
 
 def _load_supported_tools() -> dict[str, dict[str, str]]:
