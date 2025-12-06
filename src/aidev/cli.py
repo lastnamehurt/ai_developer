@@ -47,7 +47,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "AI Tools",
-            "commands": ["cursor", "claude", "codex", "gemini", "zed", "tool"],
+            "commands": ["cursor", "claude", "codex", "gemini", "tool"],
         },
         {
             "name": "Utilities",
@@ -412,14 +412,6 @@ def gemini(profile: str, args: tuple) -> None:
 
 
 @cli.command()
-@click.option("--profile", help="Profile to use")
-@click.argument("args", nargs=-1)
-def zed(profile: str, args: tuple) -> None:
-    """Launch Zed with aidev configuration"""
-    _launch_tool_with_profile("zed", profile, args)
-
-
-@cli.command()
 @click.argument("tool_name")
 @click.option("--profile", help="Profile to use")
 @click.argument("args", nargs=-1)
@@ -444,16 +436,75 @@ def profile() -> None:
 @profile.command(name="list")
 def profile_list() -> None:
     """List all available profiles"""
-    # TODO: Implement profile listing
-    console.print("[bold]Available Profiles:[/bold]")
+    from aidev.constants import BUILTIN_PROFILES
+
+    profiles = profile_manager.list_profiles()
+
+    if not profiles:
+        console.print("[yellow]No profiles found. Run 'ai setup' to initialize.[/yellow]")
+        return
+
+    table = Table(title="Available Profiles")
+    table.add_column("Name", style="cyan")
+    table.add_column("Type", style="yellow")
+    table.add_column("Description", style="white")
+
+    for name in profiles:
+        profile_type = "built-in" if name in BUILTIN_PROFILES else "custom"
+        # Load profile to get description
+        loaded = profile_manager.load_profile(name)
+        description = loaded.description if loaded else ""
+        table.add_row(name, profile_type, description)
+
+    console.print(table)
 
 
 @profile.command(name="show")
 @click.argument("name")
 def profile_show(name: str) -> None:
     """Show profile details"""
-    # TODO: Implement profile showing
-    console.print(f"[bold]Profile: {name}[/bold]")
+    from aidev.constants import BUILTIN_PROFILES
+
+    loaded = profile_manager.load_profile(name)
+    if not loaded:
+        return
+
+    # Header
+    profile_type = "built-in" if name in BUILTIN_PROFILES else "custom"
+    console.print(f"\n[bold cyan]{name}[/bold cyan] [dim]({profile_type})[/dim]")
+    console.print(f"[dim]{loaded.description}[/dim]\n")
+
+    # MCP Servers
+    if loaded.mcp_servers:
+        mcp_table = Table(title="MCP Servers", show_header=True)
+        mcp_table.add_column("Name", style="cyan")
+        mcp_table.add_column("Enabled", style="green")
+
+        for server in loaded.mcp_servers:
+            status = "✓" if server.enabled else "✗"
+            mcp_table.add_row(server.name, status)
+
+        console.print(mcp_table)
+    else:
+        console.print("[dim]No MCP servers configured[/dim]")
+
+    # Environment Variables
+    if loaded.environment:
+        console.print(f"\n[bold]Environment Variables:[/bold]")
+        for key, value in loaded.environment.items():
+            console.print(f"  [yellow]{key}[/yellow] = [dim]{value}[/dim]")
+    else:
+        console.print("\n[dim]No environment variables configured[/dim]")
+
+    # Tags
+    if loaded.tags:
+        console.print(f"\n[bold]Tags:[/bold] {', '.join(loaded.tags)}")
+
+    # Inheritance
+    if loaded.extends:
+        console.print(f"\n[dim]Extends:[/dim] {loaded.extends}")
+
+    console.print()
 
 
 @profile.command(name="create")
