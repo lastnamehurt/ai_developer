@@ -3,6 +3,8 @@ Smoke test for the config TUI to ensure it launches without crashing.
 """
 from pathlib import Path
 
+import pytest
+
 from aidev.tui_config import ProfileConfigApp
 from aidev.config import ConfigManager
 from aidev.profiles import ProfileManager
@@ -38,7 +40,8 @@ def _temp_managers(tmp_path: Path) -> tuple[ConfigManager, ProfileManager, MCPMa
     return config_manager, profile_manager, mcp_manager
 
 
-def test_config_tui_smoke(tmp_path):
+@pytest.mark.asyncio
+async def test_config_tui_smoke(tmp_path):
     config_manager, profile_manager, mcp_manager = _temp_managers(tmp_path)
     config_manager.init_directories()
     profile_manager.init_builtin_profiles()
@@ -46,7 +49,7 @@ def test_config_tui_smoke(tmp_path):
 
     app = ProfileConfigApp(config_manager, profile_manager, mcp_manager, project_dir=str(tmp_path / "project"))
     # Run briefly in headless test mode to ensure it starts and basic actions work
-    with app.run_test() as pilot:
+    async with app.run_test() as pilot:
         # Toggle first MCP server if present
         if app.current_profile and app.current_profile.mcp_servers:
             app.action_toggle_mcp()
