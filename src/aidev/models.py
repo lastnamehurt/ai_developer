@@ -24,6 +24,7 @@ class Profile(BaseModel):
     name: str
     description: str
     extends: Optional[str] = None
+    tags: list[str] = Field(default_factory=list)
     mcp_servers: list[MCPServerConfig] = Field(default_factory=list)
     environment: dict[str, str] = Field(default_factory=dict)
     tools: dict[str, ToolConfig] = Field(default_factory=dict)

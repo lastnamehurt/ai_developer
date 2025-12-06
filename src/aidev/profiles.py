@@ -218,6 +218,10 @@ class ProfileManager:
         override_data = override.model_dump()
         override_data.pop("extends", None)  # Don't inherit extends
 
+        # Merge tags (union)
+        merged_tags = set(merged_data.get("tags", [])) | set(override_data.get("tags", []))
+        merged_data["tags"] = list(merged_tags)
+
         # Merge MCP servers (by name)
         base_servers = {s.name: s for s in base.mcp_servers}
         override_servers = {s.name: s for s in override.mcp_servers}
@@ -252,6 +256,7 @@ class ProfileManager:
             Profile(
                 name="default",
                 description="General development with essential tools",
+                tags=["default"],
                 mcp_servers=[
                     MCPServerConfig(name="filesystem", enabled=True),
                     MCPServerConfig(name="git", enabled=True),
@@ -261,6 +266,7 @@ class ProfileManager:
             Profile(
                 name="minimal",
                 description="Bare minimum configuration",
+                tags=["minimal", "qa"],
                 mcp_servers=[
                     MCPServerConfig(name="filesystem", enabled=True),
                 ],
@@ -268,6 +274,7 @@ class ProfileManager:
             Profile(
                 name="researcher",
                 description="Research and investigation workflows",
+                tags=["qa"],
                 mcp_servers=[
                     MCPServerConfig(name="filesystem", enabled=True),
                     MCPServerConfig(name="git", enabled=True),
@@ -280,6 +287,7 @@ class ProfileManager:
             Profile(
                 name="fullstack",
                 description="Full-stack web development",
+                tags=["web"],
                 mcp_servers=[
                     MCPServerConfig(name="filesystem", enabled=True),
                     MCPServerConfig(name="git", enabled=True),
@@ -290,6 +298,7 @@ class ProfileManager:
             Profile(
                 name="devops",
                 description="Infrastructure and deployment",
+                tags=["infra"],
                 mcp_servers=[
                     MCPServerConfig(name="filesystem", enabled=True),
                     MCPServerConfig(name="git", enabled=True),
@@ -301,6 +310,7 @@ class ProfileManager:
             Profile(
                 name="work",
                 description="Work profile with GitLab, Atlassian, and internal MCP tools",
+                tags=["work", "infra"],
                 mcp_servers=[
                     MCPServerConfig(name="filesystem", enabled=True),
                     MCPServerConfig(name="git", enabled=True),
@@ -325,6 +335,7 @@ class ProfileManager:
             Profile(
                 name="data",
                 description="Data science and analysis",
+                tags=["data", "qa"],
                 mcp_servers=[
                     MCPServerConfig(name="filesystem", enabled=True),
                     MCPServerConfig(name="git", enabled=True),

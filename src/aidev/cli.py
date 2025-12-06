@@ -12,6 +12,7 @@ from aidev.tools import ToolManager
 from aidev.profiles import ProfileManager
 from aidev.mcp import MCPManager
 from aidev.mcp_config_generator import MCPConfigGenerator
+from aidev.quickstart import QuickstartRunner
 
 console = Console()
 config_manager = ConfigManager()
@@ -19,6 +20,7 @@ tool_manager = ToolManager()
 profile_manager = ProfileManager()
 mcp_manager = MCPManager()
 mcp_config_generator = MCPConfigGenerator()
+quickstart_runner = QuickstartRunner(config_manager, profile_manager, mcp_manager)
 
 
 # ============================================================================
@@ -123,6 +125,25 @@ def setup(force: bool) -> None:
     console.print("  1. cd into a project directory")
     console.print("  2. Run: ai init")
     console.print("  3. Launch your AI tool: ai cursor / ai claude / ai codex / ai gemini")
+
+
+@cli.command()
+@click.option("--profile", help="Force a specific profile (skip recommendation)")
+@click.option("--yes", is_flag=True, help="Accept recommended profile without prompting")
+@click.option(
+    "--project-dir",
+    type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
+    default=Path.cwd(),
+    help="Project directory (defaults to current working directory)",
+)
+def quickstart(profile: str, yes: bool, project_dir: Path) -> None:
+    """Detect stack, recommend a profile, and initialize aidev for this project."""
+    result = quickstart_runner.run(
+        project_dir=project_dir,
+        profile_override=profile,
+        auto_confirm=yes,
+    )
+    console.print(f"[green]Quickstart complete[/green] - profile: [bold]{result.selected_profile}[/bold]")
 
 
 @cli.command()
