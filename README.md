@@ -136,6 +136,10 @@ Discover, install, and manage MCP servers:
 ai mcp search kubernetes
 # ⭐ kubernetes - Manage K8s clusters and deployments
 
+# Browse registry in a TUI
+ai mcp browse
+# Filter by tags, view details, and install directly
+
 # Install and auto-configure
 ai mcp install kubernetes
 # ✓ Installed kubernetes
