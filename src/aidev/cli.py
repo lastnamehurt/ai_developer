@@ -15,8 +15,12 @@ from aidev.profiles import ProfileManager
 from aidev.mcp import MCPManager
 from aidev.mcp_config_generator import MCPConfigGenerator
 from aidev.quickstart import QuickstartRunner
-from aidev.utils import load_json, save_json
+<<<<<<< HEAD
+from aidev.utils import load_json, save_json, load_env
 from aidev.errors import preflight
+=======
+from aidev.utils import load_json, save_json, load_env
+>>>>>>> 4e1d3a5 (fix: import load_env for env list command)
 
 console = Console()
 config_manager = ConfigManager()
@@ -244,17 +248,20 @@ def env() -> None:
 @env.command(name="set")
 @click.argument("key")
 @click.argument("value")
-def env_set(key: str, value: str) -> None:
-    """Set an environment variable"""
-    config_manager.set_env(key, value)
-    console.print(f"[green]✓[/green] Set {key}")
+@click.option("--project", is_flag=True, help="Set for current project only")
+def env_set(key: str, value: str, project: bool) -> None:
+    """Set an environment variable (global by default, project with --project)."""
+    config_manager.set_env(key, value, project=project)
+    scope = "project" if project else "global"
+    console.print(f"[green]✓[/green] Set {key} ({scope})")
 
 
 @env.command(name="get")
 @click.argument("key")
-def env_get(key: str) -> None:
+@click.option("--project", is_flag=True, help="Read from current project first")
+def env_get(key: str, project: bool) -> None:
     """Get an environment variable"""
-    env_vars = config_manager.get_env()
+    env_vars = config_manager.get_env(project_dir=Path.cwd() if project else None)
     if key in env_vars:
         console.print(f"{key}={env_vars[key]}")
     else:
@@ -262,20 +269,53 @@ def env_get(key: str) -> None:
 
 
 @env.command(name="list")
-def env_list() -> None:
-    """List all environment variables"""
-    env_vars = config_manager.get_env()
+@click.option("--project", is_flag=True, help="Show merged env with project overrides")
+def env_list(project: bool) -> None:
+    """List all environment variables (merged global + project)."""
+    env_vars = config_manager.get_env(project_dir=Path.cwd() if project else None)
 
     table = Table(title="Environment Variables")
     table.add_column("Key", style="cyan")
     table.add_column("Value", style="green")
+    table.add_column("Scope", style="yellow")
+
+    # Load raw scopes for display
+    global_env = config_manager.get_env(project_dir=None)
+    project_env_path = Path.cwd() / ".aidev" / ".env"
+    project_env = load_env(project_env_path) if project_env_path.exists() else {}
 
     for key, value in sorted(env_vars.items()):
-        # Mask sensitive values
-        display_value = value if "TOKEN" not in key.upper() else "***"
-        table.add_row(key, display_value)
+        display_value = "***" if any(secret in key.upper() for secret in ["TOKEN", "KEY", "SECRET"]) else value
+        scope = "project" if key in project_env else "global"
+        table.add_row(key, display_value, scope)
 
     console.print(table)
+
+
+@env.command(name="validate")
+@click.option("--profile", help="Profile to validate against (defaults to active)")
+def env_validate(profile: str) -> None:
+    """Validate environment against profile requirements."""
+    profile_name = profile or _resolve_active_profile()
+    loaded_profile = profile_manager.load_profile(profile_name)
+    if not loaded_profile:
+        return
+    env_vars = config_manager.get_env(project_dir=Path.cwd())
+    required_keys = sorted(list(loaded_profile.environment.keys()))
+    missing = [k for k in required_keys if not env_vars.get(k)]
+    unused = [k for k in env_vars.keys() if k not in required_keys]
+
+    if missing:
+        console.print("[red]Missing required env keys:[/red]")
+        for key in missing:
+            console.print(f"  - {key} (set with: ai env set {key} <value>)")
+    else:
+        console.print("[green]All required env keys are set.[/green]")
+
+    if unused:
+        console.print("[yellow]Unused env keys (not declared in profile):[/yellow]")
+        for key in unused:
+            console.print(f"  - {key}")
 
 
 # ============================================================================
