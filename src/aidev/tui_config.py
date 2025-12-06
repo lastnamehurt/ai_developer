@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from typing import Optional
 
-from textual import events
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Horizontal, Vertical
@@ -33,6 +32,7 @@ class ProfileConfigApp(App):
         config_manager: Optional[ConfigManager] = None,
         profile_manager: Optional[ProfileManager] = None,
         mcp_manager: Optional[MCPManager] = None,
+        project_dir: Optional[str] = None,
     ) -> None:
         super().__init__()
         self.config_manager = config_manager or ConfigManager()
@@ -40,6 +40,8 @@ class ProfileConfigApp(App):
         self.mcp_manager = mcp_manager or MCPManager()
         self.current_profile_name: Optional[str] = None
         self.current_profile: Optional[Profile] = None
+        self.project_dir = project_dir
+        self.pending_warning: bool = False
 
     def compose(self) -> ComposeResult:
         """Build layout."""
@@ -48,7 +50,7 @@ class ProfileConfigApp(App):
         with Container():
             with Horizontal():
                 with Vertical(id="left"):
-                    yield Static("Profiles", classes="panel-title")
+                    yield Static("Profiles", classes="panel-title", id="preview-header")
                     yield Select(options=[], id="profile-select")
                     yield Markdown("Press `t` to toggle MCP, `Enter` on env value to update, `s` to save.")
                 with Vertical(id="middle"):
@@ -73,7 +75,8 @@ class ProfileConfigApp(App):
         profiles = self.profile_manager.list_profiles()
         select.set_options([(name, name) for name in profiles])
         if profiles:
-            await self.load_profile(profiles[0])
+            initial = self._active_project_profile() or profiles[0]
+            await self.load_profile(initial)
 
     async def load_profile(self, name: str) -> None:
         """Load profile into widgets."""
@@ -85,6 +88,11 @@ class ProfileConfigApp(App):
 
         select = self.query_one("#profile-select", Select)
         select.value = name
+
+        header = f"Profile: [bold]{name}[/bold]"
+        if self.project_dir:
+            header += f" | Project: {self.project_dir}"
+        self.query_one("#preview-header", Static).update(header)
 
         mcp_table = self.query_one("#mcp-table", DataTable)
         mcp_table.clear()
@@ -169,13 +177,33 @@ class ProfileConfigApp(App):
 
         # Validate env (warn on missing)
         missing = [k for k, v in self.current_profile.environment.items() if not v]
+        warnings = []
         if missing:
-            warn = f"[yellow]Warning: missing values for {', '.join(missing)}[/yellow]"
-            self.query_one("#preview", Markdown).update(warn)
+            warnings.append(f"Missing values for {', '.join(missing)}")
+        # Warn if any MCP server config is unknown
+        unknown = [
+            s.name for s in self.current_profile.mcp_servers
+            if not self.mcp_manager.get_server_config(s.name)
+        ]
+        if unknown:
+            warnings.append(f"Unknown MCP servers: {', '.join(unknown)}")
+        if warnings and not self.pending_warning:
+            warn_text = "[yellow]Warning:[/yellow] " + "; ".join(warnings) + " (press Save again to confirm)"
+            self.query_one("#preview", Markdown).update(warn_text)
+            self.pending_warning = True
             return
+        self.pending_warning = False
 
         # Save as custom override to avoid mutating packaged profiles
-        self.profile_manager.save_profile(self.current_profile, custom=True)
+        # Save to project if applicable, else as custom profile
+        if self.project_dir:
+            config_path = self.config_manager.init_project(project_dir=Path(self.project_dir), profile=self.current_profile_name)
+            profile_file = config_path / "profile"
+            profile_file.write_text(self.current_profile_name)
+            self.profile_manager.save_profile(self.current_profile, custom=True)
+        else:
+            self.profile_manager.save_profile(self.current_profile, custom=True)
+
         self.query_one("#preview", Markdown).update(f"[green]Saved profile '{self.current_profile_name}'[/green]")
 
     def _refresh_preview(self) -> None:
@@ -195,8 +223,20 @@ class ProfileConfigApp(App):
 """
         self.query_one("#preview", Markdown).update(text)
 
+    def _active_project_profile(self) -> Optional[str]:
+        """Detect active profile for current project."""
+        if not self.project_dir:
+            return None
+        config_dir = self.config_manager.get_project_config_path(Path(self.project_dir))
+        if not config_dir:
+            return None
+        profile_file = config_dir / "profile"
+        if profile_file.exists():
+            return profile_file.read_text().strip()
+        return None
+
 
 def run_tui() -> None:
     """Entry point for manual launching."""
-    app = ProfileConfigApp()
+    app = ProfileConfigApp(project_dir=str(Path.cwd()))
     app.run()

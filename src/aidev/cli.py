@@ -211,7 +211,7 @@ def config(ctx: click.Context) -> None:
         except Exception as exc:  # pragma: no cover - defensive
             console.print(f"[red]Failed to launch config TUI: {exc}[/red]")
             return
-        app = ProfileConfigApp(config_manager, profile_manager, mcp_manager)
+        app = ProfileConfigApp(config_manager, profile_manager, mcp_manager, project_dir=str(Path.cwd()))
         app.run()
 
 

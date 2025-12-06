@@ -44,7 +44,18 @@ def test_config_tui_smoke(tmp_path):
     profile_manager.init_builtin_profiles()
     mcp_manager.init_builtin_servers()
 
-    app = ProfileConfigApp(config_manager, profile_manager, mcp_manager)
-    # Run briefly in headless test mode to ensure it starts
+    app = ProfileConfigApp(config_manager, profile_manager, mcp_manager, project_dir=str(tmp_path / "project"))
+    # Run briefly in headless test mode to ensure it starts and basic actions work
     with app.run_test() as pilot:
+        # Toggle first MCP server if present
+        if app.current_profile and app.current_profile.mcp_servers:
+            app.action_toggle_mcp()
+        # Apply env change
+        key_input = app.query_one("#env-key")
+        val_input = app.query_one("#env-value")
+        key_input.value = "TEST_KEY"
+        val_input.value = "123"
+        app.action_apply_env()
+        # Attempt save (should not crash)
+        app.action_save()
         pilot.pause()
