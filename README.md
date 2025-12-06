@@ -67,6 +67,7 @@ ai profile show infra          # Show profile details
 ai profile create my-profile   # Create custom profile
 ai use web                     # Switch active profile for this project
 ai status                      # Show active profile, MCP servers, env requirements
+ai config                      # Launch Textual TUI to edit profiles/env
 ```
 
 **Built-in Profiles:**

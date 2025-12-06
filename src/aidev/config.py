@@ -68,6 +68,12 @@ class ConfigManager:
         for directory in directories:
             ensure_dir(directory)
 
+        # Seed default env file with a default profile override if missing
+        env_vars = load_env(self.env_file)
+        if "AIDEV_DEFAULT_PROFILE" not in env_vars:
+            env_vars["AIDEV_DEFAULT_PROFILE"] = "default"
+            save_env(self.env_file, env_vars)
+
     def is_initialized(self) -> bool:
         """Check if aidev is initialized"""
         return self.aidev_dir.exists() and self.config_dir.exists()
