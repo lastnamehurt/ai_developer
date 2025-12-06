@@ -3,6 +3,7 @@ Textual-based TUI for editing profiles: toggle MCP servers, edit env bindings, a
 """
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Optional
 
 from textual.app import App, ComposeResult
