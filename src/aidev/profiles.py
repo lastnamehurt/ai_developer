@@ -138,6 +138,64 @@ class ProfileManager:
         self.save_profile(profile)
         return profile
 
+    def clone_profile(
+        self,
+        source_name: str,
+        target_name: str,
+        description: Optional[str] = None,
+        mcp_servers: Optional[list[str]] = None,
+    ) -> Optional[Profile]:
+        """
+        Clone an existing profile
+
+        Args:
+            source_name: Source profile name
+            target_name: Target profile name
+            description: Optional custom description
+            mcp_servers: Optional list of MCP server names to override
+
+        Returns:
+            Cloned profile or None if source not found
+        """
+        # Check if target already exists
+        if self.get_profile_path(target_name):
+            console.print(f"[red]Profile '{target_name}' already exists[/red]")
+            return None
+
+        # Load source profile (fully resolved with inheritance)
+        source = self.load_profile(source_name)
+        if not source:
+            return None
+
+        # Create cloned profile data
+        cloned_data = source.model_dump()
+        cloned_data["name"] = target_name
+        cloned_data["extends"] = None  # Don't inherit, flatten it
+
+        # Override description if provided
+        if description:
+            cloned_data["description"] = description
+        else:
+            cloned_data["description"] = f"Cloned from {source_name}"
+
+        # Override MCP servers if provided
+        if mcp_servers:
+            cloned_data["mcp_servers"] = [
+                MCPServerConfig(name=name, enabled=True) for name in mcp_servers
+            ]
+
+        # Create and save cloned profile
+        try:
+            cloned_profile = Profile(**cloned_data)
+            self.save_profile(cloned_profile, custom=True)
+            console.print(
+                f"[green]✓[/green] Created profile '[cyan]{target_name}[/cyan]' from '[cyan]{source_name}[/cyan]'"
+            )
+            return cloned_profile
+        except Exception as e:
+            console.print(f"[red]Error cloning profile: {e}[/red]")
+            return None
+
     def delete_profile(self, name: str) -> bool:
         """
         Delete a custom profile
