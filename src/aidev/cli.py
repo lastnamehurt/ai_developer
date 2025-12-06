@@ -16,6 +16,7 @@ from aidev.mcp import MCPManager
 from aidev.mcp_config_generator import MCPConfigGenerator
 from aidev.quickstart import QuickstartRunner
 from aidev.backup import BackupManager
+from aidev.tutorial import Tutorial
 from aidev.utils import load_json, save_json, load_env
 from aidev.errors import preflight
 
@@ -32,7 +33,7 @@ click.rich_click.COMMAND_GROUPS = {
     "aidev.cli": [
         {
             "name": "Getting Started",
-            "commands": ["quickstart", "setup", "init"],
+            "commands": ["quickstart", "setup", "init", "learn"],
         },
         {
             "name": "Profiles",
@@ -191,6 +192,13 @@ def setup(force: bool) -> None:
     console.print("  1. cd into a project directory")
     console.print("  2. Run: ai init")
     console.print("  3. Launch your AI tool: ai cursor / ai claude / ai codex / ai gemini")
+
+
+@cli.command()
+def learn() -> None:
+    """Interactive tutorial for learning aidev"""
+    tutorial = Tutorial(config_manager, profile_manager, mcp_manager)
+    tutorial.run()
 
 
 @cli.command()
