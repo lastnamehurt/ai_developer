@@ -6,7 +6,7 @@ Stop managing scattered API keys, MCP server configs, and tool setups manually. 
 
 ## The Problem
 
-Managing AI development tools (Cursor, Claude Code, Codex, Gemini) is painful:
+Managing AI development tools (Claude Code, Cursor, Codex, Gemini) is painful:
 - 🔐 API keys scattered across multiple `.env` files
 - 🔧 MCP server configs manually edited per tool
 - 💻 30+ minutes setting up each new machine
@@ -24,8 +24,9 @@ ai use infra        # Kubernetes + Docker
 ai use qa           # Testing workflows
 
 # Launch tools with full context
-ai cursor           # Launches with active profile + MCP servers + env vars
+ai claude           # Launch with active profile + MCP servers + env vars
 ai claude --profile infra
+ai cursor --profile web
 ```
 
 ## Quick Start
@@ -60,7 +61,7 @@ ai quickstart
 # ✓ Configured MCP servers: filesystem, git, github, memory-bank
 
 # 4. Launch your tool
-ai cursor
+ai claude
 ```
 
 ## Core Features
