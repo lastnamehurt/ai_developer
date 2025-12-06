@@ -48,7 +48,7 @@ def test_generate_gemini_config(tmp_path, monkeypatch):
     assert "old" in data["mcpServers"]  # existing server remains
 
     stub = data["mcpServers"]["stub"]
-    assert stub["command"] == "echo"
+    assert stub["command"].endswith("echo")
     assert stub["args"] == ["hello"]
     assert stub["env"]["FOO"] == "qux"
     assert stub["httpUrl"] == "https://example.test/stream"

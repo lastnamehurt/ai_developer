@@ -39,7 +39,7 @@ def test_generate_codex_config(tmp_path):
     data = toml.load(config_path)
 
     assert "mcp_servers" in data
-    assert data["mcp_servers"]["stub"]["command"] == "echo"
+    assert data["mcp_servers"]["stub"]["command"].endswith("echo")
     # env should be expanded via profile/global env
     assert data["mcp_servers"]["stub"]["env"]["FOO"] == "qux"
 

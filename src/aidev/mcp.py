@@ -207,7 +207,7 @@ class MCPManager:
         console.print(f"[green]✓[/green] Installed {server.name}")
         return True
 
-    def remove_server(self, name: str) -> bool:
+    def remove_server(self, name: str, profile_manager=None) -> bool:
         """
         Remove an MCP server
 
@@ -224,6 +224,18 @@ class MCPManager:
 
         custom_path.unlink()
         console.print(f"[green]✓[/green] Removed {name}")
+
+        # Remove from profiles if a profile_manager is provided
+        if profile_manager:
+            for profile_name in profile_manager.list_profiles():
+                profile = profile_manager.load_profile(profile_name)
+                if not profile:
+                    continue
+                before = len(profile.mcp_servers)
+                profile.mcp_servers = [s for s in profile.mcp_servers if s.name != name]
+                if len(profile.mcp_servers) != before:
+                    profile_manager.save_profile(profile, custom=True)
+                    console.print(f"[yellow]Removed '{name}' from profile '{profile_name}'[/yellow]")
         return True
 
     def test_server(self, name: str) -> bool:
