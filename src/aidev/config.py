@@ -33,7 +33,17 @@ DEFAULT_PROJECT_MCP_CONFIG = {
 
 
 class ConfigManager:
-    """Manages aidev configuration and directories"""
+    """Manages aidev configuration and directories
+
+    GitHub Copilot Integration:
+    GitHub Copilot is a powerful AI pair programmer that can be leveraged directly within your IDE (like VS Code, JetBrains IDEs, Neovim, and Visual Studio). It offers autocompletion, code suggestions, and even generates entire functions based on your comments and code context.
+
+    Native Integration:
+    Copilot integrates natively with GitHub, meaning it understands your repository's context, including issues, pull requests, and codebase. This tight integration allows for more relevant and accurate suggestions.
+
+    Cost:
+    GitHub Copilot is a paid subscription service, though it offers a free trial and is free for verified students and maintainers of popular open-source projects. For individual developers, it costs $10/month or $100/year. For businesses, pricing is $19/user/month.
+    """
 
     def __init__(self) -> None:
         """Initialize config manager"""

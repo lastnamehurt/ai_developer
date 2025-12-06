@@ -15,6 +15,8 @@ BIN_DIR="$INSTALL_DIR/bin"
 # Remote source for installs when not running inside the repo
 REPO_URL="${AIDEV_REPO_URL:-https://github.com/lastnamehurt/aidev.git}"
 PACKAGE_SOURCE="${AIDEV_INSTALL_SOURCE:-aidev}"
+# Preferred installer (pipx isolates deps, no venv activation needed)
+USE_PIPX="${AIDEV_USE_PIPX:-1}"
 
 echo -e "${CYAN}========================================${NC}"
 echo -e "${CYAN}  aidev Installation${NC}"
@@ -39,47 +41,61 @@ fi
 
 echo -e "${GREEN}✓${NC} Python $PYTHON_VERSION"
 
-# Check if running in a project directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Create virtual environment
-echo
-echo -e "${CYAN}Creating virtual environment...${NC}"
-if [ ! -d "$INSTALL_DIR/venv" ]; then
-    python3 -m venv "$INSTALL_DIR/venv"
-    echo -e "${GREEN}✓${NC} Virtual environment created"
-else
-    echo -e "${YELLOW}Virtual environment already exists${NC}"
-fi
+install_with_pipx() {
+    if ! command -v pipx >/dev/null 2>&1; then
+        echo -e "${YELLOW}! pipx not found; attempting to install via pip --user${NC}"
+        python3 -m pip install --user pipx || return 1
+        export PATH="$HOME/.local/bin:$PATH"
+    fi
+    echo -e "${CYAN}Installing via pipx...${NC}"
+    if [ -f "$SCRIPT_DIR/pyproject.toml" ]; then
+        pipx install --force "$SCRIPT_DIR" && return 0
+    fi
+    pipx install --force "$PACKAGE_SOURCE" && return 0
+    echo -e "${YELLOW}!${NC} pipx install from package failed, trying git..."
+    pipx install --force "git+$REPO_URL"
+}
 
-# Activate virtual environment
-source "$INSTALL_DIR/venv/bin/activate"
-
-# Install/upgrade pip
-echo
-echo -e "${CYAN}Upgrading pip...${NC}"
-pip install --quiet --upgrade pip
-
-# Install aidev
-echo
-echo -e "${CYAN}Installing aidev...${NC}"
-if [ -f "$SCRIPT_DIR/pyproject.toml" ]; then
-    # Development installation from source
-    pip install --quiet -e "$SCRIPT_DIR"
-    echo -e "${GREEN}✓${NC} Installed aidev from source (development mode)"
-else
-    # Install from PyPI or fallback to git without requiring a local clone
-    if pip install --quiet "$PACKAGE_SOURCE"; then
-        echo -e "${GREEN}✓${NC} Installed aidev from package source: $PACKAGE_SOURCE"
+install_with_venv() {
+    echo
+    echo -e "${CYAN}Creating virtual environment...${NC}"
+    if [ ! -d "$INSTALL_DIR/venv" ]; then
+        python3 -m venv "$INSTALL_DIR/venv"
+        echo -e "${GREEN}✓${NC} Virtual environment created"
     else
-        echo -e "${YELLOW}!${NC} Primary install source failed, trying git repository..."
-        if pip install --quiet "git+$REPO_URL"; then
-            echo -e "${GREEN}✓${NC} Installed aidev from git: $REPO_URL"
+        echo -e "${YELLOW}Virtual environment already exists${NC}"
+    fi
+    source "$INSTALL_DIR/venv/bin/activate"
+    echo
+    echo -e "${CYAN}Upgrading pip...${NC}"
+    pip install --quiet --upgrade pip
+    echo
+    echo -e "${CYAN}Installing aidev...${NC}"
+    if [ -f "$SCRIPT_DIR/pyproject.toml" ]; then
+        pip install --quiet -e "$SCRIPT_DIR"
+        echo -e "${GREEN}✓${NC} Installed aidev from source (development mode)"
+    else
+        if pip install --quiet "$PACKAGE_SOURCE"; then
+            echo -e "${GREEN}✓${NC} Installed aidev from package source: $PACKAGE_SOURCE"
         else
-            echo -e "${RED}Error: Failed to install aidev from both $PACKAGE_SOURCE and $REPO_URL${NC}"
-            exit 1
+            echo -e "${YELLOW}!${NC} Primary install source failed, trying git repository..."
+            if pip install --quiet "git+$REPO_URL"; then
+                echo -e "${GREEN}✓${NC} Installed aidev from git: $REPO_URL"
+            else
+                echo -e "${RED}Error: Failed to install aidev from both $PACKAGE_SOURCE and $REPO_URL${NC}"
+                exit 1
+            fi
         fi
     fi
+}
+
+# Install aidev (prefer pipx to avoid venv activation)
+if [ "$USE_PIPX" = "1" ]; then
+    install_with_pipx || install_with_venv
+else
+    install_with_venv
 fi
 
 # Create bin directory and wrapper script
@@ -87,7 +103,16 @@ echo
 echo -e "${CYAN}Creating launcher script...${NC}"
 mkdir -p "$BIN_DIR"
 
-cat > "$BIN_DIR/aidev" << 'EOFBIN'
+if [ "$USE_PIPX" = "1" ]; then
+    echo
+    echo -e "${CYAN}pipx handles launchers (ai/aidev on PATH if pipx bin is in PATH).${NC}"
+    echo -e "${YELLOW}!${NC} Ensure pipx bin dir is on PATH (typically \$HOME/.local/bin)"
+else
+    echo
+    echo -e "${CYAN}Creating launcher script...${NC}"
+    mkdir -p "$BIN_DIR"
+
+    cat > "$BIN_DIR/aidev" << 'EOFBIN'
 #!/usr/bin/env bash
 # aidev launcher script
 
@@ -96,10 +121,10 @@ source "$INSTALL_DIR/venv/bin/activate"
 exec python -m aidev.cli "$@"
 EOFBIN
 
-chmod +x "$BIN_DIR/aidev"
+    chmod +x "$BIN_DIR/aidev"
 
-# Create shorter 'ai' alias
-cat > "$BIN_DIR/ai" << 'EOFBIN'
+    # Create shorter 'ai' alias
+    cat > "$BIN_DIR/ai" << 'EOFBIN'
 #!/usr/bin/env bash
 # ai launcher script (alias for aidev)
 
@@ -108,47 +133,49 @@ source "$INSTALL_DIR/venv/bin/activate"
 exec python -m aidev.cli "$@"
 EOFBIN
 
-chmod +x "$BIN_DIR/ai"
-echo -e "${GREEN}✓${NC} Created launchers: $BIN_DIR/aidev and $BIN_DIR/ai"
+    chmod +x "$BIN_DIR/ai"
+    echo -e \"${GREEN}✓${NC} Created launchers: $BIN_DIR/aidev and $BIN_DIR/ai\"
+fi
 
-# Check if bin directory is in PATH
-echo
-echo -e "${CYAN}Checking PATH configuration...${NC}"
+if [ "$USE_PIPX" != "1" ]; then
+    echo
+    echo -e "${CYAN}Checking PATH configuration...${NC}"
 
-if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
-    echo -e "${YELLOW}! $BIN_DIR is not in your PATH${NC}"
-    echo
-    echo "Add the following line to your shell configuration file:"
-    echo
+    if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
+        echo -e "${YELLOW}! $BIN_DIR is not in your PATH${NC}"
+        echo
+        echo \"Add the following line to your shell configuration file:\"
+        echo
 
-    # Detect shell
-    if [ -n "$ZSH_VERSION" ]; then
-        SHELL_RC="$HOME/.zshrc"
-        echo -e "${CYAN}  echo 'export PATH=\"\$HOME/.local/aidev/bin:\$PATH\"' >> ~/.zshrc${NC}"
-    elif [ -n "$BASH_VERSION" ]; then
-        SHELL_RC="$HOME/.zshrc"
-        echo -e "${CYAN}  echo 'export PATH=\"\$HOME/.local/aidev/bin:\$PATH\"' >> ~/.zshrc${NC}"
-    else
-        echo -e "${CYAN}  export PATH=\"\$HOME/.local/aidev/bin:\$PATH\"${NC}"
-    fi
-
-    echo
-    echo "Then run:"
-    echo -e "${CYAN}  source $SHELL_RC${NC}"
-    echo
-
-    # Offer to add automatically
-    read -p "Add to PATH automatically? [y/N] " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        if [ -n "$SHELL_RC" ] && [ -f "$SHELL_RC" ]; then
-            echo "export PATH=\"\$HOME/.local/aidev/bin:\$PATH\"" >> "$SHELL_RC"
-            echo -e "${GREEN}✓${NC} Added to $SHELL_RC"
-            echo -e "${YELLOW}! Run: source $SHELL_RC${NC}"
+        # Detect shell
+        if [ -n "$ZSH_VERSION" ]; then
+            SHELL_RC="$HOME/.zshrc"
+            echo -e "${CYAN}  echo 'export PATH=\"\$HOME/.local/aidev/bin:\$PATH\"' >> ~/.zshrc${NC}"
+        elif [ -n "$BASH_VERSION" ]; then
+            SHELL_RC="$HOME/.zshrc"
+            echo -e "${CYAN}  echo 'export PATH=\"\$HOME/.local/aidev/bin:\$PATH\"' >> ~/.zshrc${NC}"
+        else
+            echo -e "${CYAN}  export PATH=\"\$HOME/.local/aidev/bin:\$PATH\"${NC}"
         fi
+
+        echo
+        echo \"Then run:\"
+        echo -e \"${CYAN}  source $SHELL_RC${NC}\"
+        echo
+
+        # Offer to add automatically
+        read -p "Add to PATH automatically? [y/N] " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            if [ -n "$SHELL_RC" ] && [ -f "$SHELL_RC" ]; then
+                echo "export PATH=\"\$HOME/.local/aidev/bin:\$PATH\"" >> "$SHELL_RC"
+                echo -e "${GREEN}✓${NC} Added to $SHELL_RC"
+                echo -e "${YELLOW}! Run: source $SHELL_RC${NC}"
+            fi
+        fi
+    else
+        echo -e \"${GREEN}✓${NC} $BIN_DIR is in PATH\"
     fi
-else
-    echo -e "${GREEN}✓${NC} $BIN_DIR is in PATH"
 fi
 
 # Initialize aidev

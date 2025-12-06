@@ -1,0 +1,7 @@
+{
+  "name": "sequential-thinking",
+  "description": "Sequential thinking and reasoning capabilities",
+  "type": "stdio",
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+}
