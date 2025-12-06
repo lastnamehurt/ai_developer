@@ -6,5 +6,11 @@
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "enabledMcpjsonServers": [
+    "filesystem",
+    "git",
+    "memory-bank",
+    "github"
+  ]
 }

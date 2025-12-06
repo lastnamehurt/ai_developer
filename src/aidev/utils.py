@@ -120,6 +120,10 @@ def expand_env_vars(text: str, env: dict[str, str]) -> str:
     """
     Expand environment variables in text using custom env dict
 
+    Supports:
+    - ${VAR} - simple variable expansion
+    - ${VAR:-default} - variable with default value (bash-style)
+
     Args:
         text: Text containing ${VAR} or $VAR patterns
         env: Environment variables dictionary
@@ -128,13 +132,69 @@ def expand_env_vars(text: str, env: dict[str, str]) -> str:
         Text with variables expanded
     """
     result = text
-    # First expand ${VAR} syntax
-    for key, value in env.items():
-        result = result.replace(f"${{{key}}}", value)
-        result = result.replace(f"${key}", value)
+    max_iterations = 10  # Prevent infinite loops
 
-    # Then expand system env vars
-    result = os.path.expandvars(result)
+    for iteration in range(max_iterations):
+        prev_result = result
+
+        # Pass 1: Handle ${VAR:-default} with proper brace matching
+        new_result = []
+        i = 0
+        while i < len(result):
+            # Look for ${VAR:-
+            if result[i:i+2] == '${':
+                # Find the variable name and check for :-
+                j = i + 2
+                var_name = ''
+                while j < len(result) and (result[j].isalnum() or result[j] == '_'):
+                    var_name += result[j]
+                    j += 1
+
+                # Check if this is ${VAR:-default} syntax
+                if j + 1 < len(result) and result[j:j+2] == ':-':
+                    # Find matching closing brace (handle nesting)
+                    brace_count = 1
+                    k = j + 2
+                    default_start = k
+                    while k < len(result) and brace_count > 0:
+                        if result[k] == '{' and k > 0 and result[k-1] == '$':
+                            brace_count += 1
+                        elif result[k] == '}':
+                            brace_count -= 1
+                        k += 1
+
+                    if brace_count == 0:
+                        # Extract default value
+                        default_value = result[default_start:k-1]
+
+                        # Check if var is set
+                        value = env.get(var_name) or os.environ.get(var_name)
+                        if value:
+                            new_result.append(value)
+                        else:
+                            new_result.append(default_value)
+
+                        i = k
+                        continue
+
+            # Not a ${VAR:-} pattern, keep the character
+            new_result.append(result[i])
+            i += 1
+
+        result = ''.join(new_result)
+
+        # Pass 2: Expand simple ${VAR} from custom env
+        for key, value in env.items():
+            result = result.replace(f"${{{key}}}", value)
+            result = result.replace(f"${key}", value)
+
+        # Pass 3: Expand system env vars (handles ${HOME}, etc.)
+        result = os.path.expandvars(result)
+
+        # If nothing changed, we're done
+        if result == prev_result:
+            break
+
     return result
 
 
