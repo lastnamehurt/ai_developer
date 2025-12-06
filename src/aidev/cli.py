@@ -15,6 +15,7 @@ from aidev.profiles import ProfileManager
 from aidev.mcp import MCPManager
 from aidev.mcp_config_generator import MCPConfigGenerator
 from aidev.quickstart import QuickstartRunner
+from aidev.backup import BackupManager
 from aidev.utils import load_json, save_json, load_env
 from aidev.errors import preflight
 
@@ -51,7 +52,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "Utilities",
-            "commands": ["config", "doctor", "backup", "restore"],
+            "commands": ["config", "doctor", "backup", "restore", "config-share"],
         },
     ]
 }
@@ -62,6 +63,7 @@ tool_manager = ToolManager()
 profile_manager = ProfileManager()
 mcp_manager = MCPManager()
 mcp_config_generator = MCPConfigGenerator()
+backup_manager = BackupManager()
 quickstart_runner = QuickstartRunner(config_manager, profile_manager, mcp_manager)
 
 
@@ -660,18 +662,39 @@ def profile_edit(name: str) -> None:
 @click.argument("name")
 @click.option("--output", help="Output file path")
 def profile_export(name: str, output: str) -> None:
-    """Export a profile to share"""
-    # TODO: Implement profile export
-    output_path = output or f"{name}.json"
-    console.print(f"[green]✓[/green] Exported {name} to {output_path}")
+    """Export a profile to share
+
+    \b
+    Examples:
+      # Export with default filename
+      ai profile export web
+
+      # Export with custom filename
+      ai profile export web --output my-web-profile.json
+    """
+    output_path = Path(output) if output else Path(f"{name}.json")
+    if profile_manager.export_profile(name, output_path):
+        console.print(f"[green]✓[/green] Exported profile '[cyan]{name}[/cyan]' to {output_path}")
+        console.print("[dim]Share this file with your team![/dim]")
 
 
 @profile.command(name="import")
 @click.argument("file")
 def profile_import(file: str) -> None:
-    """Import a profile from file"""
-    # TODO: Implement profile import
-    console.print(f"[green]✓[/green] Imported profile from {file}")
+    """Import a profile from file
+
+    \b
+    Examples:
+      # Import a shared profile
+      ai profile import team-profile.json
+    """
+    input_path = Path(file)
+    imported = profile_manager.import_profile(input_path)
+    if imported:
+        console.print(f"[green]✓[/green] Imported profile '[cyan]{imported.name}[/cyan]'")
+        console.print(f"\n[bold]Next steps:[/bold]")
+        console.print(f"  • View:  [cyan]ai profile show {imported.name}[/cyan]")
+        console.print(f"  • Use:   [cyan]ai use {imported.name}[/cyan]")
 
 
 @profile.command(name="templates")
@@ -913,18 +936,70 @@ def status(profile: str) -> None:
 @cli.command()
 @click.option("--output", help="Backup file path")
 def backup(output: str) -> None:
-    """Backup aidev configuration"""
-    # TODO: Implement backup
-    output_path = output or "aidev-backup.tar.gz"
-    console.print(f"[green]✓[/green] Backed up to {output_path}")
+    """Create backup of aidev configuration
+
+    \b
+    Examples:
+      # Auto-generate backup filename
+      ai backup
+
+      # Custom output path
+      ai backup --output my-backup.tar.gz
+    """
+    output_path = Path(output) if output else None
+    backup_manager.create_backup(output_path)
 
 
 @cli.command()
 @click.argument("backup_file")
-def restore(backup_file: str) -> None:
-    """Restore aidev configuration from backup"""
-    # TODO: Implement restore
-    console.print(f"[cyan]Restoring from {backup_file}[/cyan]")
+@click.option("--force", is_flag=True, help="Force restore without confirmation")
+def restore(backup_file: str, force: bool) -> None:
+    """Restore aidev configuration from backup
+
+    \b
+    Examples:
+      # Restore with confirmation
+      ai restore aidev-backup-macbook-20231206.tar.gz
+
+      # Force restore without prompting
+      ai restore backup.tar.gz --force
+    """
+    backup_path = Path(backup_file)
+    backup_manager.restore_backup(backup_path, force=force)
+
+
+@cli.group(name="config-share")
+def config_share() -> None:
+    """Share configurations with team (export/import without secrets)"""
+    pass
+
+
+@config_share.command(name="export")
+@click.option("--output", required=True, help="Output file path")
+def config_export(output: str) -> None:
+    """Export configuration for sharing (without secrets)
+
+    \b
+    Examples:
+      # Export for team sharing
+      ai config-share export --output team-config.json
+    """
+    output_path = Path(output)
+    backup_manager.export_config(output_path)
+
+
+@config_share.command(name="import")
+@click.argument("config_file")
+def config_import(config_file: str) -> None:
+    """Import shared configuration
+
+    \b
+    Examples:
+      # Import team configuration
+      ai config-share import team-config.json
+    """
+    config_path = Path(config_file)
+    backup_manager.import_config(config_path)
 
 
 def main() -> None:
