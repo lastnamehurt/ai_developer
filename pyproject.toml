@@ -30,6 +30,7 @@ dependencies = [
     "pydantic-settings>=2.1.0",
     "toml>=0.10.2",
     "requests>=2.31.0",
+    "textual>=0.50.0",
 ]
 
 [project.optional-dependencies]

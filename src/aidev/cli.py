@@ -201,10 +201,18 @@ def init(profile: str) -> None:
     console.print("  ai gemini    # Launch Gemini Code Assist")
 
 
-@cli.group()
-def config() -> None:
-    """Manage aidev configuration"""
-    pass
+@cli.group(invoke_without_command=True)
+@click.pass_context
+def config(ctx: click.Context) -> None:
+    """Manage aidev configuration; run without subcommand to launch TUI."""
+    if ctx.invoked_subcommand is None:
+        try:
+            from aidev.tui_config import ProfileConfigApp
+        except Exception as exc:  # pragma: no cover - defensive
+            console.print(f"[red]Failed to launch config TUI: {exc}[/red]")
+            return
+        app = ProfileConfigApp(config_manager, profile_manager, mcp_manager)
+        app.run()
 
 
 @config.command(name="set")
