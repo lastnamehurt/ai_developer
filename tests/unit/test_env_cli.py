@@ -36,11 +36,9 @@ def test_env_list_masks_and_scopes(tmp_path, monkeypatch):
 
     # Inject config_manager into cli module
     monkeypatch.setattr("aidev.cli.config_manager", cm)
+    monkeypatch.chdir(project_dir)
     runner = CliRunner()
-    with runner.isolated_filesystem():
-        # move into project dir to ensure Path.cwd() resolves correctly
-        Path(project_dir).mkdir(parents=True, exist_ok=True)
-        result = runner.invoke(env_list, ["--project"], env={"PWD": str(project_dir)})
+    result = runner.invoke(env_list, ["--project"])
     assert result.exit_code == 0
     assert "***" in result.output
     assert "project" in result.output
