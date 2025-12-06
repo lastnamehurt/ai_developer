@@ -1,14 +1,18 @@
 """
 MCP server management and registry
 """
-import requests
+import os
 from pathlib import Path
 from typing import Optional
+
+import requests
+
 from aidev.constants import (
     MCP_SERVERS_DIR,
     CUSTOM_MCP_DIR,
     DEFAULT_MCP_REGISTRY,
     CACHE_DIR,
+    CONFIGS_DIR,
 )
 from aidev.models import MCPServerRegistry
 from aidev.utils import load_json, save_json, console, run_command
@@ -22,8 +26,9 @@ class MCPManager:
         self.mcp_servers_dir = MCP_SERVERS_DIR
         self.custom_mcp_dir = CUSTOM_MCP_DIR
         self.cache_dir = CACHE_DIR
-        self.registry_url = DEFAULT_MCP_REGISTRY
+        self.registry_url = os.getenv("AIDEV_MCP_REGISTRY", DEFAULT_MCP_REGISTRY)
         self.registry_cache = self.cache_dir / "mcp-registry.json"
+        self.fallback_registry = CONFIGS_DIR.parent / "examples" / "mcp-registry.json"
 
     def list_installed(self) -> list[str]:
         """
@@ -115,7 +120,19 @@ class MCPManager:
 
             return [MCPServerRegistry(**item) for item in data]
         except Exception as e:
-            console.print(f"[red]Error fetching registry: {e}[/red]")
+            console.print(f"[yellow]Registry fetch failed: {e} (using cache/fallback if available)[/yellow]")
+            cached = load_json(self.registry_cache, default=[])
+            if cached:
+                try:
+                    return [MCPServerRegistry(**item) for item in cached]
+                except Exception:
+                    pass
+            if self.fallback_registry.exists():
+                fallback = load_json(self.fallback_registry, default=[])
+                try:
+                    return [MCPServerRegistry(**item) for item in fallback]
+                except Exception:
+                    pass
             return []
 
     def search_registry(self, query: str) -> list[MCPServerRegistry]:
