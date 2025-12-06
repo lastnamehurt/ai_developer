@@ -17,6 +17,7 @@ from aidev.mcp_config_generator import MCPConfigGenerator
 from aidev.quickstart import QuickstartRunner
 from aidev.backup import BackupManager
 from aidev.tutorial import Tutorial
+from aidev.review import review_paths, staged_files, tracked_files
 from aidev.utils import load_json, save_json, load_env
 from aidev.errors import preflight
 
@@ -49,7 +50,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "AI Tools",
-            "commands": ["cursor", "claude", "codex", "gemini", "tool"],
+            "commands": ["cursor", "claude", "codex", "gemini", "tool", "review"],
         },
         {
             "name": "Utilities",
@@ -551,6 +552,62 @@ def tool(tool_name: str, profile: str, args: tuple) -> None:
     # TODO: Implement generic tool launching
     profile_name = profile or "default"
     console.print(f"[cyan]Launching {tool_name} with profile: {profile_name}[/cyan]")
+
+@cli.command()
+@click.argument("files", nargs=-1, type=click.Path(exists=True))
+@click.option("--all", "all_files", is_flag=True, help="Review all tracked files.")
+@click.option("--staged", is_flag=True, help="Review staged files.")
+@click.option("--provider", type=click.Choice(["heuristic", "external", "ollama"]), help="Choose review provider")
+@click.option(
+    "--review-config",
+    type=click.Path(exists=True),
+    help="Path to review config (default: ~/.aidev/review.json).",
+)
+def review(files: tuple[str], all_files: bool, staged: bool, provider: str, review_config: str) -> None:
+    """Run a lightweight local code review (heuristics by default; external if configured)."""
+    target_paths: list[Path] = []
+    if files:
+        target_paths = [Path(f) for f in files]
+    elif staged:
+        target_paths = staged_files()
+        if not target_paths:
+            console.print("[yellow]No staged files to review.[/yellow]")
+            return
+    elif all_files:
+        target_paths = tracked_files()
+        if not target_paths:
+            console.print("[yellow]No tracked files to review.[/yellow]")
+            return
+    else:
+        # Default to staged if nothing specified
+        target_paths = staged_files()
+        if not target_paths:
+            console.print("[yellow]No staged files to review. Use --all or pass files.[/yellow]")
+            return
+
+    from aidev.review import load_review_config, external_review, ReviewConfig, ollama_review
+
+    cfg: ReviewConfig = load_review_config(Path(review_config)) if review_config else load_review_config()
+    if provider:
+        cfg.provider = provider
+
+    if cfg.provider == "external":
+        if not cfg.command:
+            console.print("[red]External reviewer selected but no command configured (review.json -> command).[/red]")
+            return
+        console.print(f"[cyan]Using external reviewer: {' '.join(cfg.command)}[/cyan]")
+        comments = external_review(target_paths, cfg.command)
+    elif cfg.provider == "ollama":
+        console.print(f"[cyan]Using ollama reviewer: model={cfg.ollama_model}[/cyan]")
+        comments = ollama_review(target_paths, cfg.ollama_model, cfg.ollama_prompt)
+    else:
+        comments = review_paths(target_paths)
+    if comments:
+        console.print("\n[bold red]Review Findings:[/bold red]")
+        for c in comments:
+            console.print(f"  [yellow]{c.file_path}:{c.line}[/yellow] [{c.severity}] {c.message}")
+    else:
+        console.print("\n[bold green]✓ No findings.[/bold green]")
 
 
 # ============================================================================
