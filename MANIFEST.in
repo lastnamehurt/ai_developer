@@ -1,6 +1,5 @@
-# Include MCP server configurations
-recursive-include configs *.json
-recursive-include configs *.md
+# Include MCP server configurations (now under package)
+recursive-include src/aidev/configs *.json *.md
 
 # Include documentation
 include README.md
