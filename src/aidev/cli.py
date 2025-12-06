@@ -674,6 +674,71 @@ def profile_import(file: str) -> None:
     console.print(f"[green]✓[/green] Imported profile from {file}")
 
 
+@profile.command(name="templates")
+@click.argument("template_name", required=False)
+@click.argument("profile_name", required=False)
+def profile_templates(template_name: str, profile_name: str) -> None:
+    """Browse and create profiles from pre-built templates
+
+    \b
+    Examples:
+      # List all templates
+      ai profile templates
+
+      # Create profile from template
+      ai profile templates nextjs-fullstack my-project
+      ai profile templates django-api backend-api
+    """
+    # If no arguments, list all templates
+    if not template_name:
+        templates = profile_manager.get_profile_templates()
+
+        table = Table(title="Profile Templates", show_header=True)
+        table.add_column("Template", style="cyan")
+        table.add_column("Description", style="white")
+        table.add_column("Base", style="yellow")
+        table.add_column("Tags", style="dim")
+
+        for template in templates:
+            tags = ", ".join(template["tags"][:3])  # Show first 3 tags
+            if len(template["tags"]) > 3:
+                tags += "..."
+            table.add_row(
+                template["name"],
+                template["description"],
+                template["base"],
+                tags,
+            )
+
+        console.print(table)
+        console.print("\n[bold]Usage:[/bold]")
+        console.print("  ai profile templates <template-name> <new-profile-name>")
+        console.print("\n[bold]Example:[/bold]")
+        console.print("  ai profile templates nextjs-fullstack my-project")
+        return
+
+    # Create profile from template
+    if not profile_name:
+        console.print("[red]Error: Please provide a profile name[/red]")
+        console.print("Usage: ai profile templates <template-name> <new-profile-name>")
+        return
+
+    created = profile_manager.create_from_template(template_name, profile_name)
+
+    if created:
+        # Show what was created
+        console.print(f"\n[bold]Created Profile:[/bold] [cyan]{profile_name}[/cyan]")
+        console.print(f"[dim]Template:[/dim] {template_name}")
+        console.print(f"[dim]Description:[/dim] {created.description}")
+        console.print(f"[dim]MCP Servers:[/dim] {len(created.mcp_servers)} configured")
+
+        # Suggest next steps
+        console.print(f"\n[bold]Next steps:[/bold]")
+        console.print(f"  • View:  [cyan]ai profile show {profile_name}[/cyan]")
+        console.print(f"  • Edit:  [cyan]ai config[/cyan] (then select '{profile_name}')")
+        console.print(f"  • Use:   [cyan]ai use {profile_name}[/cyan]")
+
+
 # ============================================================================
 # MCP Server Management Commands
 # ============================================================================

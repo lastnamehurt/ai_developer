@@ -424,3 +424,104 @@ class ProfileManager:
                 extends="web",
             ),
         ]
+
+    def get_profile_templates(self) -> list[dict]:
+        """
+        Get pre-built profile templates for common tech stacks
+
+        Returns:
+            List of template dictionaries with name, description, base, and servers
+        """
+        return [
+            {
+                "name": "nextjs-fullstack",
+                "description": "Next.js + PostgreSQL + Redis full-stack app",
+                "base": "web",
+                "mcp_servers": ["filesystem", "git", "github", "postgres", "redis", "memory-bank"],
+                "tags": ["web", "javascript", "typescript", "nextjs", "database"],
+            },
+            {
+                "name": "django-api",
+                "description": "Django REST API + PostgreSQL + Redis",
+                "base": "web",
+                "mcp_servers": ["filesystem", "git", "github", "postgres", "redis", "memory-bank"],
+                "tags": ["web", "python", "django", "api", "database"],
+            },
+            {
+                "name": "react-native",
+                "description": "React Native mobile app development",
+                "base": "web",
+                "mcp_servers": ["filesystem", "git", "github", "memory-bank"],
+                "tags": ["mobile", "javascript", "typescript", "react"],
+            },
+            {
+                "name": "microservices",
+                "description": "Microservices with Docker + Kubernetes",
+                "base": "infra",
+                "mcp_servers": ["filesystem", "git", "github", "docker", "k8s", "memory-bank"],
+                "tags": ["infra", "docker", "kubernetes", "microservices"],
+            },
+            {
+                "name": "data-science",
+                "description": "Data science and ML workflows",
+                "base": "web",
+                "mcp_servers": ["filesystem", "git", "github", "postgres", "memory-bank"],
+                "tags": ["data", "python", "ml", "jupyter"],
+            },
+            {
+                "name": "monorepo",
+                "description": "Monorepo with Turborepo/Nx + multiple services",
+                "base": "web",
+                "mcp_servers": ["filesystem", "git", "github", "postgres", "redis", "memory-bank"],
+                "tags": ["web", "monorepo", "turborepo", "nx"],
+            },
+        ]
+
+    def create_from_template(self, template_name: str, profile_name: str) -> Optional[Profile]:
+        """
+        Create a new profile from a template
+
+        Args:
+            template_name: Template to use
+            profile_name: Name for the new profile
+
+        Returns:
+            Created profile or None if template not found
+        """
+        # Check if profile already exists
+        if self.get_profile_path(profile_name):
+            console.print(f"[red]Profile '{profile_name}' already exists[/red]")
+            return None
+
+        # Find template
+        templates = self.get_profile_templates()
+        template = next((t for t in templates if t["name"] == template_name), None)
+
+        if not template:
+            console.print(f"[red]Template '{template_name}' not found[/red]")
+            return None
+
+        # Create profile from template
+        profile_data = {
+            "name": profile_name,
+            "description": f"{template['description']} (from template: {template_name})",
+            "extends": template["base"],
+            "tags": template["tags"],
+            "mcp_servers": [
+                MCPServerConfig(name=server, enabled=True)
+                for server in template["mcp_servers"]
+            ],
+            "environment": {},
+            "tools": {},
+        }
+
+        try:
+            profile = Profile(**profile_data)
+            self.save_profile(profile, custom=True)
+            console.print(
+                f"[green]✓[/green] Created profile '[cyan]{profile_name}[/cyan]' from template '[cyan]{template_name}[/cyan]'"
+            )
+            return profile
+        except Exception as e:
+            console.print(f"[red]Error creating profile from template: {e}[/red]")
+            return None
