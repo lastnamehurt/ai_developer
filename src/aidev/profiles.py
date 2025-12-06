@@ -258,6 +258,72 @@ class ProfileManager:
             console.print(f"[red]Error importing profile: {e}[/red]")
             return None
 
+    def diff_profiles(self, profile1_name: str, profile2_name: str) -> Optional[dict]:
+        """
+        Compare two profiles and show differences
+
+        Args:
+            profile1_name: First profile name
+            profile2_name: Second profile name
+
+        Returns:
+            Dictionary containing differences or None if profiles not found
+        """
+        # Load both profiles (fully resolved)
+        profile1 = self.load_profile(profile1_name)
+        profile2 = self.load_profile(profile2_name)
+
+        if not profile1 or not profile2:
+            return None
+
+        # Compare MCP servers
+        servers1 = {s.name for s in profile1.mcp_servers}
+        servers2 = {s.name for s in profile2.mcp_servers}
+
+        mcp_diff = {
+            "added": sorted(servers2 - servers1),  # In profile2 only
+            "removed": sorted(servers1 - servers2),  # In profile1 only
+            "common": sorted(servers1 & servers2),  # In both
+        }
+
+        # Compare environment variables
+        env1 = set(profile1.environment.keys())
+        env2 = set(profile2.environment.keys())
+
+        # Check for changed values
+        changed_env = {}
+        for key in env1 & env2:
+            if profile1.environment[key] != profile2.environment[key]:
+                changed_env[key] = {
+                    "from": profile1.environment[key],
+                    "to": profile2.environment[key],
+                }
+
+        env_diff = {
+            "added": sorted(env2 - env1),
+            "removed": sorted(env1 - env2),
+            "common": sorted(env1 & env2),
+            "changed": changed_env,
+        }
+
+        # Compare tags
+        tags1 = set(profile1.tags)
+        tags2 = set(profile2.tags)
+
+        tags_diff = {
+            "added": sorted(tags2 - tags1),
+            "removed": sorted(tags1 - tags2),
+            "common": sorted(tags1 & tags2),
+        }
+
+        return {
+            "profile1": profile1_name,
+            "profile2": profile2_name,
+            "mcp_servers": mcp_diff,
+            "environment": env_diff,
+            "tags": tags_diff,
+        }
+
     def _merge_profiles(self, base: Profile, override: Profile) -> Profile:
         """
         Merge two profiles (base + overrides)
