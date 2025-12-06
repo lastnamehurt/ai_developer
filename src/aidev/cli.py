@@ -441,9 +441,11 @@ def mcp_search(query: str, refresh: bool) -> None:
     table.add_column("Description", style="white")
     table.add_column("Version", style="green")
     table.add_column("Tags", style="yellow")
+    table.add_column("Profiles", style="magenta")
     for entry in registry:
         tags = ", ".join(entry.tags) if entry.tags else "-"
-        table.add_row(entry.name, entry.description, entry.version, tags)
+        profiles = ", ".join(entry.compatible_profiles) if entry.compatible_profiles else "-"
+        table.add_row(entry.name, entry.description, entry.version, tags, profiles)
     console.print(table)
 
 
@@ -468,8 +470,20 @@ def mcp_install(name: str, profile: str) -> None:
 @click.argument("name")
 def mcp_remove(name: str) -> None:
     """Remove an MCP server."""
-    if mcp_manager.remove_server(name):
-        console.print(f"[yellow]Removed MCP server: {name}[/yellow]")
+    removed = mcp_manager.remove_server(name)
+    if not removed:
+        return
+    # Remove from custom profiles if present
+    for profile_name in profile_manager.list_profiles():
+        profile = profile_manager.load_profile(profile_name)
+        if not profile:
+            continue
+        before = len(profile.mcp_servers)
+        profile.mcp_servers = [s for s in profile.mcp_servers if s.name != name]
+        if len(profile.mcp_servers) != before:
+            profile_manager.save_profile(profile, custom=True)
+            console.print(f"[yellow]Removed '{name}' from profile '{profile_name}'[/yellow]")
+    console.print(f"[yellow]Removed MCP server: {name}[/yellow]")
 
 
 @mcp.command(name="test")
