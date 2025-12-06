@@ -125,6 +125,11 @@ ai env list
 ai env validate
 # ✓ All required keys present
 # ⚠ OPENAI_API_KEY set but not used
+
+# Encrypt sensitive values (stored as ENC:: in ~/.aidev/.env, auto-decrypted on use)
+ai env set --encrypt GITHUB_TOKEN ghp_xxx
+# Ensure key exists/unlock
+ai env unlock
 ```
 
 ### 4. MCP Server Management
@@ -288,6 +293,8 @@ ai doctor  # Verify
 git clone https://github.com/lastnamehurt/ai_developer.git
 cd ai_developer
 pip install -e ".[dev]"
+# For encrypted env support:
+# pip install cryptography
 ```
 
 ### Testing

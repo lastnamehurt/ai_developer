@@ -32,6 +32,7 @@ dependencies = [
     "toml>=0.10.2",
     "requests>=2.31.0",
     "textual>=0.50.0",
+    "cryptography>=41.0.0",
 ]
 
 [project.optional-dependencies]
