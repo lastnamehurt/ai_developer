@@ -1,7 +1,7 @@
 {
   "cursor": {
     "name": "Cursor",
-    "binary": "cursor",
+    "binary": "cursor-agent",
     "app_name": "Cursor",
     "config_path": "~/.cursor/mcp.json",
     "install_url": "https://cursor.sh"
