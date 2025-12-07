@@ -19,7 +19,17 @@
       "name": "simulator",
       "enabled": true,
       "config": {
-        "platforms": ["ios", "android"]
+        "platforms": [
+          "ios",
+          "android"
+        ]
+      }
+    },
+    {
+      "name": "memory",
+      "enabled": true,
+      "config": {
+        "MEMORY_FILE_PATH": "~/.aidev/shared_memory.jsonl"
       }
     }
   ],

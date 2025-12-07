@@ -28,3 +28,4 @@ def test_init_directories_sets_default_profile(tmp_path):
     cm.init_directories()
     env_vars = cm.get_env()
     assert env_vars.get("AIDEV_DEFAULT_PROFILE") == "custom"
+

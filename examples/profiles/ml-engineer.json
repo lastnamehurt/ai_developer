@@ -15,7 +15,10 @@
       "name": "jupyter",
       "enabled": true,
       "config": {
-        "kernels": ["python3", "julia"]
+        "kernels": [
+          "python3",
+          "julia"
+        ]
       }
     },
     {
@@ -26,12 +29,22 @@
       "name": "s3",
       "enabled": true,
       "config": {
-        "buckets": ["ml-datasets", "model-artifacts"]
+        "buckets": [
+          "ml-datasets",
+          "model-artifacts"
+        ]
       }
     },
     {
       "name": "mlflow",
       "enabled": true
+    },
+    {
+      "name": "memory",
+      "enabled": true,
+      "config": {
+        "MEMORY_FILE_PATH": "~/.aidev/shared_memory.jsonl"
+      }
     }
   ],
   "environment": {

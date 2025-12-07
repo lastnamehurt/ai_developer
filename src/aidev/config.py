@@ -20,9 +20,15 @@ from aidev.constants import (
     TOOLS_CONFIG,
     SUPPORTED_TOOLS,
     ENGINEERING_WORKFLOW_TEMPLATE,
+    PROJECT_CONFIG_DIR,
+    PROJECT_ENV_FILE,
+    PROJECT_PROFILE_FILE,
 )
 from aidev.utils import ensure_dir, load_json, save_json, load_env, save_env
 from aidev.secrets import decrypt_value, encrypt_value
+
+# Alias used by tests and to allow patching during runtime
+GLOBAL_ENV_FILE = ENV_FILE
 
 # Minimal MCP config used when no global config exists
 DEFAULT_PROJECT_MCP_CONFIG = {
@@ -58,8 +64,10 @@ class ConfigManager:
         self.plugins_dir = PLUGINS_DIR
         self.cache_dir = CACHE_DIR
         self.logs_dir = LOGS_DIR
-        self.env_file = ENV_FILE
+        self.env_file = GLOBAL_ENV_FILE
         self.tools_config = TOOLS_CONFIG
+        # Allow tests (and callers) to override the notion of "current directory"
+        self._current_dir: Path = Path.cwd()
 
     def init_directories(self) -> None:
         """Initialize all required directories"""
@@ -92,10 +100,10 @@ class ConfigManager:
     def get_env(self, project_dir: Optional[Path] = None) -> dict[str, str]:
         """Get merged environment variables (global, overridden by project), decrypting secrets."""
         global_env = load_env(self.env_file)
-        if project_dir is None:
-            project_dir = Path.cwd()
-        project_env_path = project_dir / ".aidev" / ".env"
-        project_env = load_env(project_env_path) if project_env_path.exists() else {}
+
+        config_path = self.get_project_config_path(project_dir)
+        project_env_path = config_path / PROJECT_ENV_FILE if config_path else None
+        project_env = load_env(project_env_path) if project_env_path and project_env_path.exists() else {}
         merged = {**global_env, **project_env}
 
         # Decrypt any encrypted values
@@ -110,9 +118,11 @@ class ConfigManager:
     ) -> None:
         """Set an environment variable (global by default, project if requested)."""
         if project:
-            if project_dir is None:
-                project_dir = Path.cwd()
-            env_path = project_dir / ".aidev" / ".env"
+            config_path = self.get_project_config_path(project_dir)
+            if config_path is None:
+                base_dir = project_dir or self._current_dir
+                config_path = base_dir / PROJECT_CONFIG_DIR
+            env_path = config_path / PROJECT_ENV_FILE
         else:
             env_path = self.env_file
         env_vars = load_env(env_path)
@@ -137,38 +147,47 @@ class ConfigManager:
         Returns:
             Path to project config directory or None if not initialized
         """
-        if project_dir is None:
-            project_dir = Path.cwd()
-
-        config_path = project_dir / ".aidev"
+        base_dir = project_dir or self._current_dir
+        config_path = base_dir if base_dir.name == PROJECT_CONFIG_DIR else base_dir / PROJECT_CONFIG_DIR
         return config_path if config_path.exists() else None
 
-    def init_project(self, project_dir: Optional[Path] = None, profile: str = "default") -> Path:
+    def get_current_profile(self, project_dir: Optional[Path] = None) -> str:
+        """Resolve the active profile, preferring project config then env fallback."""
+        config_path = self.get_project_config_path(project_dir)
+        if config_path:
+            profile_file = config_path / PROJECT_PROFILE_FILE
+            if profile_file.exists():
+                return profile_file.read_text().strip() or "default"
+        return os.environ.get("AIDEV_DEFAULT_PROFILE", "default")
+
+    def init_project(
+        self, project_dir: Optional[Path] = None, profile: str = "default", profile_name: Optional[str] = None
+    ) -> Path:
         """
         Initialize aidev in a project directory
 
         Args:
             project_dir: Project directory (defaults to current directory)
             profile: Default profile to use
+            profile_name: Optional alias for profile (for backward compatibility in tests)
 
         Returns:
             Path to created config directory
         """
-        if project_dir is None:
-            project_dir = Path.cwd()
+        base_dir = project_dir or self._current_dir or Path.cwd()
 
-        config_path = project_dir / ".aidev"
+        config_path = base_dir / PROJECT_CONFIG_DIR
         ensure_dir(config_path)
 
         # Create config.json
         config_file = config_path / "config.json"
         if not config_file.exists():
-            save_json(config_file, {"profile": profile, "environment": {}, "mcp_overrides": {}})
+            save_json(config_file, {"profile": profile_name or profile, "environment": {}, "mcp_overrides": {}})
 
         # Create profile file
         profile_file = config_path / "profile"
         if not profile_file.exists():
-            profile_file.write_text(profile)
+            profile_file.write_text(profile_name or profile)
 
         # Create .env file
         env_file = config_path / ".env"
@@ -176,7 +195,7 @@ class ConfigManager:
             env_file.touch()
 
         # Set up project-local tool config folders for legacy compatibility
-        self._init_project_tool_configs(project_dir)
+        self._init_project_tool_configs(base_dir)
 
         return config_path
 
