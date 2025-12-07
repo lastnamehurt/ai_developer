@@ -1,3 +1,21 @@
+### **Clarification: MCP Registry vs. Built-in Server Configurations**
+
+There are two distinct mechanisms for discovering and configuring MCP servers in `aidev`:
+
+1.  **The MCP Registry (for the `ai mcp browse` TUI)**
+    -   **Source File:** The master list for the interactive TUI is `examples/mcp-registry.json`.
+    -   **Purpose:** This file acts as a browsable "app store" for MCPs. It contains rich metadata like author, repository URL, and installation commands.
+    -   **Behavior:** The application is designed to fetch this list from a central URL. The local `examples/mcp-registry.json` file serves as the **initial default and offline fallback** for the TUI. The modifications we have been making are to this file.
+
+2.  **Built-in Server Configurations (this directory)**
+    -   **Source Files:** The individual `*.json` files in this `src/aidev/configs/mcp-servers/` directory.
+    -   **Purpose:** These files represent the pre-packaged, **runtime configurations** for a curated set of core servers that come bundled with `aidev`.
+    -   **Behavior:** When you run `ai setup`, these files are copied to your local `~/.aidev/config/mcp-servers/` directory, so they are ready to be used immediately by a profile, without needing to be installed via the TUI.
+
+In short, the **Registry (`examples/`)** is for discovering and installing new servers, while the **Built-in Configs (`configs/`)** are for providing a set of core, ready-to-use servers out of the box.
+
+---
+
 # aidev Configuration Files
 
 This directory contains the built-in configuration files for aidev, stored as JSON for easy editing and management.
@@ -160,10 +178,10 @@ All servers in this directory are production-ready and tested:
 
 To contribute a new MCP server configuration:
 
-1. Test the server locally
-2. Create the JSON file following the format
-3. Add documentation to the description field
-4. Submit a PR with the new config file
+11. Test the server locally
+12. Create the JSON file following the format
+13. Add documentation to the description field
+14. Submit a PR with the new config file
 
 ---
 
