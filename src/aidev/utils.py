@@ -113,7 +113,7 @@ def save_env(path: Path, env_vars: dict[str, str]) -> None:
     ensure_dir(path.parent)
     with open(path, "w") as f:
         for key, value in sorted(env_vars.items()):
-            f.write(f'{key}="{value}"\n')
+            f.write(f"{key}={value}\n")
 
 
 def expand_env_vars(text: str, env: dict[str, str]) -> str:
