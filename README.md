@@ -2,358 +2,290 @@
 
 **One command to configure all your AI development tools across any project or machine.**
 
-Stop managing scattered API keys, MCP server configs, and tool setups manually. Use profiles to instantly switch contexts and launch AI tools with full configuration.
+## Introduction
 
-## The Problem
+Managing AI development tools (like Claude Code, Cursor, Codex, or Gemini) can be fragmented and time-consuming. From scattered API keys and manual configuration of MCP servers to lengthy setup times for new machines and lack of team-wide sharing, these challenges hinder productivity.
 
-Managing AI development tools (Claude Code, Cursor, Codex, Gemini) is painful:
-- 🔐 API keys scattered across multiple `.env` files
-- 🔧 MCP server configs manually edited per tool
-- 💻 30+ minutes setting up each new machine
-- 🔄 No way to share configurations with your team
+`aidev` simplifies this by providing a unified command-line interface to manage all your AI development environments. Use profiles to instantly switch contexts, centralize your secrets, and launch AI tools with full, consistent configurations.
 
-## The Solution
+## ✨ Features
 
-```bash
-# Auto-detect your project and configure everything
-ai quickstart
+*   **Smart Quickstart**: Automatically detects your project's tech stack and configures an optimal profile and MCP servers.
+*   **Profile System**: Define and switch between pre-configured or custom profiles tailored for different workflows (e.g., web dev, infrastructure, QA).
+*   **Environment Management**: Centralized, encrypted storage for API keys and other environment variables, with global and project-specific scopes.
+*   **MCP Server Management**: Discover, install, and manage custom AI backend (MCP) servers to extend `aidev`'s capabilities.
+*   **Tool Launcher**: Seamlessly launch integrated AI tools (Claude, Cursor, Codex, Gemini) with all relevant configurations injected automatically.
+*   **Interactive TUI**: A terminal user interface for visual configuration editing and management of profiles, environments, and MCP servers.
+*   **Health Checks**: Diagnose common setup issues with `ai doctor`, providing actionable fixes to keep your environment running smoothly.
+*   **Lightweight Code Review**: Perform quick, heuristic-based code reviews on staged, all tracked, or specified files directly from the CLI.
 
-# Switch profiles instantly
-ai use web          # Web development
-ai use infra        # Kubernetes + Docker
-ai use qa           # Testing workflows
+## 🚀 Quick Start
 
-# Launch tools with full context
-ai claude           # Launch with active profile + MCP servers + env vars
-ai claude --profile infra
-ai cursor --profile web
+Get `aidev` up and running in minutes.
 
-# Lightweight local code review (heuristics)
-ai review --staged     # Review staged files
-ai review --all        # Review all tracked files
-ai review app.py util.py
+### Installation
 
-# External reviewer options (e.g., Aider or Ollama)
-# Configure ~/.aidev/review.json for Ollama CodeLlama:
-# {
-#   "provider": "ollama",
-#   "ollama_model": "codellama",
-#   "ollama_prompt": "You are a staff-level code reviewer..."
-# }
-# Or for a custom external command:
-# { "provider": "external", "command": ["aider", "--model", "llama3"] }
-ai review --staged --provider ollama
-```
-
-## Quick Start
-
-### Installation (no virtualenv needed)
+The recommended way to install `aidev` is using `pipx` for isolated, system-wide access without virtual environment activation.
 
 ```bash
-# Recommended: pipx (isolated, no activation)
+# Recommended: Install with pipx (isolated, no venv activation needed)
 pipx install "git+https://github.com/lastnamehurt/ai_developer.git@main"
 
-# Or from source with pipx
-git clone https://github.com/lastnamehurt/ai_developer.git
-cd ai_developer && pipx install .
+# If you've cloned the repository and want to install from source:
+# git clone https://github.com/lastnamehurt/ai_developer.git
+# cd ai_developer && pipx install .
 
-# Fallback: system/user pip (no venv required)
-pip install "git+https://github.com/lastnamehurt/ai_developer.git@main"
+# Fallback: Install with pip (system or user scope)
+# pip install "git+https://github.com/lastnamehurt/ai_developer.git@main"
 ```
 
 ### First Run
 
-```bash
-# 1. Initial setup
-ai setup
+Follow these steps to set up `aidev` and configure your first project:
 
-# 2. Add your API keys (stored in ~/.aidev/.env)
-ai env set ANTHROPIC_API_KEY sk-ant-xxx
+1.  **Initialize `aidev`**:
+    ```bash
+    ai setup
+    ```
+
+2.  **Add your API keys**: Store sensitive credentials securely. `aidev` encrypts these in `~/.aidev/.env`.
+    ```bash
+    ai env set ANTHROPIC_API_KEY sk-ant-xxx
+    ai env set GITHUB_TOKEN ghp_xxx
+    # For encrypted storage:
+    ai env set --encrypt OPENAI_API_KEY sk-openai-xxx
+    ```
+
+3.  **Navigate to your project and auto-configure**:
+    ```bash
+    cd ~/my-nextjs-app
+    ai quickstart
+    # Output will show detected stack and recommended profile, e.g.:
+    # 🔍 Analyzing project...
+    # ✓ Detected: Next.js + PostgreSQL
+    # 💡 Recommended profile: web
+    # ✓ Configured MCP servers: filesystem, git, github, memory-bank
+    ```
+
+4.  **Launch your AI tool**: `aidev` will automatically inject the correct context.
+    ```bash
+    ai claude            # Launch Claude Code with your active profile
+    ai cursor --profile infra # Launch Cursor with a specific profile
+    ```
+
+## 📖 In-Depth Guides
+
+Explore `aidev`'s capabilities in more detail:
+
+### Profile Management
+
+`aidev` uses profiles to define collections of environment variables and MCP server configurations, allowing you to quickly switch between different development contexts.
+
+```bash
+ai profile list                 # Show all available profiles
+ai profile show web             # View details of a specific profile
+ai profile clone web my-web     # Create a custom profile based on an existing one
+ai profile diff web infra       # Compare two profiles
+ai use infra                    # Switch your active profile to 'infra'
+ai status                       # Display your current active profile and configured servers
+```
+
+### Environment Variables
+
+Manage all your secrets and configurations centrally.
+
+```bash
+# Global environment variable (available across all projects)
 ai env set GITHUB_TOKEN ghp_xxx
 
-# 3. Navigate to a project and auto-configure
-cd ~/my-nextjs-app
-ai quickstart
-# 🔍 Analyzing project...
-# ✓ Detected: Next.js + PostgreSQL
-# 💡 Recommended profile: web
-# ✓ Configured MCP servers: filesystem, git, github, memory-bank
-
-# 4. Launch your tool
-ai claude
-```
-
-## Core Features
-
-### 1. Smart Quickstart
-
-Auto-detect your stack and configure the right profile:
-
-```bash
-ai quickstart
-# Detects: package.json, tsconfig.json, docker-compose.yml
-# Recommends: web profile
-# Configures: filesystem, git, github, postgres MCP servers
-```
-
-**Supported detection:**
-- JavaScript/TypeScript (Next.js, React, Node)
-- Python (Django, FastAPI, Flask)
-- Docker & Kubernetes
-- Databases (PostgreSQL, MySQL, Redis)
-
-### 2. Profile System
-
-Pre-configured profiles for different workflows:
-
-| Profile | Use Case | MCP Servers |
-|---------|----------|-------------|
-| `web` | Web/API development | filesystem, git, github, memory-bank |
-| `qa` | Testing & quality assurance | filesystem, git, duckduckgo, memory-bank |
-| `infra` | Infrastructure & K8s | filesystem, git, gitlab, k8s, atlassian |
-| `default` | General development | Alias of `web` |
-
-**Profile commands:**
-```bash
-ai profile list                 # Show all profiles
-ai profile show web             # View profile details
-ai profile clone web my-web     # Clone and customize
-ai profile diff web infra       # Compare profiles
-ai use infra                    # Switch active profile
-ai status                       # Show current profile + servers
-```
-
-### 3. Environment Management
-
-Centralized secrets with global + project scope:
-
-```bash
-# Global (all projects)
-ai env set GITHUB_TOKEN ghp_xxx
-
-# Project-specific (overrides global)
+# Project-specific environment variable (overrides global if same name)
 ai env set DATABASE_URL postgres://localhost --project
 
-# List (auto-masks secrets)
-ai env list
-# Global:
-#   GITHUB_TOKEN: ghp-***xxx
-# Project:
-#   DATABASE_URL: postgres://***
-
-# Validate against profile requirements
-ai env validate
-# ✓ All required keys present
-# ⚠ OPENAI_API_KEY set but not used
-
-# Encrypt sensitive values (stored as ENC:: in ~/.aidev/.env, auto-decrypted on use)
-ai env set --encrypt GITHUB_TOKEN ghp_xxx
-# Ensure key exists/unlock
-ai env unlock
+ai env list                     # List configured environment variables (secrets are masked)
+ai env validate                 # Check for missing required variables for your active profile
+ai env unlock                   # Unlock encrypted variables for use
 ```
 
-### 4. MCP Server Management
+### MCP Server Management
 
-Discover, install, and manage MCP servers:
+MCP (Multi-Capability Platform) servers are `aidev`'s way of extending its reach to various tools and services.
 
 ```bash
-# Search the registry
-ai mcp search kubernetes
-# ⭐ kubernetes - Manage K8s clusters and deployments
-
-# Browse registry in a TUI
-ai mcp browse
-# Filter by tags, view details, and install directly
-
-# Install and auto-configure
-ai mcp install kubernetes
-# ✓ Installed kubernetes
-# 💡 Works great with 'infra' profile
-# Add to current profile? [Y/n]
-
-# Test connectivity
-ai mcp test kubernetes
-# ✓ kubernetes: Connected
-# ✓ Found 3 clusters
-
-# List installed
-ai mcp list
-# Installed MCP Servers:
-#   ✓ filesystem (built-in)
-#   ✓ git (built-in)
-#   ✓ kubernetes
+ai mcp search kubernetes        # Find MCP servers in the registry
+ai mcp browse                   # Launch a TUI to visually browse and install MCP servers
+ai mcp install kubernetes       # Install a new MCP server
+ai mcp test kubernetes          # Verify connectivity to an installed MCP server
+ai mcp list                     # List all installed MCP servers
 ```
 
-### 5. Tool Launcher
+### Tool Integration
 
-Launch AI tools with automatic config injection:
+`aidev` acts as a launcher, preparing the environment and configuration for your preferred AI development tools.
 
 ```bash
-ai cursor                       # Use active profile
-ai cursor --profile infra       # Override profile
+ai cursor                       # Launch Cursor using your active profile's configuration
 ai claude                       # Launch Claude Code
 ai codex                        # Launch Codex CLI
 ai gemini                       # Launch Gemini Code Assist
 ```
 
-**What happens behind the scenes:**
-1. Loads profile (e.g., `web`)
-2. Merges global + project env vars
-3. Generates tool-specific MCP config (`~/.cursor/mcp.json`, `~/.claude/mcp.json`)
-4. Validates required env vars are set
-5. Launches tool with full context
+### Interactive Configuration (TUI)
 
-### 6. Interactive TUI
-
-Visual configuration editor:
+For a visual way to manage your `aidev` setup, use the interactive TUI.
 
 ```bash
 ai config
-# Launches Textual TUI to:
+# Launches a Textual TUI to:
 # - Browse and toggle MCP servers
 # - Edit environment variables
 # - Switch profiles visually
-# - See live preview
+# - See live configuration previews
 ```
 
-### 7. Health Checks
+### System Health Checks
 
-Preflight validation with actionable fixes:
+Ensure `aidev` and its dependencies are correctly configured.
 
 ```bash
 ai doctor
-# ✓ aidev initialized
-# ✓ git binary found
-# ✗ ANTHROPIC_API_KEY not set
-#
-# Fix: ai env set ANTHROPIC_API_KEY sk-ant-xxx
-# Get key: https://console.anthropic.com/
+# Runs a series of checks and provides actionable advice for any issues found.
 ```
 
-## Advanced Usage
+### Lightweight Code Review
+
+Get instant feedback on your code using `aidev`'s built-in heuristic-based reviewer or external tools.
+
+```bash
+ai review --staged              # Review changes in your Git staging area
+ai review --all                 # Review all tracked files in your repository
+ai review app.py util.py        # Review specific files
+```
+You can also configure external reviewers (e.g., Aider, Ollama) in `~/.aidev/review.json`.
+
+## 🏗️ Advanced Usage
 
 ### Custom Profiles
 
+Extend `aidev` to fit your unique needs.
+
 ```bash
-# Clone and customize
-ai profile clone web my-fullstack
-ai profile clone web my-fullstack -m "git,github,postgres,redis"
+ai profile clone web my-fullstack           # Clone an existing profile to customize
+ai profile create mobile --extends web      # Create a new profile inheriting from 'web'
+# Edit your custom profile files in ~/.aidev/config/profiles/custom/
 
-# Create from scratch
-ai profile create mobile --extends web
-# Edit: ~/.aidev/config/profiles/custom/mobile.json
-
-# Share with team
-ai profile export mobile --output mobile.json
-# Team imports:
-ai profile import mobile.json
+ai profile export my-profile --output my-profile.json # Share your custom profile
+ai profile import shared-profile.json       # Import profiles from your team
 ```
 
 ### Project Workflow
 
+Initialize and manage `aidev` configurations on a per-project basis.
+
 ```bash
-# Initialize new project
 cd ~/new-project
-ai init --profile web
+ai init --profile web                       # Initialize a new project with a specific profile
 
-# Switch profiles per project
-ai use qa        # For testing
-ai use infra     # For deployment work
+# Switch profiles based on current task
+ai use qa                                   # For testing workflows
+ai use infra                                # For deployment work
 
-# Check current config
-ai status
-# Profile: qa
-# MCP Servers: ✓ filesystem ✓ git ✓ duckduckgo ✓ memory-bank
-# Environment: ✓ ANTHROPIC_API_KEY
+ai status                                   # Quickly see the active profile and environment for the current project
 ```
 
 ### Machine Migration
 
-```bash
-# On old machine
-ai backup --output aidev-backup.tar.gz
+Easily migrate your `aidev` configuration between machines.
 
-# On new machine
-curl -fsSL https://install.aidev.sh | bash
-ai restore aidev-backup.tar.gz
-ai doctor  # Verify
+```bash
+# On your old machine:
+ai backup --output aidev-config-backup.tar.gz
+
+# On your new machine (after aidev installation):
+ai restore aidev-config-backup.tar.gz
+ai doctor # Verify everything is working
 ```
 
-## Architecture
+## 🏛️ Architecture
+
+`aidev` stores its core configuration and user data in a structured directory:
 
 ```
 ~/.aidev/
 ├── config/
-│   ├── profiles/          # Built-in profiles
-│   │   ├── web.json
-│   │   ├── qa.json
-│   │   └── infra.json
-│   └── profiles/custom/   # Your custom profiles
-├── .env                   # Global environment variables
-└── cache/                 # MCP registry cache
+│   ├── profiles/          # Built-in profile definitions
+│   └── profiles/custom/   # Your custom profile definitions
+├── .env                   # Global environment variables (encrypted)
+└── cache/                 # Cache for MCP registry data
 
-.aidev/                    # Per-project
-├── config.json            # Project settings
-├── .env                   # Project-specific env vars
-└── profile                # Active profile name
+# Per-project configuration is stored in a .aidev/ directory within your project:
+./.aidev/
+├── config.json            # Project-specific settings
+├── .env                   # Project-specific environment variables (encrypted)
+└── profile                # Active profile name for this project
 ```
+For a detailed understanding of `aidev`'s internal workings, including flow diagrams, please refer to the `docs/architecture.md` file.
 
-**How it works:**
-- Profiles define MCP servers + env requirements
-- `ai quickstart` detects stack and recommends profile
-- `ai cursor` generates tool config from active profile
-- Global env + project env merge (project wins)
-- See `docs/architecture.md` for flow diagrams
-
-## Development
+## 🧑‍💻 Development
 
 ### Setup
+
+To contribute to `aidev`, clone the repository and set up your development environment:
 
 ```bash
 git clone https://github.com/lastnamehurt/ai_developer.git
 cd ai_developer
 pip install -e ".[dev]"
-# For encrypted env support:
+# For encrypted environment variable support (if issues arise):
 # pip install cryptography
 ```
 
 ### Testing
 
+Run tests to ensure code integrity:
+
 ```bash
-pytest                              # All tests
-pytest tests/unit                   # Unit tests only
-pytest --cov=aidev --cov-report=html  # With coverage
+pytest                              # Run all tests
+pytest tests/unit                   # Run only unit tests
+pytest --cov=aidev --cov-report=html  # Run tests with code coverage analysis
 ```
 
 ### Code Quality
 
+Maintain high code quality standards:
+
 ```bash
-black src/ tests/      # Format
-ruff src/ tests/       # Lint
-mypy src/              # Type check
+black src/ tests/      # Format code automatically
+ruff src/ tests/       # Lint code for common issues
+mypy src/              # Perform static type checking
 ```
 
-## Contributing
+### Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/my-feature`)
-3. Make changes and add tests
-4. Run quality checks (`black`, `ruff`, `mypy`, `pytest`)
-5. Commit with descriptive messages
-6. Submit a pull request
+We welcome contributions! Please see our `CONTRIBUTING.md` for guidelines.
 
-## License
+1.  Fork the repository.
+2.  Create a feature branch (`git checkout -b feature/my-new-feature`).
+3.  Make your changes and add relevant tests.
+4.  Ensure all quality checks pass (`black`, `ruff`, `mypy`, `pytest`).
+5.  Commit your changes with descriptive messages.
+6.  Submit a pull request.
 
-MIT License - see [LICENSE](LICENSE) for details.
+## 🤝 Community & Support
 
-## Credits
+Have questions, ideas, or need assistance?
+Open an issue on our GitHub repository: [github.com/lastnamehurt/ai_developer/issues](https://github.com/lastnamehurt/ai_developer/issues)
 
-Built with:
-- [Click](https://click.palletsprojects.com/) + [Rich-Click](https://github.com/ewels/rich-click) - CLI framework
-- [Rich](https://rich.readthedocs.io/) - Terminal formatting
-- [Textual](https://textual.textualize.io/) - TUI framework
-- [Pydantic](https://docs.pydantic.dev/) - Data validation
+## 📄 License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for full details.
+
+## 💖 Credits
+
+`aidev` is built upon the excellent work of these open-source projects:
+
+*   [Click](https://click.palletsprojects.com/) + [Rich-Click](https://github.com/ewels/rich-click) - Powerful CLI framework
+*   [Rich](https://rich.readthedocs.io/) - Stunning terminal formatting and display
+*   [Textual](https://textual.textualize.io/) - Modern TUI application framework
+*   [Pydantic](https://docs.pydantic.dev/) - Robust data validation and settings management
 
 ---
-
-**Questions?** Open an issue at [github.com/lastnamehurt/ai_developer/issues](https://github.com/lastnamehurt/ai_developer/issues)
