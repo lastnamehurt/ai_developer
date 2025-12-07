@@ -232,6 +232,21 @@ else
     echo -e "${GREEN}✓${NC} Gemini settings detected at $GEMINI_SETTINGS"
 fi
 
+# Install GitHub CLI (gh)
+echo
+echo -e "${CYAN}Installing GitHub CLI (gh)...${NC}"
+if ! command -v brew &> /dev/null; then
+    echo -e "${YELLOW}! Homebrew not found; skipping gh install. Please install Homebrew first.${NC}"
+elif command -v gh &> /dev/null; then
+    echo -e "${GREEN}✓${NC} gh is already installed."
+else
+    if brew install gh; then
+        echo -e "${GREEN}✓${NC} gh installed successfully via Homebrew."
+    else
+        echo -e "${RED}Error: Failed to install gh via Homebrew.${NC}"
+    fi
+fi
+
 # Install git MCP server (Go)
 echo
 echo -e "${CYAN}Installing git MCP server...${NC}"
