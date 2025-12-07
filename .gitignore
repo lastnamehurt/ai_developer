@@ -58,3 +58,4 @@ Thumbs.db
 *.log
 .aidev/
 configs/local_*
+.claude/settings.local.json
