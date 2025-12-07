@@ -15,21 +15,27 @@
       "name": "web-search",
       "enabled": true,
       "config": {
-        "searchEngines": ["google", "shodan"]
-      }
-    },
-    {
-      "name": "memory",
-      "enabled": true,
-      "config": {
-        "retention": "30days"
+        "searchEngines": [
+          "google",
+          "shodan"
+        ]
       }
     },
     {
       "name": "vulnerability-db",
       "enabled": true,
       "config": {
-        "databases": ["nvd", "cve"]
+        "databases": [
+          "nvd",
+          "cve"
+        ]
+      }
+    },
+    {
+      "name": "memory",
+      "enabled": true,
+      "config": {
+        "MEMORY_FILE_PATH": "~/.aidev/shared_memory.jsonl"
       }
     }
   ],

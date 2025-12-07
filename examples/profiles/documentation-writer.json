@@ -30,7 +30,16 @@
       "name": "spell-check",
       "enabled": true,
       "config": {
-        "languages": ["en-US"]
+        "languages": [
+          "en-US"
+        ]
+      }
+    },
+    {
+      "name": "memory",
+      "enabled": true,
+      "config": {
+        "MEMORY_FILE_PATH": "~/.aidev/shared_memory.jsonl"
       }
     }
   ],

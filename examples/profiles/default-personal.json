@@ -25,6 +25,13 @@
     {
       "name": "memory-bank",
       "enabled": true
+    },
+    {
+      "name": "memory",
+      "enabled": true,
+      "config": {
+        "MEMORY_FILE_PATH": "~/.aidev/shared_memory.jsonl"
+      }
     }
   ],
   "environment": {
