@@ -95,6 +95,18 @@ install_with_venv() {
 # Install aidev (prefer pipx to avoid venv activation)
 if [ "$USE_PIPX" = "1" ]; then
     install_with_pipx || install_with_venv
+
+    # Clean up legacy venv-based installation if it exists
+    if [ -d "$INSTALL_DIR/venv" ]; then
+        echo
+        echo -e "${YELLOW}! Found legacy venv installation at $INSTALL_DIR${NC}"
+        read -p "Remove legacy installation? [y/N] " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            rm -rf "$INSTALL_DIR"
+            echo -e "${GREEN}✓${NC} Removed legacy installation"
+        fi
+    fi
 else
     install_with_venv
 fi
@@ -118,9 +130,12 @@ if [ "$USE_PIPX" = "1" ]; then
             SHELL_RC="$HOME/.zshrc"
         fi
         if [ -n "$SHELL_RC" ] && [ -f "$SHELL_RC" ]; then
-            if ! grep -q "$PIPX_BIN_DIR" "$SHELL_RC"; then
+            # Check if PATH entry already exists (avoid duplicates)
+            if ! grep -qF "$PIPX_BIN_DIR" "$SHELL_RC"; then
                 echo "export PATH=\"$PIPX_BIN_DIR:\$PATH\"" >> "$SHELL_RC"
                 echo -e "${GREEN}✓${NC} Added $PIPX_BIN_DIR to $SHELL_RC"
+            else
+                echo -e "${GREEN}✓${NC} $PIPX_BIN_DIR already in $SHELL_RC"
             fi
         fi
     fi
@@ -185,9 +200,14 @@ if [ "$USE_PIPX" != "1" ]; then
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             if [ -n "$SHELL_RC" ] && [ -f "$SHELL_RC" ]; then
-                echo "export PATH=\"\$HOME/.local/aidev/bin:\$PATH\"" >> "$SHELL_RC"
-                echo -e "${GREEN}✓${NC} Added to $SHELL_RC"
-                echo -e "${YELLOW}! Run: source $SHELL_RC${NC}"
+                # Check if PATH entry already exists (avoid duplicates)
+                if ! grep -qF "\$HOME/.local/aidev/bin" "$SHELL_RC"; then
+                    echo "export PATH=\"\$HOME/.local/aidev/bin:\$PATH\"" >> "$SHELL_RC"
+                    echo -e "${GREEN}✓${NC} Added to $SHELL_RC"
+                    echo -e "${YELLOW}! Run: source $SHELL_RC${NC}"
+                else
+                    echo -e "${GREEN}✓${NC} PATH already contains \$HOME/.local/aidev/bin in $SHELL_RC"
+                fi
             fi
         fi
     else
