@@ -1055,15 +1055,9 @@ def mcp_test(name: str) -> None:
 
 def _resolve_active_profile(profile: Optional[str] = None) -> str:
     """Determine the active profile using project overrides or fallback."""
-    profile_name = profile
-    if not profile_name:
-        project_config_dir = config_manager.get_project_config_path()
-        if project_config_dir:
-            profile_file = project_config_dir / "profile"
-            if profile_file.exists():
-                profile_name = profile_file.read_text().strip()
-
-    return profile_name or "default"
+    if profile:
+        return profile
+    return config_manager.get_current_profile(project_dir=Path.cwd())
 
 
 @cli.command()
