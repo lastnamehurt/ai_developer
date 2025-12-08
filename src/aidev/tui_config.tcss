@@ -65,15 +65,13 @@ Container {
     margin-bottom: 1;
 }
 
-/* Profile info scrollable */
-#profile-info-scroll {
+/* Profile info */
+#profile-info {
     height: 1fr;
+    padding: 1;
     border: round #1f2937;
     background: #0b1120;
-}
-
-#profile-info {
-    padding: 1;
+    overflow: auto;
 }
 
 /* Tables */

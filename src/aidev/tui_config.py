@@ -11,7 +11,7 @@ from typing import Optional
 from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Container, Horizontal, Vertical, Scrollable
+from textual.containers import Container, Horizontal, Vertical
 from textual.widgets import Button, Footer, Header, Input, Markdown, DataTable, Select, Static
 
 from aidev.config import ConfigManager
@@ -69,8 +69,7 @@ class ProfileConfigApp(App):
                 yield Select(options=[], id="profile-select")
 
                 yield Static("Profile Details", classes="panel-title")
-                with Scrollable(id="profile-info-scroll"):
-                    yield Markdown("", id="profile-info")
+                yield Markdown("", id="profile-info")
 
             # Middle: MCP Servers
             with Vertical(id="middle"):
