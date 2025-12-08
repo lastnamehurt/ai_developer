@@ -1,0 +1,35 @@
+{
+  "name": "aider",
+  "description": "AI pair programming with Aider CLI",
+  "extends": "default",
+  "tags": ["cli", "pair-programming", "git", "terminal"],
+  "mcp_servers": [
+    {
+      "name": "filesystem",
+      "enabled": true
+    },
+    {
+      "name": "git",
+      "enabled": true
+    },
+    {
+      "name": "github",
+      "enabled": true
+    },
+    {
+      "name": "memory",
+      "enabled": true,
+      "config": {
+        "MEMORY_FILE_PATH": "~/.aidev/shared_memory.jsonl"
+      }
+    }
+  ],
+  "environment": {
+    "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}",
+    "OPENAI_API_KEY": "${OPENAI_API_KEY}",
+    "GITHUB_TOKEN": "${GITHUB_TOKEN}",
+    "AIDER_AUTO_COMMITS": "true",
+    "AIDER_DARK_MODE": "true",
+    "AIDER_GITIGNORE": "true"
+  }
+}

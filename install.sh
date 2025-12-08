@@ -283,6 +283,26 @@ else
     echo -e "${YELLOW}  Please install Ollama manually from https://ollama.com${NC}"
 fi
 
+# Install Aider
+echo
+echo -e "${CYAN}Installing Aider AI pair programming tool...${NC}"
+if command -v aider &> /dev/null; then
+    echo -e "${GREEN}✓${NC} Aider is already installed."
+else
+    if command -v pip &> /dev/null || command -v pip3 &> /dev/null; then
+        PYTHON_PIP=$(command -v pip3 || command -v pip)
+        echo -e "${CYAN}Installing Aider via pip...${NC}"
+        if $PYTHON_PIP install aider-chat; then
+            echo -e "${GREEN}✓${NC} Aider installed successfully."
+        else
+            echo -e "${RED}Error: Failed to install Aider.${NC}"
+        fi
+    else
+        echo -e "${YELLOW}! pip not found; skipping Aider install.${NC}"
+        echo -e "${YELLOW}  Install Python 3 and pip, then run: pip install aider-chat${NC}"
+    fi
+fi
+
 # Summary
 echo
 echo -e "${GREEN}========================================${NC}"
