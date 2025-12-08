@@ -56,6 +56,10 @@ def test_workflow_engine_seeds_and_runs(tmp_path: Path):
     assert data["steps"][0]["prompt_id"] == "ticket_understander"
     assert data["schema_version"] == "1.1"
     assert data["steps"][0]["tool_timeout_sec"] == 30
+    # Execute placeholder and ensure status/result set
+    engine.execute_manifest(run_path)
+    executed = json.loads(run_path.read_text())
+    assert executed["steps"][0]["output"]["status"] == "ok"
 
 
 def test_refactor_scout_stub(tmp_path: Path):

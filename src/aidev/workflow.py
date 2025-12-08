@@ -10,7 +10,6 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
-
 import yaml
 
 from aidev.constants import (
@@ -271,6 +270,27 @@ class WorkflowEngine:
         if workflow.name == "refactor_scout":
             self._persist_refactor_stub(ticket_file, ticket_text)
         return run_path
+
+    def execute_manifest(self, manifest_path: Path) -> Path:
+        """
+        Execute steps in a manifest (placeholder execution):
+        - Marks steps as ok
+        - Writes a stub result containing prompt_id and input preview
+        """
+        data = json.loads(manifest_path.read_text())
+        steps = data.get("steps", [])
+        for step in steps:
+            output = step.get("output") or {}
+            output["status"] = "ok"
+            output["result"] = {
+                "note": "Execution placeholder (no real assistant call)",
+                "prompt_id": step.get("prompt_id"),
+                "input_preview": step.get("input", {}).get("ticket_text_preview"),
+            }
+            step["output"] = output
+        data["completed_at"] = int(time.time())
+        manifest_path.write_text(json.dumps(data, indent=2))
+        return manifest_path
 
     # ------------------------------------------------------------------ #
     # Internals

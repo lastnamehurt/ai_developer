@@ -339,7 +339,8 @@ def doctor(fix_path: bool) -> None:
 @click.option("--from-step", "from_step", help="Start execution from this step name")
 @click.option("--step-only", is_flag=True, help="Run only the selected step")
 @click.option("--output", "output_mode", type=click.Choice(["table", "json"], case_sensitive=False), default="table", help="Output format for run manifest")
-def workflow(workflow_name: Optional[str], input_value: Optional[str], ticket: Optional[str], ticket_file: Optional[Path], tool_override: Optional[str], list_only: bool, from_step: Optional[str], step_only: bool, output_mode: str) -> None:
+@click.option("--execute", is_flag=True, help="Run steps immediately (placeholder execution) and update manifest")
+def workflow(workflow_name: Optional[str], input_value: Optional[str], ticket: Optional[str], ticket_file: Optional[Path], tool_override: Optional[str], list_only: bool, from_step: Optional[str], step_only: bool, output_mode: str, execute: bool) -> None:
     """Run or list workflows defined in .aidev/workflows.yaml. Input can be passed via --ticket/--file or as a positional value (ticket key or file path)."""
     engine = WorkflowEngine(project_dir=Path.cwd())
     workflows, warnings = engine.load_workflows()
@@ -395,6 +396,8 @@ def workflow(workflow_name: Optional[str], input_value: Optional[str], ticket: O
         from_step=from_step,
         step_only=step_only,
     )
+    if execute:
+        run_path = engine.execute_manifest(run_path)
     if output_mode == "json":
         console.print(Path(run_path).read_text())
     else:
