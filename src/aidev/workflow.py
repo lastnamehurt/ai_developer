@@ -382,7 +382,20 @@ class WorkflowEngine:
                 timeout=timeout_sec,
             )
             if proc.returncode != 0:
-                raise RuntimeError(f"Assistant returned {proc.returncode}: {proc.stderr[:500]}")
+                # Fallback to echo to avoid hard failure when assistant CLI rejects flags
+                echo_proc = subprocess.run(
+                    ["echo", f"[assistant {assistant} failed rc={proc.returncode}] {merged}"],
+                    text=True,
+                    capture_output=True,
+                    timeout=timeout_sec,
+                )
+                return {
+                    "assistant": f"{assistant} (fallback echo)",
+                    "returncode": proc.returncode,
+                    "stdout": echo_proc.stdout,
+                    "stderr": proc.stderr,
+                    "prompt_used": prompt_text[:2000],
+                }
             return {
                 "assistant": assistant,
                 "returncode": proc.returncode,
