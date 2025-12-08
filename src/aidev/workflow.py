@@ -20,7 +20,7 @@ from aidev.constants import (
     WORKFLOWS_TEMPLATE,
 )
 from aidev.tools import ToolManager
-from aidev.utils import console, ensure_dir
+from aidev.utils import console, ensure_dir, load_json
 
 
 @dataclass
@@ -199,6 +199,7 @@ class WorkflowEngine:
         *,
         ticket: Optional[str],
         ticket_file: Optional[Path],
+        user_prompt: Optional[str],
         tool_override: Optional[str],
         project_default_assistant: Optional[str] = None,
         from_step: Optional[str] = None,
@@ -210,6 +211,7 @@ class WorkflowEngine:
         """
         ticket_source = detect_ticket_source(ticket, ticket_file)
         ticket_text = self._load_ticket_text(ticket, ticket_file)
+        user_text = user_prompt or ticket_text
         steps_output: list[dict[str, Any]] = []
 
         step_iter = workflow.steps
@@ -246,6 +248,7 @@ class WorkflowEngine:
                     "input": {
                         "ticket_source": ticket_source,
                         "ticket_text_preview": ticket_text[:4000] if ticket_text else "",
+                        "user_prompt": (user_text or "")[:4000],
                     },
                     "output": {
                         "status": "not-run",
@@ -359,6 +362,29 @@ class WorkflowEngine:
         stub_path.write_text("\n".join(body))
         console.print(f"[cyan]Refactor draft saved to[/cyan] {stub_path}")
 
+    def handoff_to_assistant(self, manifest_path: Path, assistant: str) -> None:
+        """
+        Launch assistant CLI with an instruction to execute the manifest interactively.
+        This opens the assistant; user can watch/drive the steps.
+        """
+        instruction = (
+            "You are a workflow executor. Read the manifest JSON file and execute the steps sequentially. "
+            "Use the system prompt as given and the user prompt/ticket content as input. "
+            "Narrate your actions and produce outputs per step."
+        )
+        user_prompt = f"Read and execute the workflow manifest at: {manifest_path}"
+        cmd = self._assistant_command(assistant, instruction, user_prompt, user_prompt)
+        if not cmd:
+            console.print(f"[red]✗[/red] No handoff command available for assistant '{assistant}'. Open the manifest manually: {manifest_path}")
+            return
+        try:
+            # Don't pipe stdin for TUI CLIs - let them inherit terminal stdin for raw mode
+            proc = subprocess.Popen(cmd, text=True, start_new_session=True)
+            console.print(f"[cyan]Opened assistant '{assistant}' with manifest handoff[/cyan]")
+        except Exception as exc:
+            console.print(f"[red]✗[/red] Failed to launch assistant '{assistant}': {exc}")
+            console.print(f"[yellow]Manifest:[/yellow] {manifest_path}")
+
     def _default_runner(self, step: dict[str, Any]) -> dict[str, Any]:
         """
         Default step runner: calls assistant binary with prompt text and captures stdout.
@@ -366,7 +392,8 @@ class WorkflowEngine:
         """
         assistant = step.get("assistant")
         prompt_text = step.get("prompt_text", "")
-        input_preview = step.get("input", {}).get("ticket_text_preview", "")
+        input_section = step.get("input", {}) or {}
+        input_preview = input_section.get("user_prompt") or input_section.get("ticket_text_preview") or ""
         timeout_sec = int(step.get("tool_timeout_sec", 30))
         merged = f"{prompt_text}\n\nINPUT:\n{input_preview}"
 
@@ -377,7 +404,6 @@ class WorkflowEngine:
         try:
             proc = subprocess.run(
                 cmd,
-                input=merged,
                 text=True,
                 capture_output=True,
                 timeout=timeout_sec,
@@ -396,10 +422,10 @@ class WorkflowEngine:
 
     def _assistant_command(self, assistant: str, prompt_text: str, input_preview: str, merged: str) -> Optional[list[str]]:
         """
-        Map assistant id to a CLI command using prompt flags (no chat subcommand):
-        - claude: claude --system-prompt <prompt> --prompt <input>
-        - codex:  codex --prompt <merged>
-        - gemini: gemini --prompt <merged>
+        Map assistant id to a CLI command for non-interactive execution:
+        - claude: claude --system-prompt <prompt> <input>
+        - codex:  codex exec <merged>
+        - gemini: gemini <merged>
         - ollama: ollama run llama3.1 --prompt <merged>
         - cursor: unsupported (returns None)
         """
@@ -407,13 +433,13 @@ class WorkflowEngine:
             return [bin_name, *args] if shutil.which(bin_name) else None
 
         if assistant == "claude":
-            # Claude: set system prompt flag, send user content via stdin
-            return _cmd("claude", ["--system-prompt", prompt_text])
+            # Claude: set system prompt flag and user prompt as positional argument
+            return _cmd("claude", ["--system-prompt", prompt_text, input_preview])
         if assistant == "codex":
-            # Codex: positional prompt
-            return _cmd("codex", [merged])
+            # Codex: use exec subcommand for non-interactive execution
+            return _cmd("codex", ["exec", merged])
         if assistant == "gemini":
-            # Gemini: positional prompt (headless)
+            # Gemini: positional prompt defaults to one-shot mode
             return _cmd("gemini", [merged])
         if assistant == "ollama":
             return _cmd("ollama", ["run", "llama3.1", "--prompt", merged])

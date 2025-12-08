@@ -12,6 +12,7 @@ Managing AI development tools (like Claude Code, Cursor, Codex, or Gemini) can b
 
 *   **Smart Quickstart**: Automatically detects your project's tech stack and configures an optimal profile and MCP servers.
 *   **Profile System**: Define and switch between pre-configured or custom profiles tailored for different workflows (e.g., web dev, infrastructure, QA).
+*   **Workflow Orchestration**: Define and execute multi-step AI tasks across different assistants with configurable retries, timeouts, and resumable execution.
 *   **Environment Management**: Centralized, encrypted storage for API keys and other environment variables, with global and project-specific scopes.
 *   **MCP Server Management**: Discover, install, and manage custom AI backend (MCP) servers to extend `aidev`'s capabilities.
 *   **Tool Launcher**: Seamlessly launch integrated AI tools (Claude, Cursor, Codex, Gemini) with all relevant configurations injected automatically.
@@ -161,6 +162,25 @@ ai review --all                 # Review all tracked files in your repository
 ai review app.py util.py        # Review specific files
 ```
 You can also configure external reviewers (e.g., Aider, Ollama) in `~/.aidev/review.json`.
+
+### Workflow Orchestration
+
+Run multi-step AI tasks across different assistants with the workflow system.
+
+```bash
+ai workflow list                              # Show available workflows
+ai workflow doc_improver README.md            # Run workflow with interactive handoff
+ai workflow doc_improver README.md --execute  # Run workflow non-interactively
+ai workflow doc_improver README.md --from-step "Review changes"  # Resume from specific step
+```
+
+Workflows are defined in `.aidev/workflows.yaml` and can coordinate multiple AI assistants (Claude, Codex, Gemini) to complete complex tasks. Each step can have its own timeout, retry configuration, and assistant assignment.
+
+**Learn more:** See [docs/workflows.md](docs/workflows.md) for comprehensive workflow documentation including:
+- Creating custom workflows
+- Assistant handoff mechanism
+- Execution modes (interactive vs automated)
+- Troubleshooting and best practices
 
 ## 🏗️ Advanced Usage
 

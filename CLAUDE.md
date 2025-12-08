@@ -102,6 +102,59 @@ Profiles can extend others via `extends` field. Merging logic in `ProfileManager
 
 Confidence scores aggregate to recommend profile by matching tags.
 
+### Workflow System (`workflow.py`)
+The workflow engine orchestrates multi-step AI tasks by coordinating assistant execution.
+
+#### Workflow Execution Modes
+1. **Manifest Preparation**: `run_workflow()` creates a manifest JSON with step metadata
+2. **Interactive Handoff**: `handoff_to_assistant()` launches assistant CLI with file path reference
+3. **Automated Execution**: `execute_manifest()` runs steps non-interactively via `_default_runner()`
+
+#### Assistant Command Mapping
+Each assistant has a specific CLI invocation pattern for non-interactive execution:
+
+- **Claude**: `claude --system-prompt <system_prompt> <user_prompt>`
+  - System prompt sets context/role
+  - User prompt as positional argument
+  - No stdin piping (preserves raw mode for TUI)
+
+- **Codex**: `codex exec <prompt>`
+  - Uses `exec` subcommand for one-shot mode
+  - Positional prompt argument
+
+- **Gemini**: `gemini <prompt>`
+  - Positional prompt defaults to one-shot mode
+  - No special flags needed
+
+- **Ollama**: `ollama run llama3.1 --prompt <prompt>`
+  - Requires model selection (`llama3.1`)
+  - Uses `--prompt` flag
+
+- **Cursor**: Not supported (no headless mode)
+
+#### Handoff Mechanism
+When users run `ai workflow <name> <input>`:
+1. Workflow manifest is generated at `.aidev/workflow-runs/<name>-<timestamp>.json`
+2. Assistant is launched with instruction to read the manifest file (not raw content)
+3. Command example: `claude --system-prompt "You are a workflow executor..." "Read and execute the workflow manifest at: /path/to/manifest.json"`
+4. Assistant uses Read tool to access manifest and execute steps
+
+**Key Design Decision**: File path reference instead of raw manifest content avoids:
+- Command-line argument length limits
+- Excessive token usage in initial prompt
+- Escaping/encoding issues with large JSON payloads
+
+#### Adding Support for New Assistants
+To add a new assistant to the workflow system:
+1. Update `_assistant_command()` in `workflow.py`:
+   ```python
+   if assistant == "newtool":
+       return _cmd("newtool", ["--flag", prompt_text])
+   ```
+2. Follow the pattern: prioritize non-interactive/one-shot modes
+3. Avoid stdin piping for TUI-based tools (preserves raw terminal mode)
+4. Test both `execute_manifest()` (automated) and `handoff_to_assistant()` (interactive)
+
 ## Key Files
 
 - `src/aidev/cli.py`: Click command tree (entry point)
@@ -110,6 +163,7 @@ Confidence scores aggregate to recommend profile by matching tags.
 - `src/aidev/mcp.py`: MCPManager with registry handling
 - `src/aidev/mcp_config_generator.py`: Tool-specific MCP config rendering
 - `src/aidev/quickstart.py`: Stack detection and profile recommendation
+- `src/aidev/workflow.py`: Workflow engine, assistant resolver, and command execution
 - `src/aidev/errors.py`: Preflight checks and error guidance (used by `ai doctor`)
 - `src/aidev/tui_config.py`: Textual TUI for profile/env editing
 - `src/aidev/models.py`: Pydantic data models
