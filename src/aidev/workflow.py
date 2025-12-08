@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import re
 import shutil
+import subprocess
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -276,12 +277,16 @@ class WorkflowEngine:
         Execute steps in a manifest:
         - Runs each step via the configured runner (default: assistant CLI best-effort)
         - Respects retries (best-effort)
+        - Skips steps already marked ok (resume behavior)
         - Updates status/result and writes manifest
         """
         data = json.loads(manifest_path.read_text())
         steps = data.get("steps", [])
         for step in steps:
+            if step.get("output", {}).get("status") == "ok":
+                continue
             output = step.get("output") or {}
+            output["started_at"] = int(time.time())
             retries = step.get("retries", 0)
             attempt = 0
             last_err = None
@@ -298,6 +303,7 @@ class WorkflowEngine:
                     output["result"] = {"error": last_err, "attempt": attempt}
                     if attempt <= retries:
                         time.sleep(0.1)
+            output["ended_at"] = int(time.time())
             step["output"] = output
         data["completed_at"] = int(time.time())
         manifest_path.write_text(json.dumps(data, indent=2))
@@ -366,13 +372,15 @@ class WorkflowEngine:
             raise RuntimeError(f"No runner available for assistant '{assistant}'")
 
         try:
-            proc = shutil.subprocess.run(
+            proc = subprocess.run(
                 cmd,
                 input=input_preview,
                 text=True,
                 capture_output=True,
                 timeout=timeout_sec,
             )
+            if proc.returncode != 0:
+                raise RuntimeError(f"Assistant returned {proc.returncode}: {proc.stderr[:500]}")
             return {
                 "assistant": assistant,
                 "returncode": proc.returncode,

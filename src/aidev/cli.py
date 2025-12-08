@@ -403,6 +403,13 @@ def workflow(workflow_name: Optional[str], input_value: Optional[str], ticket: O
     else:
         console.print(f"[cyan]Run manifest saved to[/cyan] {run_path}")
 
+    if execute:
+        data = json.loads(Path(run_path).read_text())
+        errors = [s for s in data.get("steps", []) if s.get("output", {}).get("status") == "error"]
+        if errors:
+            console.print(f"[red]✗[/red] {len(errors)} step(s) failed. See manifest for details.")
+            raise SystemExit(1)
+
 
 @cli.command()
 @click.argument("shell", type=click.Choice(["bash", "zsh", "fish"], case_sensitive=False))
