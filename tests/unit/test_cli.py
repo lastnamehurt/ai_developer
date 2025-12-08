@@ -58,7 +58,7 @@ def test_setup_command(runner, isolated_cli):
             with patch('aidev.cli.mcp_manager') as mock_mcp:
                 mock_config.is_initialized.return_value = False
 
-                result = runner.invoke(cli, ['setup'])
+                result = runner.invoke(cli, ['setup', '--skip-env'])
 
                 assert result.exit_code == 0
                 mock_config.init_directories.assert_called_once()
@@ -84,7 +84,7 @@ def test_setup_force_flag(runner, isolated_cli):
             with patch('aidev.cli.mcp_manager') as mock_mcp:
                 mock_config.is_initialized.return_value = True
 
-                result = runner.invoke(cli, ['setup', '--force'])
+                result = runner.invoke(cli, ['setup', '--force', '--skip-env'])
 
                 assert result.exit_code == 0
                 mock_config.init_directories.assert_called_once()
