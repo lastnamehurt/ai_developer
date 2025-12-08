@@ -9,7 +9,7 @@ import shutil
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Callable
 import yaml
 
 from aidev.constants import (
@@ -273,27 +273,38 @@ class WorkflowEngine:
 
     def execute_manifest(self, manifest_path: Path) -> Path:
         """
-        Execute steps in a manifest (placeholder execution):
-        - Marks steps as ok
-        - Writes a stub result containing prompt_id and input preview
+        Execute steps in a manifest:
+        - Runs each step via the configured runner (default: assistant CLI best-effort)
+        - Respects retries (best-effort)
+        - Updates status/result and writes manifest
         """
         data = json.loads(manifest_path.read_text())
         steps = data.get("steps", [])
         for step in steps:
             output = step.get("output") or {}
-            output["status"] = "ok"
-            output["result"] = {
-                "note": "Execution placeholder (no real assistant call)",
-                "prompt_id": step.get("prompt_id"),
-                "input_preview": step.get("input", {}).get("ticket_text_preview"),
-            }
+            retries = step.get("retries", 0)
+            attempt = 0
+            last_err = None
+            while attempt <= retries:
+                attempt += 1
+                try:
+                    result = self._runner(step)
+                    output["status"] = "ok"
+                    output["result"] = result
+                    break
+                except Exception as exc:  # pragma: no cover - defensive
+                    last_err = str(exc)
+                    output["status"] = "error"
+                    output["result"] = {"error": last_err, "attempt": attempt}
+                    if attempt <= retries:
+                        time.sleep(0.1)
             step["output"] = output
         data["completed_at"] = int(time.time())
         manifest_path.write_text(json.dumps(data, indent=2))
         return manifest_path
 
     # ------------------------------------------------------------------ #
-    # Internals
+    # Internals / runners
     # ------------------------------------------------------------------ #
     def _load_prompt(self, prompt_id: str) -> str:
         """Load prompt text from bundled prompts directory."""
@@ -339,3 +350,57 @@ class WorkflowEngine:
         stub_path = self.runs_dir() / f"refactor_scout-{ts}-draft.md"
         stub_path.write_text("\n".join(body))
         console.print(f"[cyan]Refactor draft saved to[/cyan] {stub_path}")
+
+    def _default_runner(self, step: dict[str, Any]) -> dict[str, Any]:
+        """
+        Default step runner: calls assistant binary with prompt text and captures stdout.
+        Minimal, best-effort. Real streaming/structured output can be layered later.
+        """
+        assistant = step.get("assistant")
+        prompt_text = step.get("prompt_text", "")
+        input_preview = step.get("input", {}).get("ticket_text_preview", "")
+        timeout_sec = int(step.get("tool_timeout_sec", 30))
+
+        cmd = self._assistant_command(assistant, prompt_text, input_preview)
+        if not cmd:
+            raise RuntimeError(f"No runner available for assistant '{assistant}'")
+
+        try:
+            proc = shutil.subprocess.run(
+                cmd,
+                input=input_preview,
+                text=True,
+                capture_output=True,
+                timeout=timeout_sec,
+            )
+            return {
+                "assistant": assistant,
+                "returncode": proc.returncode,
+                "stdout": proc.stdout,
+                "stderr": proc.stderr,
+                "prompt_used": prompt_text[:2000],
+            }
+        except shutil.subprocess.TimeoutExpired as exc:
+            raise RuntimeError(f"Timeout after {timeout_sec}s: {exc}")
+
+    def _assistant_command(self, assistant: str, prompt_text: str, input_preview: str) -> Optional[list[str]]:
+        """
+        Map assistant id to a CLI command. Minimal, best-effort:
+        - claude: `claude chat --message <prompt+input>`
+        - codex: `codex chat --message <prompt+input>`
+        - gemini: `gemini prompt --text <prompt+input>`
+        - cursor: fallback to `echo` (no direct CLI)
+        - ollama: `ollama run <model>` with prompt text
+        """
+        merged = f"{prompt_text}\n\nINPUT:\n{input_preview}"
+        if assistant == "claude":
+            return ["claude", "chat", "--message", merged]
+        if assistant == "codex":
+            return ["codex", "chat", "--message", merged]
+        if assistant == "gemini":
+            return ["gemini", "prompt", "--text", merged]
+        if assistant == "ollama":
+            return ["ollama", "run", "llama3.1", merged]
+        if assistant == "cursor":
+            return ["echo", merged]
+        return None

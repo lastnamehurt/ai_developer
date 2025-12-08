@@ -38,6 +38,8 @@ def test_assistant_resolver_precedence_and_fallback():
 def test_workflow_engine_seeds_and_runs(tmp_path: Path):
     project_dir = tmp_path
     engine = WorkflowEngine(project_dir=project_dir)
+    # Override runner to avoid shelling out during tests
+    engine._runner = lambda step: {"assistant": step.get("assistant"), "stdout": "ok"}
 
     workflows, warnings = engine.load_workflows()
     assert "implement_ticket" in workflows
