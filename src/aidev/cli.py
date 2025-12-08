@@ -6,6 +6,7 @@ import shutil
 import subprocess
 from pathlib import Path
 from typing import Optional
+import json
 
 import rich_click as click
 from rich.console import Console
