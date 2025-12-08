@@ -31,9 +31,6 @@ ai workflow list
 # Run a workflow with a ticket/input
 ai workflow doc_improver README.md
 
-# Execute workflow non-interactively
-ai workflow doc_improver README.md --execute
-
 # Resume from a specific step
 ai workflow doc_improver README.md --from-step "Review changes"
 
