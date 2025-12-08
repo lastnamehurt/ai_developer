@@ -404,15 +404,19 @@ class ProfileManager:
             ),
             Profile(
                 name="work",
-                description="Work/business tasks (Jira, Confluence, GitHub)",
+                description="Work/business tasks (Jira, Confluence, GitLab)",
                 tags=["work", "business"],
                 mcp_servers=[
                     MCPServerConfig(name="filesystem", enabled=True),
                     MCPServerConfig(name="git", enabled=True),
-                    MCPServerConfig(name="github", enabled=True),
+                    MCPServerConfig(name="gitlab", enabled=True),
                     MCPServerConfig(name="atlassian", enabled=True),
                     MCPServerConfig(name="memory-bank", enabled=True),
                 ],
+                environment={
+                    "GITLAB_PERSONAL_ACCESS_TOKEN": "${GITLAB_PERSONAL_ACCESS_TOKEN}",
+                    "GITLAB_URL": "${GITLAB_URL:-https://gitlab.com}",
+                },
             ),
             Profile(
                 name="infra",
