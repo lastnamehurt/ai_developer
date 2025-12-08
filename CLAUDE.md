@@ -32,9 +32,14 @@ pytest tests/integration
 # Run specific test file
 pytest tests/unit/test_profiles.py
 
-# Run with coverage
-pytest --cov=aidev --cov-report=html
+# Run specific test function
+pytest tests/unit/test_profiles.py::TestProfileManager::test_create_profile
+
+# Run with coverage report (terminal)
 pytest --cov=aidev --cov-report=term-missing
+
+# Run with coverage report (HTML)
+pytest --cov=aidev --cov-report=html
 ```
 
 ### Code Quality
@@ -43,7 +48,7 @@ pytest --cov=aidev --cov-report=term-missing
 black src/ tests/
 
 # Lint
-ruff src/ tests/
+ruff check src/ tests/
 
 # Type check
 mypy src/
@@ -157,36 +162,62 @@ To add a new assistant to the workflow system:
 
 ## Key Files
 
+### Core Functionality
 - `src/aidev/cli.py`: Click command tree (entry point)
 - `src/aidev/config.py`: ConfigManager implementation
 - `src/aidev/profiles.py`: ProfileManager with inheritance logic
 - `src/aidev/mcp.py`: MCPManager with registry handling
 - `src/aidev/mcp_config_generator.py`: Tool-specific MCP config rendering
-- `src/aidev/quickstart.py`: Stack detection and profile recommendation
+- `src/aidev/tools.py`: ToolManager for AI tool detection, config resolution, and launching
 - `src/aidev/workflow.py`: Workflow engine, assistant resolver, and command execution
 - `src/aidev/errors.py`: Preflight checks and error guidance (used by `ai doctor`)
-- `src/aidev/tui_config.py`: Textual TUI for profile/env editing
+
+### Data & Configuration
 - `src/aidev/models.py`: Pydantic data models
 - `src/aidev/constants.py`: Path constants and defaults
+- `src/aidev/secrets.py`: Environment variable encryption/decryption
 - `src/aidev/utils.py`: Shared utilities (JSON/env file I/O, console)
+
+### User Interfaces & Features
+- `src/aidev/tui_config.py`: Textual TUI for profile/env editing
+- `src/aidev/tui_mcp_browser.py`: Textual TUI for browsing and managing MCP servers
+- `src/aidev/quickstart.py`: Stack detection and profile recommendation
+- `src/aidev/review.py`: Code review functionality
+- `src/aidev/backup.py`: Configuration backup and restore utilities
 
 ## Testing Strategy
 
 ### Unit Tests (`tests/unit/`)
-Test individual managers in isolation with mocked dependencies:
-- `test_config_manager.py`: Directory init, env merging
-- `test_profiles.py`: Profile loading, inheritance, merging
-- `test_mcp.py`: Registry fetch, cache fallback
-- `test_env_cli.py`: Env variable set/get/list commands
+Test individual managers in isolation with mocked dependencies. Run with:
+```bash
+pytest tests/unit
+pytest tests/unit/test_profiles.py::TestProfileManager::test_create_profile
+```
+
+Test coverage includes:
+- `test_config_manager.py`: Directory init, env merging, config file I/O
+- `test_profiles.py`: Profile loading, inheritance, merging logic
+- `test_mcp.py`: Registry fetch, cache fallback, offline handling
+- `test_env_cli.py`: Env variable set/get/list commands, encryption
 - `test_codex_mcp_config.py`, `test_gemini_mcp_config.py`: Tool-specific config generation
+- Other tool config tests: Cursor, Claude, Zed MCP config rendering
 
 ### Integration Tests (`tests/integration/`)
-End-to-end workflows with temporary directories:
+End-to-end workflows with temporary directories testing real interactions:
 - `test_quickstart_flow.py`: Full quickstart + profile recommendation
 - `test_profile_status_and_mcp_config.py`: Profile switching + MCP config generation
 - `test_config_tui.py`: TUI load/save interactions
 
-Use `tmp_path` fixture for isolated test environments. Clean up after each test.
+Run with:
+```bash
+pytest tests/integration
+```
+
+**Best Practices:**
+- Use `tmp_path` fixture (pytest) for isolated test environments
+- Mock external calls (HTTP requests to MCP registry, tool binary execution)
+- Clean up after each test; don't rely on test execution order
+- Ensure tests pass on Python 3.10, 3.11, and 3.12 (tested in CI)
 
 ## Common Patterns
 
@@ -233,6 +264,7 @@ All MCP server `env` fields and profile `environment` values support `${VAR}` sy
 - Resolved at config generation time via `utils.expand_env_vars()`
 - Source: merged global + project env from `ConfigManager.get_env()`
 - Missing vars log warnings but don't block (allows partial configs)
+- Use `ai env set KEY value` or `ai env set KEY value --project` to manage vars
 
 ## Error Handling & Doctor
 `errors.py` provides `preflight()` function for env/binary checks:
@@ -241,12 +273,156 @@ All MCP server `env` fields and profile `environment` values support `${VAR}` sy
 - Returns actionable error messages with fix hints
 - Used by `ai doctor` command
 
+## Important Implementation Details
+
+### Encryption & Secrets
+- Environment variables can be encrypted with `ai env set --encrypt KEY value`
+- Encrypted values are prefixed with `ENC::` and stored in `.env` files
+- Encryption key is stored in `~/.aidev/.env.key` (mode 0o600)
+- `secrets.py` handles encryption/decryption using Fernet (cryptography library)
+- Always validate that sensitive data is properly encrypted before committing
+
+### Backup & Restore
+- `backup.py` manages configuration migration between machines
+- Backups are tar.gz archives with metadata manifest
+- Used by `ai backup` and `ai restore` commands
+- Includes profiles, MCP configs, and encrypted environment variables
+
+### Config File Format
+Configuration uses JSON for profiles and MCP servers, but:
+- Workflows are defined in YAML (`.aidev/workflows.yaml`)
+- Environment variables in `.env` (key=value format)
+- MCP registry is JSON with metadata for discovery
+- Tool-specific configs are generated in their native formats (JSON/TOML)
+
+### Path Constants
+All path operations use `constants.py` definitions:
+- `AIDEV_DIR` = `~/.aidev/` (global config root)
+- `PROFILES_DIR` = `~/.aidev/config/profiles/` (built-in)
+- `CUSTOM_PROFILES_DIR` = `~/.aidev/config/profiles/custom/` (user-defined)
+- `PROJECT_AIDEV_DIR` = `./.aidev/` in current project
+- Use these constants instead of hardcoding paths
+
 ## CI/CD
 GitHub Actions workflow (`.github/workflows/tests.yml`):
 - Runs on push/PR to `main`
 - Python 3.11 on Ubuntu
-- Executes `pytest tests/unit` and `pytest tests/integration`
-- No coverage upload currently (can add with `pytest-cov`)
+- Executes `pytest tests/unit` and `pytest tests/integration` sequentially
+- Must pass all tests before PR merge
+- Coverage reports available locally with `pytest --cov=aidev --cov-report=html`
+
+Before committing, ensure:
+```bash
+pytest                  # All tests pass
+black src/ tests/       # Code formatted
+ruff check src/ tests/  # No lint issues
+mypy src/               # Type hints valid
+```
+
+## Setup Process & Environment Variables
+
+### New User Setup
+When users install aidev, the `ai setup` command now includes interactive prompts for required environment variables:
+
+1. **Initial setup** creates directories and profiles
+2. **Profile selection** - users choose which profiles to configure (web, infra, or both)
+3. **Environment variable prompts** - for each profile, users are prompted for required secrets:
+   - **web profile**: `GITHUB_TOKEN` or `GITHUB_PERSONAL_ACCESS_TOKEN`
+   - **infra profile**: `GITLAB_PERSONAL_ACCESS_TOKEN` and optionally `GITLAB_URL`
+   - Users see helpful links to where to get each secret (GitHub settings, GitLab settings, etc.)
+4. **Encryption** - sensitive values are automatically encrypted and stored in `~/.aidev/.env`
+
+### Required Environment Variables by Profile
+Built-in mapping in `src/aidev/env_requirements.py`:
+- **web**: github (requires `GITHUB_TOKEN`)
+- **qa**: duckduckgo (no secrets required)
+- **infra**: gitlab (requires `GITLAB_PERSONAL_ACCESS_TOKEN`), k8s (optional `KUBECONFIG`)
+- **postgres**: requires `POSTGRES_URL`
+
+Users can add more env vars with `ai env set KEY value [--project] [--encrypt]`
+
+### Health Checks
+The `ai doctor` command now:
+1. Checks if all required env vars for the active profile are set
+2. Shows which are missing with links to where to get them
+3. Provides actionable error messages
+
+## Getting Started with Development
+
+### First Time Setup
+1. Clone and install dev dependencies:
+   ```bash
+   git clone https://github.com/lastnamehurt/ai_developer.git
+   cd ai_developer
+   pip install -e ".[dev]"
+   ```
+
+2. Verify installation:
+   ```bash
+   ai --version
+   pytest tests/unit -k test_config_manager --no-cov  # Quick sanity check
+   ```
+
+3. Run all tests to ensure environment is correct:
+   ```bash
+   pytest
+   ```
+
+### Development Workflow
+1. **Make changes** to files in `src/aidev/`
+2. **Run tests** for the affected module:
+   ```bash
+   pytest tests/unit/test_profiles.py -v --no-cov
+   ```
+3. **Format and lint** before committing:
+   ```bash
+   black src/ tests/
+   ruff check src/ tests/ --fix
+   mypy src/
+   ```
+4. **Run full test suite** before pushing:
+   ```bash
+   pytest
+   ```
+
+### Common Development Tasks
+
+**Debugging a failing test:**
+```bash
+pytest tests/unit/test_mcp.py::TestMCPManager::test_registry_fetch -vvs
+# -vvs: verbose, very verbose, no capture (see print statements)
+```
+
+**Testing a specific manager:**
+```bash
+# Test ConfigManager's env merging logic
+pytest tests/unit/test_config_manager.py -v
+
+# Test ProfileManager's inheritance
+pytest tests/unit/test_profiles.py::TestProfileManager::test_profile_inheritance -v
+```
+
+**Adding a new test:**
+- Follow the pattern in existing test files (use `tmp_path` fixture for isolation)
+- Name test functions `test_<feature_being_tested>`
+- Test both success and failure cases
+- Mock external dependencies (HTTP requests, file system operations outside tmp_path)
+
+### Troubleshooting Development
+
+**Import errors when running tests:**
+- Ensure you ran `pip install -e ".[dev]"` (with editable install flag)
+- Delete any `__pycache__` directories: `find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null`
+
+**Type checking failures:**
+- Check that function signatures match their implementations
+- Use `from __future__ import annotations` for forward references
+- Run `mypy src/ --no-incremental` to get fresh analysis
+
+**Tests pass locally but fail in CI:**
+- Ensure tests don't depend on local machine state (use `tmp_path`)
+- Don't hardcode absolute paths (use `constants.py`)
+- Test on Python 3.11 (what CI uses): `python3.11 -m pytest`
 
 ## Built-in Profiles
 - **default**: Alias of `web`

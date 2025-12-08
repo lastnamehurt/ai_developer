@@ -21,9 +21,15 @@ from aidev.quickstart import QuickstartRunner
 from aidev.backup import BackupManager
 from aidev.tutorial import Tutorial
 from aidev.review import review_paths, staged_files, tracked_files
-from aidev.utils import load_json, save_json, load_env
+from aidev.utils import load_json, save_json, load_env, confirm
 from aidev.errors import preflight
 from aidev.workflow import WorkflowEngine
+from aidev.env_requirements import (
+    get_required_env_vars_for_profile,
+    get_env_var_info,
+    get_missing_env_vars,
+    is_env_var_optional,
+)
 
 def _which_all(executable: str) -> list[str]:
     """Return all resolutions of an executable (best-effort, cross-shell)."""
@@ -220,12 +226,98 @@ def cli() -> None:
 # ============================================================================
 
 
+def _prompt_for_env_var(env_var: str, encrypt: bool = False) -> Optional[str]:
+    """
+    Prompt user for a single environment variable with helpful context.
+
+    Args:
+        env_var: Environment variable name
+        encrypt: Whether to encrypt the value
+
+    Returns:
+        The value entered by the user, or None if skipped
+    """
+    info = get_env_var_info(env_var)
+    description = info.get("description", env_var)
+    url = info.get("url")
+    help_text = info.get("help", "")
+
+    console.print(f"\n[bold cyan]{description}[/bold cyan]")
+    if url:
+        console.print(f"[dim]Get it at: {url}[/dim]")
+    if help_text:
+        console.print(f"[dim]Tip: {help_text}[/dim]")
+
+    value = click.prompt("Enter value (or leave blank to skip)", default="", show_default=False)
+
+    if value.strip():
+        if encrypt:
+            console.print(f"[dim]✓ Value will be encrypted[/dim]")
+        return value.strip()
+
+    return None
+
+
+def _setup_env_vars_for_profile(profile_name: str) -> None:
+    """
+    Prompt for and store required environment variables for a profile.
+
+    Args:
+        profile_name: Name of the profile being set up
+    """
+    profile = profile_manager.load_profile(profile_name)
+    if not profile:
+        console.print(f"[red]Could not load profile '{profile_name}'[/red]")
+        return
+
+    required_env_vars = get_required_env_vars_for_profile(profile)
+    env_dict = config_manager.get_env()
+
+    if not required_env_vars:
+        console.print(f"\n[dim]✓ Profile '{profile_name}' has no required environment variables[/dim]")
+        return
+
+    # Check which are missing
+    missing_vars = get_missing_env_vars(profile, env_dict.get)
+
+    if not missing_vars:
+        console.print(f"\n[green]✓ All required environment variables for '{profile_name}' are already set![/green]")
+        return
+
+    console.print(f"\n[bold yellow]Required Environment Variables for '{profile_name}' profile[/bold yellow]")
+    console.print(f"[dim]{len(missing_vars)} of {len(required_env_vars)} required variables are missing:[/dim]\n")
+
+    for env_var in missing_vars:
+        info = get_env_var_info(env_var)
+        should_encrypt = info.get("encrypt", False)
+
+        if is_env_var_optional(env_var):
+            if not confirm(f"Configure {env_var} (optional)?"):
+                continue
+
+        value = _prompt_for_env_var(env_var, encrypt=should_encrypt)
+        if value:
+            # Store the value (encrypted if needed)
+            config_manager.set_env(env_var, value, project=False, encrypt=should_encrypt)
+
+    console.print("\n[green]✓ Environment variables configured![/green]")
+
+
 @cli.command()
 @click.option("--force", is_flag=True, help="Force reinstall even if already initialized")
-def setup(force: bool) -> None:
+@click.option("--skip-env", is_flag=True, help="Skip environment variable setup")
+def setup(force: bool, skip_env: bool) -> None:
     """Interactive setup wizard for aidev"""
     if config_manager.is_initialized() and not force:
         console.print("[yellow]aidev is already set up. Use --force to reinitialize.[/yellow]")
+        if not skip_env and confirm("Configure missing environment variables?"):
+            console.print("\nWhich profile would you like to configure?")
+            profiles = ["web", "infra"]
+            for i, p in enumerate(profiles, 1):
+                console.print(f"  {i}. {p}")
+            choice = click.prompt("Select profile", type=click.Choice(["1", "2"]), default="1")
+            profile_name = profiles[int(choice) - 1]
+            _setup_env_vars_for_profile(profile_name)
         return
 
     console.print("[bold cyan]Welcome to aidev![/bold cyan]\n")
@@ -243,17 +335,44 @@ def setup(force: bool) -> None:
     console.print("[cyan]Installing built-in MCP servers...[/cyan]")
     mcp_manager.init_builtin_servers()
 
-    # TODO: Interactive prompts for:
-    # - GitHub/GitLab tokens
-    # - Git author info
-    # - Default profile
-    # - Tool detection
+    # Interactive setup for environment variables
+    if not skip_env:
+        console.print("\n[cyan]Setting up environment variables[/cyan]")
+        console.print("[dim]These are needed for GitHub, GitLab, and other MCP servers.[/dim]")
+
+        if confirm("Configure environment variables now?", default=True):
+            console.print("\nWhich profile would you like to configure?")
+            console.print("  1. [bold]web[/bold] (GitHub, general development)")
+            console.print("  2. [bold]infra[/bold] (GitLab, Kubernetes, Atlassian)")
+            console.print("  3. [bold]both[/bold]")
+            console.print("  4. [bold]skip[/bold] (configure later with: ai env set KEY value)")
+
+            choice = click.prompt(
+                "Select option",
+                type=click.Choice(["1", "2", "3", "4"]),
+                default="1",
+            )
+
+            profiles_to_setup = []
+            if choice in ["1", "3"]:
+                profiles_to_setup.append("web")
+            if choice in ["2", "3"]:
+                profiles_to_setup.append("infra")
+
+            for profile_name in profiles_to_setup:
+                _setup_env_vars_for_profile(profile_name)
 
     console.print("\n[bold green]✓ Setup complete![/bold green]")
-    console.print("\nNext steps:")
+    console.print("\n[bold cyan]What's next:[/bold cyan]")
     console.print("  1. cd into a project directory")
-    console.print("  2. Run: ai init")
-    console.print("  3. Launch your AI tool: ai cursor / ai claude / ai codex / ai gemini")
+    console.print("  2. Run: [bold]ai init[/bold] (or [bold]ai quickstart[/bold] for auto-detection)")
+    console.print("  3. Launch your AI tool:")
+    console.print("     • [bold]ai cursor[/bold] - Cursor editor")
+    console.print("     • [bold]ai claude[/bold] - Claude Code")
+    console.print("     • [bold]ai codex[/bold] - Codex CLI")
+    console.print("     • [bold]ai gemini[/bold] - Gemini Code Assist")
+    console.print("\n[dim]Missing env vars? Run: [bold]ai env set KEY value[/bold][/dim]")
+    console.print("[dim]Check status: [bold]ai status[/bold][/dim]")
 
 
 @cli.command()
@@ -305,6 +424,28 @@ def doctor(fix_path: bool) -> None:
     env_lookup = lambda key: config_manager.get_env().get(key)
     all_ok = preflight(env_keys, binaries, env_lookup)
 
+    # Check environment variables for active profile
+    console.print("\n[cyan]Checking active profile environment variables...[/cyan]")
+    current_profile_name = config_manager.get_current_profile()
+    profile = profile_manager.load_profile(current_profile_name)
+
+    if profile:
+        missing = get_missing_env_vars(profile, env_lookup)
+        if missing:
+            console.print(f"[yellow]![/yellow] Profile '[bold]{current_profile_name}[/bold]' has {len(missing)} missing env vars:")
+            for var in missing:
+                if not is_env_var_optional(var):
+                    info = get_env_var_info(var)
+                    url_hint = f" (get at: {info.get('url')})" if info.get('url') else ""
+                    console.print(f"   [red]✗[/red] {var}{url_hint}")
+                    all_ok = False
+            console.print(f"[dim]Set them with: ai env set KEY value[/dim]")
+        else:
+            console.print(f"[green]✓[/green] All required env vars for '{current_profile_name}' are set")
+    else:
+        console.print(f"[yellow]![/yellow] Could not load profile '{current_profile_name}'")
+        all_ok = False
+
     console.print("\n[cyan]PATH & shim checks...[/cyan]")
     ai_locations = _which_all("ai")
     pipx_bin = _pipx_bin_dir()
@@ -319,6 +460,7 @@ def doctor(fix_path: bool) -> None:
             console.print(f"[dim]All ai locations: {', '.join(ai_locations)}[/dim]")
     else:
         console.print("[red]✗[/red] ai not found on PATH. Run with --fix-path or ensure pipx shims are exported.")
+        all_ok = False
 
     if fix_path:
         console.print("\n[cyan]Applying pipx path fix...[/cyan]")
