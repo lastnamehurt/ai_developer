@@ -50,7 +50,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "AI Tools",
-            "commands": ["cursor", "claude", "codex", "gemini", "ollama", "tool", "review"],
+            "commands": ["cursor", "claude", "codex", "gemini", "tool", "review"],
         },
         {
             "name": "Utilities",
@@ -544,14 +544,6 @@ def gemini(profile: str, args: tuple) -> None:
 
 
 @cli.command()
-@click.option("--profile", help="Profile to use")
-@click.argument("args", nargs=-1)
-def ollama(profile: str, args: tuple) -> None:
-    """Launch Ollama with aidev configuration"""
-    _launch_tool_with_profile("ollama", profile, args)
-
-
-@cli.command()
 @click.argument("tool_name")
 @click.option("--profile", help="Profile to use")
 @click.argument("args", nargs=-1)
@@ -565,7 +557,7 @@ def tool(tool_name: str, profile: str, args: tuple) -> None:
 @click.argument("files", nargs=-1, type=click.Path(exists=True))
 @click.option("--all", "all_files", is_flag=True, help="Review all tracked files.")
 @click.option("--staged", is_flag=True, help="Review staged files.")
-@click.option("--provider", type=click.Choice(["heuristic", "external", "ollama"]), help="Choose review provider")
+@click.option("--provider", type=click.Choice(["heuristic", "external"]), help="Choose review provider")
 @click.option(
     "--review-config",
     type=click.Path(exists=True),
@@ -593,7 +585,7 @@ def review(files: tuple[str], all_files: bool, staged: bool, provider: str, revi
             console.print("[yellow]No staged files to review. Use --all or pass files.[/yellow]")
             return
 
-    from aidev.review import load_review_config, external_review, ReviewConfig, ollama_review
+    from aidev.review import load_review_config, external_review, ReviewConfig
 
     cfg: ReviewConfig = load_review_config(Path(review_config)) if review_config else load_review_config()
     if provider:
@@ -605,9 +597,6 @@ def review(files: tuple[str], all_files: bool, staged: bool, provider: str, revi
             return
         console.print(f"[cyan]Using external reviewer: {' '.join(cfg.command)}[/cyan]")
         comments = external_review(target_paths, cfg.command)
-    elif cfg.provider == "ollama":
-        console.print(f"[cyan]Using ollama reviewer: model={cfg.ollama_model}[/cyan]")
-        comments = ollama_review(target_paths, cfg.ollama_model, cfg.ollama_prompt)
     else:
         comments = review_paths(target_paths)
     if comments:

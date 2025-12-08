@@ -26,21 +26,6 @@ def test_external_review_handles_missing_command():
     assert comments == []
 
 
-def test_ollama_review_handles_missing_binary(monkeypatch, tmp_path: Path):
-    from aidev import review
-
-    def fake_run(*args, **kwargs):
-        raise FileNotFoundError("ollama not found")
-
-    monkeypatch.setattr(review.subprocess, "run", fake_run)
-    f = tmp_path / "file.py"
-    f.write_text("print('x')")
-    comments = review.ollama_review([f], "codellama", "prompt")
-    assert comments
-    assert comments[0].severity == "error"
-    assert "ollama not found" in comments[0].message
-
-
 def test_analyze_content_detects_debug_breakpoint():
     """Test detection of debug breakpoints"""
     content = "import pdb\npdb.set_trace()\nbreakpoint()\n"
@@ -188,85 +173,6 @@ def test_external_review_exception(tmp_path: Path, monkeypatch):
     assert comments[0].severity == "error"
     assert "Command failed" in comments[0].message
 
-
-def test_ollama_review_empty_paths():
-    """Test ollama review with empty paths"""
-    from aidev.review import ollama_review
-    comments = ollama_review([], "codellama", "prompt")
-    assert comments == []
-
-
-def test_ollama_review_nonexistent_file():
-    """Test ollama review with nonexistent file"""
-    from aidev.review import ollama_review
-    comments = ollama_review([Path("/nonexistent.py")], "codellama", "prompt")
-    assert comments == []
-
-
-def test_ollama_review_success(tmp_path: Path, monkeypatch):
-    """Test successful ollama review"""
-    from aidev import review
-    import subprocess
-    
-    class MockResult:
-        returncode = 0
-        stdout = "Code looks good"
-        stderr = ""
-    
-    def mock_run(*args, **kwargs):
-        return MockResult()
-    
-    monkeypatch.setattr(subprocess, "run", mock_run)
-    
-    file = tmp_path / "test.py"
-    file.write_text("def hello(): return 'world'")
-    comments = review.ollama_review([file], "codellama", "review this")
-    
-    assert len(comments) == 1
-    assert comments[0].severity == "info"
-    assert "Code looks good" in comments[0].message
-
-
-def test_ollama_review_error(tmp_path: Path, monkeypatch):
-    """Test ollama review with non-zero exit"""
-    from aidev import review
-    import subprocess
-    
-    class MockResult:
-        returncode = 1
-        stdout = ""
-        stderr = "Model error"
-    
-    def mock_run(*args, **kwargs):
-        return MockResult()
-    
-    monkeypatch.setattr(subprocess, "run", mock_run)
-    
-    file = tmp_path / "test.py"
-    file.write_text("def hello(): return 'world'")
-    comments = review.ollama_review([file], "codellama", "review this")
-    
-    assert len(comments) == 1
-    assert comments[0].severity == "error"
-
-
-def test_ollama_review_exception(tmp_path: Path, monkeypatch):
-    """Test ollama review with generic exception"""
-    from aidev import review
-    import subprocess
-    
-    def mock_run(*args, **kwargs):
-        raise RuntimeError("Unexpected error")
-    
-    monkeypatch.setattr(subprocess, "run", mock_run)
-    
-    file = tmp_path / "test.py"
-    file.write_text("def hello(): return 'world'")
-    comments = review.ollama_review([file], "codellama", "review this")
-    
-    assert len(comments) == 1
-    assert comments[0].severity == "error"
-    assert "Unexpected error" in comments[0].message
 
 
 def test_load_review_config_default():

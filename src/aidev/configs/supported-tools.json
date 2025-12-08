@@ -33,12 +33,5 @@
     "app_name": "Zed",
     "config_path": "~/.config/zed/mcp.json",
     "install_url": "https://zed.dev"
-  },
-  "ollama": {
-    "name": "Ollama",
-    "binary": "ollama",
-    "app_name": "Ollama",
-    "config_path": "~/.ollama/config.json",
-    "install_url": "https://ollama.com"
   }
 }

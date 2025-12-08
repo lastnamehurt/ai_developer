@@ -160,7 +160,7 @@ ai review --staged              # Review changes in your Git staging area
 ai review --all                 # Review all tracked files in your repository
 ai review app.py util.py        # Review specific files
 ```
-You can also configure external reviewers (e.g., Aider, Ollama) in `~/.aidev/review.json`.
+You can also configure external reviewers (e.g., Aider) in `~/.aidev/review.json`.
 
 ## 🏗️ Advanced Usage
 

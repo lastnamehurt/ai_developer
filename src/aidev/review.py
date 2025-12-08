@@ -10,11 +10,6 @@ from pathlib import Path
 from typing import Iterable, List, Optional
 
 REVIEW_EXTENSIONS = {".py", ".ts", ".tsx", ".js", ".jsx", ".md"}
-DEFAULT_OLLAMA_MODEL = "codellama"
-DEFAULT_OLLAMA_PROMPT = (
-    "You are a staff-level code reviewer. Review the following files for bugs, risky code, "
-    "missing tests, and poor error handling. Respond concisely with findings."
-)
 
 
 @dataclass
@@ -27,10 +22,8 @@ class ReviewComment:
 
 @dataclass
 class ReviewConfig:
-    provider: str = "heuristic"  # heuristic | external | ollama
+    provider: str = "heuristic"  # heuristic | external
     command: Optional[list[str]] = None  # for external
-    ollama_model: str = DEFAULT_OLLAMA_MODEL
-    ollama_prompt: str = DEFAULT_OLLAMA_PROMPT
 
 
 def load_review_config(path: Optional[Path] = None) -> ReviewConfig:
@@ -41,9 +34,7 @@ def load_review_config(path: Optional[Path] = None) -> ReviewConfig:
         data = json.loads(config_path.read_text())
         provider = data.get("provider", "heuristic")
         command = data.get("command")
-        ollama_model = data.get("ollama_model", DEFAULT_OLLAMA_MODEL)
-        ollama_prompt = data.get("ollama_prompt", DEFAULT_OLLAMA_PROMPT)
-        return ReviewConfig(provider=provider, command=command, ollama_model=ollama_model, ollama_prompt=ollama_prompt)
+        return ReviewConfig(provider=provider, command=command)
     except Exception:
         return ReviewConfig()
 
@@ -111,49 +102,6 @@ def external_review(paths: list[Path], command: list[str]) -> list[ReviewComment
         return [ReviewComment(file_path="external", line=1, severity=severity, message=output)]
     except Exception as exc:
         return [ReviewComment(file_path="external", line=1, severity="error", message=str(exc))]
-
-
-def ollama_review(paths: list[Path], model: str, prompt: str) -> list[ReviewComment]:
-    """Call `ollama run <model>` with concatenated file contents and a review prompt."""
-    if not paths:
-        return []
-    # Build input for the model
-    blob_lines = []
-    for p in paths:
-        if not p.exists() or not p.is_file():
-            continue
-        blob_lines.append(f"### FILE: {p}")
-        try:
-            blob_lines.append(p.read_text())
-        except Exception:
-            blob_lines.append("[unreadable]")
-        blob_lines.append("")  # blank line
-    blob = "\n".join(blob_lines)
-    if not blob.strip():
-        return []
-
-    try:
-        proc = subprocess.run(
-            ["ollama", "run", model, "--prompt", prompt],
-            input=blob,
-            text=True,
-            capture_output=True,
-            timeout=300,
-        )
-        output = proc.stdout.strip() or proc.stderr.strip() or "No output from ollama."
-        severity = "error" if proc.returncode != 0 else "info"
-        return [ReviewComment(file_path="ollama", line=1, severity=severity, message=output)]
-    except FileNotFoundError:
-        return [
-            ReviewComment(
-                file_path="ollama",
-                line=1,
-                severity="error",
-                message="ollama not found on PATH. Install from https://ollama.ai/ and pull the model.",
-            )
-        ]
-    except Exception as exc:
-        return [ReviewComment(file_path="ollama", line=1, severity="error", message=str(exc))]
 
 
 def staged_files() -> list[Path]:
