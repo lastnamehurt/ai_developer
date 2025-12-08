@@ -31,6 +31,8 @@ with pkg_resources.path('aidev', 'configs') as p:
     CONFIGS_DIR: Final[Path] = p
 with pkg_resources.path('aidev.configs', 'engineering-workflow.md') as p:
     ENGINEERING_WORKFLOW_TEMPLATE: Final[Path] = p
+with pkg_resources.path('aidev.configs', 'workflows.yaml') as p:
+    WORKFLOWS_TEMPLATE: Final[Path] = p
 
 
 # Files
@@ -42,6 +44,8 @@ PROJECT_CONFIG_DIR: Final[str] = ".aidev"
 PROJECT_CONFIG_FILE: Final[str] = "config.json"
 PROJECT_ENV_FILE: Final[str] = ".env"
 PROJECT_PROFILE_FILE: Final[str] = "profile"
+PROJECT_WORKFLOWS_FILE: Final[str] = "workflows.yaml"
+PROJECT_WORKFLOW_RUNS_DIR: Final[str] = "workflow-runs"
 
 # Built-in profiles
 BUILTIN_PROFILES: Final[list[str]] = [

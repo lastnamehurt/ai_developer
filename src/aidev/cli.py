@@ -22,6 +22,7 @@ from aidev.tutorial import Tutorial
 from aidev.review import review_paths, staged_files, tracked_files
 from aidev.utils import load_json, save_json, load_env
 from aidev.errors import preflight
+from aidev.workflow import WorkflowEngine
 
 def _which_all(executable: str) -> list[str]:
     """Return all resolutions of an executable (best-effort, cross-shell)."""
@@ -113,7 +114,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "Utilities",
-            "commands": ["config", "doctor", "completion", "backup", "restore", "config-share"],
+            "commands": ["config", "workflow", "doctor", "completion", "backup", "restore", "config-share"],
         },
     ]
 }
@@ -326,6 +327,57 @@ def doctor(fix_path: bool) -> None:
         console.print("\n[bold green]All checks passed![/bold green]")
     else:
         console.print("\n[bold yellow]Fix the above items and re-run ai doctor.[/bold yellow]")
+
+
+@cli.command()
+@click.argument("workflow_name", required=False)
+@click.option("--ticket", help="Ticket key, URL, or org/repo#123")
+@click.option("--file", "ticket_file", type=click.Path(exists=True, dir_okay=False, path_type=Path), help="Load ticket text from file")
+@click.option("--tool", "tool_override", help="Force assistant/tool to use (e.g., claude, codex)")
+@click.option("--list", "list_only", is_flag=True, help="List available workflows")
+def workflow(workflow_name: Optional[str], ticket: Optional[str], ticket_file: Optional[Path], tool_override: Optional[str], list_only: bool) -> None:
+    """Run or list workflows defined in .aidev/workflows.yaml"""
+    engine = WorkflowEngine(project_dir=Path.cwd())
+    workflows = engine.load_workflows()
+
+    if not workflows:
+        console.print("[red]✗[/red] No workflows defined. Edit .aidev/workflows.yaml to add one.")
+        return
+
+    if list_only:
+        console.print("[bold]Available workflows[/bold]")
+        for name, spec in workflows.items():
+            console.print(f"• {name}: {spec.description}")
+        return
+
+    selected_name = workflow_name or ("implement_ticket" if "implement_ticket" in workflows else next(iter(workflows)))
+    if selected_name not in workflows:
+        console.print(f"[red]✗[/red] Workflow '{selected_name}' not found. Use --list to see options.")
+        return
+
+    spec = workflows[selected_name]
+    if ticket_file and not spec.allow_file:
+        console.print(f"[red]✗[/red] Workflow '{selected_name}' does not allow --file input.")
+        return
+
+    project_config = config_manager.get_project_config_path(Path.cwd())
+    project_default_assistant = None
+    if project_config:
+        cfg_file = project_config / "config.json"
+        if cfg_file.exists():
+            try:
+                project_default_assistant = load_json(cfg_file, default={}).get("default_assistant")
+            except Exception:
+                project_default_assistant = None
+
+    run_path = engine.run_workflow(
+        spec,
+        ticket=ticket,
+        ticket_file=ticket_file,
+        tool_override=tool_override,
+        project_default_assistant=project_default_assistant,
+    )
+    console.print(f"[cyan]Run manifest saved to[/cyan] {run_path}")
 
 
 @cli.command()
