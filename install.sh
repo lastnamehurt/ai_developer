@@ -257,9 +257,10 @@ AIDEV_BIN="$(command -v ai || command -v aidev || true)"
 if [ -z "$AIDEV_BIN" ]; then
     echo -e "${YELLOW}! Could not find ai/aidev on PATH in this shell. Open a new shell or run: pipx ensurepath && hash -r${NC}"
 else
-    "$AIDEV_BIN" setup --force > /dev/null 2>&1 || true
+    # Skip env var prompts during install (user can run 'ai setup' later interactively)
+    "$AIDEV_BIN" setup --force --skip-env < /dev/null 2>/dev/null || true
 fi
-echo -e "${GREEN}✓${NC} aidev initialized"
+echo -e "${GREEN}✓${NC} aidev initialized""
 
 # Detect conflicting ai binaries (e.g., local venv shadowing pipx)
 if command -v ai >/dev/null 2>&1; then
