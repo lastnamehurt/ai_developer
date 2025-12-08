@@ -4,13 +4,15 @@ Workflow engine and assistant resolver for ai_developer.
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
+import subprocess
+import shlex
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional
-
+from typing import Any, Optional, Callable
 import yaml
 
 from aidev.constants import (
@@ -20,7 +22,17 @@ from aidev.constants import (
     WORKFLOWS_TEMPLATE,
 )
 from aidev.tools import ToolManager
-from aidev.utils import console, ensure_dir
+from aidev.utils import console, ensure_dir, load_json
+
+PROPOSAL_EXEC_SUFFIX = """
+
+[Mode: proposal then execute]
+1) Start with a concise proposal: goal, TODO checklist, risks/assumptions, and any approval needed.
+2) Write the proposal as Markdown to the path declared in the run manifest (field: proposal_output).
+3) If no approval gate is specified, immediately execute the TODOs now—apply edits/files directly.
+4) Narrate actions briefly; do not stop after planning.
+5) When done, state what you changed and where to find artifacts (edited file paths and the proposal_output path). If you could not write the file, paste the proposal inline and note the intended path.
+"""
 
 
 @dataclass
@@ -127,6 +139,8 @@ class WorkflowEngine:
         self.project_dir = Path(project_dir or Path.cwd())
         self.tool_manager = ToolManager()
         self.resolver = AssistantResolver(self.tool_manager)
+        # Runner hook for step execution; can be overridden in tests
+        self._runner: Callable[[dict[str, Any]], dict[str, Any]] = self._default_runner
 
     # ------------------------------------------------------------------ #
     # Loading
@@ -197,6 +211,7 @@ class WorkflowEngine:
         *,
         ticket: Optional[str],
         ticket_file: Optional[Path],
+        user_prompt: Optional[str],
         tool_override: Optional[str],
         project_default_assistant: Optional[str] = None,
         from_step: Optional[str] = None,
@@ -208,6 +223,7 @@ class WorkflowEngine:
         """
         ticket_source = detect_ticket_source(ticket, ticket_file)
         ticket_text = self._load_ticket_text(ticket, ticket_file)
+        user_text = user_prompt or ticket_text
         steps_output: list[dict[str, Any]] = []
 
         step_iter = workflow.steps
@@ -230,7 +246,7 @@ class WorkflowEngine:
                 env_default=self._env_default_assistant(),
                 project_default=project_default_assistant,
             )
-            prompt_text = self._load_prompt(step.prompt)
+            prompt_text = self._load_prompt(step.prompt) + PROPOSAL_EXEC_SUFFIX
             steps_output.append(
                 {
                     "name": step.name,
@@ -244,6 +260,7 @@ class WorkflowEngine:
                     "input": {
                         "ticket_source": ticket_source,
                         "ticket_text_preview": ticket_text[:4000] if ticket_text else "",
+                        "user_prompt": (user_text or "")[:4000],
                     },
                     "output": {
                         "status": "not-run",
@@ -272,8 +289,45 @@ class WorkflowEngine:
             self._persist_refactor_stub(ticket_file, ticket_text)
         return run_path
 
+    def execute_manifest(self, manifest_path: Path) -> Path:
+        """
+        Execute steps in a manifest:
+        - Runs each step via the configured runner (default: assistant CLI best-effort)
+        - Respects retries (best-effort)
+        - Skips steps already marked ok (resume behavior)
+        - Updates status/result and writes manifest
+        """
+        data = json.loads(manifest_path.read_text())
+        steps = data.get("steps", [])
+        for step in steps:
+            if step.get("output", {}).get("status") == "ok":
+                continue
+            output = step.get("output") or {}
+            output["started_at"] = int(time.time())
+            retries = step.get("retries", 0)
+            attempt = 0
+            last_err = None
+            while attempt <= retries:
+                attempt += 1
+                try:
+                    result = self._runner(step)
+                    output["status"] = "ok"
+                    output["result"] = result
+                    break
+                except Exception as exc:  # pragma: no cover - defensive
+                    last_err = str(exc)
+                    output["status"] = "error"
+                    output["result"] = {"error": last_err, "attempt": attempt}
+                    if attempt <= retries:
+                        time.sleep(0.1)
+            output["ended_at"] = int(time.time())
+            step["output"] = output
+        data["completed_at"] = int(time.time())
+        manifest_path.write_text(json.dumps(data, indent=2))
+        return manifest_path
+
     # ------------------------------------------------------------------ #
-    # Internals
+    # Internals / runners
     # ------------------------------------------------------------------ #
     def _load_prompt(self, prompt_id: str) -> str:
         """Load prompt text from bundled prompts directory."""
@@ -287,6 +341,8 @@ class WorkflowEngine:
         ensure_dir(self.runs_dir())
         timestamp = time.strftime("%Y%m%d-%H%M%S")
         path = self.runs_dir() / f"{workflow_name}-{timestamp}.json"
+        manifest["manifest_path"] = str(path)
+        manifest["proposal_output"] = str(path.with_suffix(".proposal.md"))
         path.write_text(json.dumps(manifest, indent=2))
         return path
 
@@ -319,3 +375,116 @@ class WorkflowEngine:
         stub_path = self.runs_dir() / f"refactor_scout-{ts}-draft.md"
         stub_path.write_text("\n".join(body))
         console.print(f"[cyan]Refactor draft saved to[/cyan] {stub_path}")
+
+    def handoff_to_assistant(self, manifest_path: Path, assistant: str) -> None:
+        """
+        Launch assistant CLI with an instruction to execute the manifest interactively.
+        This opens the assistant; user can watch/drive the steps.
+        """
+        instruction = (
+            "You are a workflow executor. Read the manifest JSON file and execute the steps sequentially. "
+            "Use the system prompt as given and the user prompt/ticket content as input. "
+            "Narrate your actions and produce outputs per step."
+        )
+        user_prompt = f"Read and execute the workflow manifest at: {manifest_path}"
+        cmd = self._assistant_command(assistant, instruction, user_prompt, user_prompt, interactive=True)
+        if not cmd:
+            console.print(f"[red]✗[/red] No handoff command available for assistant '{assistant}'. Open the manifest manually: {manifest_path}")
+            return
+        try:
+            env = self._assistant_env(assistant)
+            # Run inline in the current terminal (avoid opening new Terminal windows).
+            result = subprocess.run(cmd, check=False, env=env)
+            if result.returncode != 0:
+                console.print(f"[red]✗[/red] Assistant '{assistant}' exited with code {result.returncode}.")
+                console.print(f"[yellow]Manifest:[/yellow] {manifest_path}")
+                console.print(f"[dim]Command:[/dim] {' '.join(cmd)}")
+            else:
+                console.print(f"[cyan]Opened assistant '{assistant}' with manifest handoff[/cyan]")
+        except Exception as exc:
+            console.print(f"[red]✗[/red] Failed to launch assistant '{assistant}': {exc}")
+            console.print(f"[yellow]Manifest:[/yellow] {manifest_path}")
+
+    def _default_runner(self, step: dict[str, Any]) -> dict[str, Any]:
+        """
+        Default step runner: calls assistant binary with prompt text and captures stdout.
+        Minimal, best-effort. Real streaming/structured output can be layered later.
+        """
+        assistant = step.get("assistant")
+        prompt_text = step.get("prompt_text", "")
+        input_section = step.get("input", {}) or {}
+        input_preview = input_section.get("user_prompt") or input_section.get("ticket_text_preview") or ""
+        timeout_sec = int(step.get("tool_timeout_sec", 30))
+        merged = f"{prompt_text}\n\nINPUT:\n{input_preview}"
+
+        cmd = self._assistant_command(assistant, prompt_text, input_preview, merged, interactive=False)
+        if not cmd:
+            raise RuntimeError(f"No runner available for assistant '{assistant}'")
+
+        try:
+            env = self._assistant_env(assistant)
+            proc = subprocess.run(
+                cmd,
+                text=True,
+                capture_output=True,
+                timeout=timeout_sec,
+                env=env,
+            )
+            if proc.returncode != 0:
+                raise RuntimeError(f"{' '.join(cmd)} -> rc={proc.returncode}, stderr={proc.stderr[:200]}")
+            return {
+                "assistant": assistant,
+                "returncode": proc.returncode,
+                "stdout": proc.stdout,
+                "stderr": proc.stderr,
+                "prompt_used": prompt_text[:2000],
+            }
+        except subprocess.TimeoutExpired as exc:
+            raise RuntimeError(f"Timeout after {timeout_sec}s: {exc}")
+
+    def _assistant_command(
+        self,
+        assistant: str,
+        prompt_text: str,
+        input_preview: str,
+        merged: str,
+        *,
+        interactive: bool = False,
+    ) -> Optional[list[str]]:
+        """
+        Map assistant id to a CLI command for non-interactive execution:
+        - claude: claude --system-prompt <prompt> <input>
+        - codex:  codex --system-prompt <prompt> <input> (fallback to positional prompt only)
+        - gemini: gemini --prompt <merged> (interactive flag when handoff)
+        - ollama: ollama run llama3.1 --prompt <merged>
+        - cursor: unsupported (returns None)
+        """
+        def _cmd(bin_name: str, args: list[str]) -> Optional[list[str]]:
+            return [bin_name, *args] if shutil.which(bin_name) else None
+
+        if assistant == "claude":
+            # Claude: system prompt flag plus user text as positional argument
+            return _cmd("claude", ["--system-prompt", prompt_text, input_preview])
+        if assistant == "codex":
+            # Codex: use simple positional prompt; exec subcommand for headless runs
+            if interactive:
+                return _cmd("codex", [merged])
+            return _cmd("codex", ["exec", merged]) or _cmd("codex", [merged])
+        if assistant == "gemini":
+            # Gemini: use interactive prompt flag for handoff, else one-shot prompt
+            if interactive:
+                return _cmd("gemini", ["--prompt-interactive", merged]) or _cmd("gemini", ["--prompt", merged])
+            return _cmd("gemini", ["--prompt", merged]) or _cmd("gemini", [merged])
+        if assistant == "ollama":
+            return _cmd("ollama", ["run", "llama3.1", "--prompt", merged])
+        if assistant == "cursor":
+            return None
+        return None
+
+    def _assistant_env(self, assistant: str) -> Optional[dict[str, str]]:
+        """Return env overrides for assistants to keep state inside workspace."""
+        if assistant in {"claude", "codex", "gemini"}:
+            env = os.environ.copy()
+            env["HOME"] = str(self.project_dir)
+            return env
+        return None

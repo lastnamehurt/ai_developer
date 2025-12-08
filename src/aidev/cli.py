@@ -6,6 +6,7 @@ import shutil
 import subprocess
 from pathlib import Path
 from typing import Optional
+import json
 
 import rich_click as click
 from rich.console import Console
@@ -339,7 +340,9 @@ def doctor(fix_path: bool) -> None:
 @click.option("--from-step", "from_step", help="Start execution from this step name")
 @click.option("--step-only", is_flag=True, help="Run only the selected step")
 @click.option("--output", "output_mode", type=click.Choice(["table", "json"], case_sensitive=False), default="table", help="Output format for run manifest")
-def workflow(workflow_name: Optional[str], input_value: Optional[str], ticket: Optional[str], ticket_file: Optional[Path], tool_override: Optional[str], list_only: bool, from_step: Optional[str], step_only: bool, output_mode: str) -> None:
+@click.option("--handoff/--no-handoff", default=True, help="Launch assistant with manifest for interactive execution (default: on)")
+@click.option("--execute", is_flag=True, help="Run steps headless before handoff")
+def workflow(workflow_name: Optional[str], input_value: Optional[str], ticket: Optional[str], ticket_file: Optional[Path], tool_override: Optional[str], list_only: bool, from_step: Optional[str], step_only: bool, output_mode: str, handoff: bool, execute: bool) -> None:
     """Run or list workflows defined in .aidev/workflows.yaml. Input can be passed via --ticket/--file or as a positional value (ticket key or file path)."""
     engine = WorkflowEngine(project_dir=Path.cwd())
     workflows, warnings = engine.load_workflows()
@@ -358,13 +361,14 @@ def workflow(workflow_name: Optional[str], input_value: Optional[str], ticket: O
             console.print(f"• {name}: {spec.description}")
         return
 
-    # Interpret positional input if provided: prefer file if path exists, else ticket
+    # Interpret positional input if provided: prefer file if path exists, else treat as free-form prompt
+    user_prompt = None
     if input_value and not ticket and not ticket_file:
         candidate_path = Path(input_value)
         if candidate_path.exists():
             ticket_file = candidate_path
         else:
-            ticket = input_value
+            user_prompt = input_value
 
     selected_name = workflow_name or ("implement_ticket" if "implement_ticket" in workflows else next(iter(workflows)))
     if selected_name not in workflows:
@@ -390,15 +394,21 @@ def workflow(workflow_name: Optional[str], input_value: Optional[str], ticket: O
         spec,
         ticket=ticket,
         ticket_file=ticket_file,
+        user_prompt=user_prompt,
         tool_override=tool_override,
         project_default_assistant=project_default_assistant,
         from_step=from_step,
         step_only=step_only,
     )
+    if execute:
+        run_path = engine.execute_manifest(run_path)
     if output_mode == "json":
         console.print(Path(run_path).read_text())
     else:
         console.print(f"[cyan]Run manifest saved to[/cyan] {run_path}")
+
+    if handoff:
+        engine.handoff_to_assistant(run_path, tool_override or spec.tool_default or engine.resolver._fallback_by_availability())
 
 
 @cli.command()

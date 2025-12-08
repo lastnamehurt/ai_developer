@@ -38,6 +38,8 @@ def test_assistant_resolver_precedence_and_fallback():
 def test_workflow_engine_seeds_and_runs(tmp_path: Path):
     project_dir = tmp_path
     engine = WorkflowEngine(project_dir=project_dir)
+    # Override runner to avoid shelling out during tests
+    engine._runner = lambda step: {"assistant": step.get("assistant"), "stdout": "ok"}
 
     workflows, warnings = engine.load_workflows()
     assert "implement_ticket" in workflows
@@ -49,13 +51,26 @@ def test_workflow_engine_seeds_and_runs(tmp_path: Path):
         description="demo workflow",
         steps=[WorkflowStep(name="step1", profile="default", prompt="ticket_understander", tool="claude")],
     )
-    run_path = engine.run_workflow(spec, ticket="ABC-1", ticket_file=None, tool_override=None, from_step=None, step_only=False)
+    run_path = engine.run_workflow(
+        spec,
+        ticket="ABC-1",
+        ticket_file=None,
+        user_prompt="hello world",
+        tool_override=None,
+        from_step=None,
+        step_only=False,
+    )
     assert run_path.exists()
     data = json.loads(run_path.read_text())
     assert data["workflow"] == "demo"
     assert data["steps"][0]["prompt_id"] == "ticket_understander"
     assert data["schema_version"] == "1.1"
     assert data["steps"][0]["tool_timeout_sec"] == 30
+    assert data["steps"][0]["input"]["user_prompt"] == "hello world"
+    # Execute placeholder and ensure status/result set
+    engine.execute_manifest(run_path)
+    executed = json.loads(run_path.read_text())
+    assert executed["steps"][0]["output"]["status"] == "ok"
 
 
 def test_refactor_scout_stub(tmp_path: Path):
@@ -65,6 +80,14 @@ def test_refactor_scout_stub(tmp_path: Path):
     engine = WorkflowEngine(project_dir=project_dir)
     wf = engine.load_workflows()[0]["refactor_scout"]
 
-    engine.run_workflow(wf, ticket=None, ticket_file=code_file, tool_override=None, from_step=None, step_only=False)
+    engine.run_workflow(
+        wf,
+        ticket=None,
+        ticket_file=code_file,
+        user_prompt=None,
+        tool_override=None,
+        from_step=None,
+        step_only=False,
+    )
     runs = list((tmp_path / ".aidev" / "workflow-runs").glob("refactor_scout-*-draft.md"))
     assert runs, "Expected refactor_scout to write a draft ticket file"
