@@ -248,7 +248,12 @@ def _prompt_for_env_var(env_var: str, encrypt: bool = False) -> Optional[str]:
     if help_text:
         console.print(f"[dim]Tip: {help_text}[/dim]")
 
-    value = click.prompt("Enter value (or leave blank to skip)", default="", show_default=False)
+    try:
+        value = click.prompt("Enter value (or leave blank to skip)", default="", show_default=False)
+    except (EOFError, KeyboardInterrupt):
+        # Handle non-interactive mode or user interrupt
+        console.print("[dim]Skipped (non-interactive or interrupted)[/dim]")
+        return None
 
     if value.strip():
         if encrypt:
@@ -310,34 +315,52 @@ def setup(force: bool, skip_env: bool) -> None:
     """Interactive setup wizard for aidev"""
     if config_manager.is_initialized() and not force:
         console.print("[yellow]aidev is already set up. Use --force to reinitialize.[/yellow]")
-        if not skip_env and confirm("Configure missing environment variables?"):
+        if not skip_env and confirm("Configure missing environment variables?", default=False):
             console.print("\nWhich profile would you like to configure?")
             profiles = ["web", "infra"]
             for i, p in enumerate(profiles, 1):
                 console.print(f"  {i}. {p}")
-            choice = click.prompt("Select profile", type=click.Choice(["1", "2"]), default="1")
-            profile_name = profiles[int(choice) - 1]
-            _setup_env_vars_for_profile(profile_name)
+            try:
+                choice = click.prompt("Select profile", type=click.Choice(["1", "2"]), default="1")
+                profile_name = profiles[int(choice) - 1]
+                _setup_env_vars_for_profile(profile_name)
+            except (EOFError, KeyboardInterrupt):
+                console.print("\n[dim]Setup interrupted[/dim]")
         return
 
     console.print("[bold cyan]Welcome to aidev![/bold cyan]\n")
     console.print("Let's set up your AI development environment.\n")
 
     # Initialize directories
-    console.print("[cyan]Creating configuration directories...[/cyan]")
-    config_manager.init_directories()
+    console.print("[cyan]1/4 Creating configuration directories...[/cyan]")
+    try:
+        config_manager.init_directories()
+        console.print("[green]✓ Directories created[/green]")
+    except Exception as e:
+        console.print(f"[red]Error creating directories: {e}[/red]")
+        return
 
     # Initialize built-in profiles
-    console.print("[cyan]Installing built-in profiles...[/cyan]")
-    profile_manager.init_builtin_profiles()
+    console.print("[cyan]2/4 Installing built-in profiles...[/cyan]")
+    try:
+        profile_manager.init_builtin_profiles()
+        console.print("[green]✓ Profiles installed[/green]")
+    except Exception as e:
+        console.print(f"[red]Error installing profiles: {e}[/red]")
+        return
 
     # Initialize built-in MCP servers
-    console.print("[cyan]Installing built-in MCP servers...[/cyan]")
-    mcp_manager.init_builtin_servers()
+    console.print("[cyan]3/4 Installing built-in MCP servers...[/cyan]")
+    try:
+        mcp_manager.init_builtin_servers()
+        console.print("[green]✓ MCP servers installed[/green]")
+    except Exception as e:
+        console.print(f"[red]Error installing MCP servers: {e}[/red]")
+        return
 
     # Interactive setup for environment variables
     if not skip_env:
-        console.print("\n[cyan]Setting up environment variables[/cyan]")
+        console.print("\n[cyan]4/4 Setting up environment variables[/cyan]")
         console.print("[dim]These are needed for GitHub, GitLab, and other MCP servers.[/dim]")
 
         if confirm("Configure environment variables now?", default=True):
@@ -347,20 +370,23 @@ def setup(force: bool, skip_env: bool) -> None:
             console.print("  3. [bold]both[/bold]")
             console.print("  4. [bold]skip[/bold] (configure later with: ai env set KEY value)")
 
-            choice = click.prompt(
-                "Select option",
-                type=click.Choice(["1", "2", "3", "4"]),
-                default="1",
-            )
+            try:
+                choice = click.prompt(
+                    "Select option",
+                    type=click.Choice(["1", "2", "3", "4"]),
+                    default="1",
+                )
 
-            profiles_to_setup = []
-            if choice in ["1", "3"]:
-                profiles_to_setup.append("web")
-            if choice in ["2", "3"]:
-                profiles_to_setup.append("infra")
+                profiles_to_setup = []
+                if choice in ["1", "3"]:
+                    profiles_to_setup.append("web")
+                if choice in ["2", "3"]:
+                    profiles_to_setup.append("infra")
 
-            for profile_name in profiles_to_setup:
-                _setup_env_vars_for_profile(profile_name)
+                for profile_name in profiles_to_setup:
+                    _setup_env_vars_for_profile(profile_name)
+            except (EOFError, KeyboardInterrupt):
+                console.print("\n[dim]Setup interrupted[/dim]")
 
     console.print("\n[bold green]✓ Setup complete![/bold green]")
     console.print("\n[bold cyan]What's next:[/bold cyan]")

@@ -275,7 +275,12 @@ def confirm(message: str, default: bool = False) -> bool:
         True if user confirmed, False otherwise
     """
     suffix = " [Y/n]: " if default else " [y/N]: "
-    response = console.input(f"{message}{suffix}").strip().lower()
+    try:
+        response = console.input(f"{message}{suffix}").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        # In non-interactive mode (no stdin), use default
+        console.print(f"[dim]{message}... using default ({default})[/dim]")
+        return default
 
     if not response:
         return default
