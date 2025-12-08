@@ -52,6 +52,7 @@ BUILTIN_PROFILES: Final[list[str]] = [
     "default",
     "web",
     "qa",
+    "work",
     "infra",
 ]
 

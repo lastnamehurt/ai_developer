@@ -403,6 +403,18 @@ class ProfileManager:
                 },
             ),
             Profile(
+                name="work",
+                description="Work/business tasks (Jira, Confluence, GitHub)",
+                tags=["work", "business"],
+                mcp_servers=[
+                    MCPServerConfig(name="filesystem", enabled=True),
+                    MCPServerConfig(name="git", enabled=True),
+                    MCPServerConfig(name="github", enabled=True),
+                    MCPServerConfig(name="atlassian", enabled=True),
+                    MCPServerConfig(name="memory-bank", enabled=True),
+                ],
+            ),
+            Profile(
                 name="infra",
                 description="Infrastructure and deployment",
                 tags=["infra"],
