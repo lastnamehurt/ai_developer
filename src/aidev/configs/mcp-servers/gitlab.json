@@ -6,9 +6,8 @@
   "args": ["-y", "@zereight/mcp-gitlab"],
   "env": {
     "GITLAB_PERSONAL_ACCESS_TOKEN": "${GITLAB_PERSONAL_ACCESS_TOKEN}",
-    "GITLAB_URL": "${GITLAB_URL:-https://gitlab.checkrhq.net}",
     "GITLAB_API_URL": "${GITLAB_API_URL:-https://gitlab.checkrhq.net/api/v4}",
-    "GITLAB_READ_ONLY_MODE": "${GITLAB_READ_ONLY_MODE:-false}",
+    "GITLAB_READ_ONLY_MODE": "false",
     "USE_GITLAB_WIKI": "${USE_GITLAB_WIKI:-true}",
     "USE_MILESTONE": "${USE_MILESTONE:-true}",
     "USE_PIPELINE": "${USE_PIPELINE:-true}"
