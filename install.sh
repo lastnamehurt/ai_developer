@@ -9,7 +9,7 @@ YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-# Installation directory
+# Installation directory (legacy venv fallback)
 INSTALL_DIR="$HOME/.local/aidev"
 BIN_DIR="$INSTALL_DIR/bin"
 # Remote source for installs when not running inside the repo
@@ -17,7 +17,29 @@ REPO_URL="${AIDEV_REPO_URL:-https://github.com/lastnamehurt/aidev.git}"
 PACKAGE_SOURCE="${AIDEV_INSTALL_SOURCE:-aidev}"
 # Preferred installer (pipx isolates deps, no venv activation needed)
 USE_PIPX="${AIDEV_USE_PIPX:-1}"
-PIPX_BIN_DIR="$HOME/.local/bin"
+
+# Detect pipx bin dir (fallback to ~/.local/bin)
+detect_pipx_bin_dir() {
+    if command -v pipx >/dev/null 2>&1; then
+        # pipx environment --value PIPX_BIN_DIR available in recent pipx
+        local detected
+        detected=$(pipx environment --value PIPX_BIN_DIR 2>/dev/null || true)
+        if [ -n "$detected" ]; then
+            echo "$detected"
+            return
+        fi
+        # Older pipx prints lines; parse
+        detected=$(pipx environment 2>/dev/null | sed -n 's/^PIPX_BIN_DIR=//p' | head -n1)
+        if [ -n "$detected" ]; then
+            echo "$detected"
+            return
+        fi
+    fi
+    echo "$HOME/.local/bin"
+}
+
+PIPX_BIN_DIR="${PIPX_BIN_DIR:-$(detect_pipx_bin_dir)}"
+HOMEBREW_BIN_DIR="/opt/homebrew/bin"
 
 echo -e "${CYAN}========================================${NC}"
 echo -e "${CYAN}  aidev Installation${NC}"
@@ -44,12 +66,43 @@ echo -e "${GREEN}✓${NC} Python $PYTHON_VERSION"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+ensure_path_entry() {
+    local dir="$1"
+    local label="$2"
+    if [ -z "$dir" ]; then
+        return
+    fi
+    if [[ ":$PATH:" != *":$dir:"* ]]; then
+        export PATH="$dir:$PATH"
+        local shell_rc=""
+        if [ -n "$ZSH_VERSION" ]; then
+            shell_rc="$HOME/.zshrc"
+        elif [ -n "$BASH_VERSION" ]; then
+            shell_rc="$HOME/.zshrc"
+        fi
+        if [ -n "$shell_rc" ] && [ -f "$shell_rc" ] && ! grep -qF "$dir" "$shell_rc"; then
+            echo "export PATH=\"$dir:\$PATH\"" >> "$shell_rc"
+            echo -e "${GREEN}✓${NC} Added $dir to $shell_rc ($label)"
+        elif [ -n "$shell_rc" ] && [ -f "$shell_rc" ]; then
+            echo -e "${GREEN}✓${NC} $label already in PATH via $shell_rc"
+        fi
+    fi
+}
+
 install_with_pipx() {
     if ! command -v pipx >/dev/null 2>&1; then
         echo -e "${YELLOW}! pipx not found; attempting to install via pip --user${NC}"
         python3 -m pip install --user pipx || return 1
-        export PATH="$HOME/.local/bin:$PATH"
+        pipx ensurepath >/dev/null 2>&1 || true
+        PIPX_BIN_DIR="$(detect_pipx_bin_dir)"
+        ensure_path_entry "$PIPX_BIN_DIR" "pipx bin"
     fi
+    # Ensure pipx shims are on PATH (helps current shell)
+    pipx ensurepath >/dev/null 2>&1 || true
+    PIPX_BIN_DIR="$(detect_pipx_bin_dir)"
+    ensure_path_entry "$PIPX_BIN_DIR" "pipx bin"
+    ensure_path_entry "$HOMEBREW_BIN_DIR" "Homebrew bin"
+
     echo -e "${CYAN}Installing via pipx...${NC}"
     if [ -f "$SCRIPT_DIR/pyproject.toml" ]; then
         pipx install --force "$SCRIPT_DIR" && return 0
@@ -119,26 +172,8 @@ mkdir -p "$BIN_DIR"
 if [ "$USE_PIPX" = "1" ]; then
     echo
     echo -e "${CYAN}pipx handles launchers (ai/aidev on PATH if pipx bin is in PATH).${NC}"
-    echo -e "${YELLOW}!${NC} Ensuring pipx bin dir is in PATH (typically $PIPX_BIN_DIR)"
-    if [[ ":$PATH:" != *":$PIPX_BIN_DIR:"* ]]; then
-        # Prepend for current session
-        export PATH="$PIPX_BIN_DIR:$PATH"
-        # Optionally append to shell rc
-        if [ -n "$ZSH_VERSION" ]; then
-            SHELL_RC="$HOME/.zshrc"
-        elif [ -n "$BASH_VERSION" ]; then
-            SHELL_RC="$HOME/.zshrc"
-        fi
-        if [ -n "$SHELL_RC" ] && [ -f "$SHELL_RC" ]; then
-            # Check if PATH entry already exists (avoid duplicates)
-            if ! grep -qF "$PIPX_BIN_DIR" "$SHELL_RC"; then
-                echo "export PATH=\"$PIPX_BIN_DIR:\$PATH\"" >> "$SHELL_RC"
-                echo -e "${GREEN}✓${NC} Added $PIPX_BIN_DIR to $SHELL_RC"
-            else
-                echo -e "${GREEN}✓${NC} $PIPX_BIN_DIR already in $SHELL_RC"
-            fi
-        fi
-    fi
+    ensure_path_entry "$PIPX_BIN_DIR" "pipx bin"
+    ensure_path_entry "$HOMEBREW_BIN_DIR" "Homebrew bin"
 else
     echo
     echo -e "${CYAN}Creating launcher script...${NC}"
@@ -218,8 +253,28 @@ fi
 # Initialize aidev
 echo
 echo -e "${CYAN}Initializing aidev...${NC}"
-"$BIN_DIR/aidev" setup --force > /dev/null 2>&1 || true
+AIDEV_BIN="$(command -v ai || command -v aidev || true)"
+if [ -z "$AIDEV_BIN" ]; then
+    echo -e "${YELLOW}! Could not find ai/aidev on PATH in this shell. Open a new shell or run: pipx ensurepath && hash -r${NC}"
+else
+    "$AIDEV_BIN" setup --force > /dev/null 2>&1 || true
+fi
 echo -e "${GREEN}✓${NC} aidev initialized"
+
+# Detect conflicting ai binaries (e.g., local venv shadowing pipx)
+if command -v ai >/dev/null 2>&1; then
+    PRIMARY_AI="$(command -v ai)"
+    ALL_AI="$(which -a ai 2>/dev/null | tr '\n' ' ')"
+    echo -e "${CYAN}ai resolution:${NC} $PRIMARY_AI"
+    if echo "$PRIMARY_AI" | grep -E "/venv/|/.venv/" >/dev/null 2>&1; then
+        echo -e "${YELLOW}! Current ai points to a virtualenv ($PRIMARY_AI). pipx shim may be shadowed.${NC}"
+    elif [ -n "$PIPX_BIN_DIR" ] && [[ "$PRIMARY_AI" != "$PIPX_BIN_DIR/"* ]]; then
+        echo -e "${YELLOW}! Current ai is not from pipx. Consider: pipx reinstall ai-developer --force${NC}"
+    fi
+    if [ -n "$ALL_AI" ]; then
+        echo -e "${CYAN}All ai locations:${NC} $ALL_AI"
+    fi
+fi
 
 # Prepare Gemini CLI config directory (for MCP settings)
 GEMINI_DIR="$HOME/.gemini"

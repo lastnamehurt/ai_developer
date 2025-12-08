@@ -2,6 +2,8 @@
 CLI interface for aidev
 """
 import os
+import shutil
+import subprocess
 from pathlib import Path
 from typing import Optional
 
@@ -20,6 +22,63 @@ from aidev.tutorial import Tutorial
 from aidev.review import review_paths, staged_files, tracked_files
 from aidev.utils import load_json, save_json, load_env
 from aidev.errors import preflight
+
+def _which_all(executable: str) -> list[str]:
+    """Return all resolutions of an executable (best-effort, cross-shell)."""
+    try:
+        output = subprocess.check_output(["which", "-a", executable], text=True).strip()
+        return [line for line in output.splitlines() if line]
+    except Exception:
+        resolved = shutil.which(executable)
+        return [resolved] if resolved else []
+
+
+def _pipx_bin_dir() -> Optional[str]:
+    """Detect pipx bin dir if available."""
+    if not shutil.which("pipx"):
+        return None
+    for args in (["pipx", "environment", "--value", "PIPX_BIN_DIR"], ["pipx", "environment"]):
+        try:
+            output = subprocess.check_output(args, text=True).strip()
+        except Exception:
+            continue
+        if "PIPX_BIN_DIR=" in output:
+            output = next((line.split("=", 1)[1] for line in output.splitlines() if line.startswith("PIPX_BIN_DIR=")), output)
+        if output:
+            return output.splitlines()[0]
+    return None
+
+
+def _ensure_pipx_installed(console: Console) -> bool:
+    """Install pipx via pip --user if missing."""
+    if shutil.which("pipx"):
+        return True
+    console.print("[yellow]![/yellow] pipx not found; installing via pip --user")
+    result = subprocess.run(["python3", "-m", "pip", "install", "--user", "pipx"])
+    if result.returncode != 0:
+        console.print("[red]✗[/red] Failed to install pipx; please install pipx manually.")
+        return False
+    return True
+
+
+def _fix_path_and_reinstall(console: Console) -> None:
+    """Self-heal PATH and reinstall via pipx."""
+    if not _ensure_pipx_installed(console):
+        return
+    subprocess.run(["pipx", "ensurepath"])
+    console.print("[green]✓[/green] Ensured pipx shims are on PATH (restart shell if needed)")
+    # Reinstall aidev into pipx to refresh shims
+    result = subprocess.run(["pipx", "reinstall", "ai-developer", "--force"])
+    if result.returncode == 0:
+        console.print("[green]✓[/green] Reinstalled ai-developer via pipx")
+    else:
+        console.print("[yellow]![/yellow] pipx reinstall failed; trying install")
+        install_result = subprocess.run(["pipx", "install", "--force", "ai-developer"])
+        if install_result.returncode == 0:
+            console.print("[green]✓[/green] Installed ai-developer via pipx")
+        else:
+            console.print("[red]✗[/red] pipx install/reinstall failed; check network and pipx configuration.")
+    console.print("[dim]Tip: run `hash -r` in your shell to refresh command cache if needed.[/dim]")
 
 # Configure rich-click
 click.rich_click.USE_RICH_MARKUP = True
@@ -222,7 +281,12 @@ def quickstart(profile: str, yes: bool, project_dir: Path) -> None:
 
 
 @cli.command()
-def doctor() -> None:
+@click.option(
+    "--fix-path",
+    is_flag=True,
+    help="Ensure pipx shims are on PATH and reinstall ai-developer via pipx",
+)
+def doctor(fix_path: bool) -> None:
     """Check aidev installation and configuration health"""
     console.print("[bold]aidev Health Check[/bold]\n")
 
@@ -239,7 +303,26 @@ def doctor() -> None:
     env_lookup = lambda key: config_manager.get_env().get(key)
     all_ok = preflight(env_keys, binaries, env_lookup)
 
-    if all_ok:
+    console.print("\n[cyan]PATH & shim checks...[/cyan]")
+    ai_locations = _which_all("ai")
+    pipx_bin = _pipx_bin_dir()
+    if ai_locations:
+        console.print(f"[green]✓[/green] ai resolves to {ai_locations[0]}")
+        if pipx_bin and not ai_locations[0].startswith(pipx_bin):
+            console.print(f"[yellow]![/yellow] ai is not from pipx (expected under {pipx_bin}).")
+            console.print("[dim]Hint: run `pipx reinstall ai-developer --force` or use --fix-path.[/dim]")
+        if any("/venv/" in loc or "/.venv/" in loc for loc in ai_locations):
+            console.print("[yellow]![/yellow] Detected ai inside a virtualenv; it may shadow the pipx shim.")
+        if len(ai_locations) > 1:
+            console.print(f"[dim]All ai locations: {', '.join(ai_locations)}[/dim]")
+    else:
+        console.print("[red]✗[/red] ai not found on PATH. Run with --fix-path or ensure pipx shims are exported.")
+
+    if fix_path:
+        console.print("\n[cyan]Applying pipx path fix...[/cyan]")
+        _fix_path_and_reinstall(console)
+
+    if all_ok and (ai_locations or fix_path):
         console.print("\n[bold green]All checks passed![/bold green]")
     else:
         console.print("\n[bold yellow]Fix the above items and re-run ai doctor.[/bold yellow]")
