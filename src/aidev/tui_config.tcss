@@ -14,6 +14,20 @@ Footer {
     background: #020617;
 }
 
+/* Profile header section */
+#profile-header-section {
+    background: #0b1120;
+    border-bottom: thick #1f2937;
+    padding: 1 2;
+}
+
+#profile-header {
+    content-align: left middle;
+    text-style: bold;
+    color: #7dd3fc;
+    background: #0b1120;
+}
+
 /* Main container */
 Container {
     layout: horizontal;
@@ -30,15 +44,15 @@ Container {
 }
 
 #left {
-    width: 30%;
+    width: 25%;
 }
 
 #middle {
-    width: 35%;
+    width: 30%;
 }
 
 #right {
-    width: 35%;
+    width: 45%;
 }
 
 /* Panel titles */
@@ -51,13 +65,35 @@ Container {
     margin-bottom: 1;
 }
 
-/* Tables */
-DataTable {
+/* Profile info scrollable */
+#profile-info-scroll {
     height: 1fr;
-    border: tall #111827;
+    border: round #1f2937;
+    background: #0b1120;
 }
 
-#mcp-table, #env-table {
+#profile-info {
+    padding: 1;
+}
+
+/* Tables */
+DataTable {
+    border: tall #111827;
+    background: #020617;
+}
+
+#mcp-table {
+    height: 15;
+    margin-top: 1;
+}
+
+#env-table {
+    height: 12;
+    margin-top: 1;
+}
+
+#override-table {
+    height: 8;
     margin-top: 1;
 }
 
@@ -78,13 +114,11 @@ Button.-primary {
     text-style: bold;
 }
 
-/* Preview panel */
-#preview {
-    border: round #1f2937;
-    background: #020617;
+/* Help text */
+#help-text {
     padding: 1;
-    height: 7;
-    margin-top: 1;
+    background: #0b1120;
+    border: round #1f2937;
 }
 
 /* Enabled / disabled styles for MCP table (used via Rich Text styles) */
