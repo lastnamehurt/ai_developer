@@ -58,7 +58,7 @@ Issues = "https://github.com/lastnamehurt/aidev/issues"
 where = ["src"]
 
 [tool.setuptools.package-data]
-"aidev" = ["configs/**/*", "prompts/**/*"]
+"aidev" = ["configs/**/*", "prompts/**/*", "tui_*.tcss", "examples/**/*"]
 
 # Include configs directory in the package
 [tool.setuptools]

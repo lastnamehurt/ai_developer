@@ -1,0 +1,105 @@
+/* Global look */
+Screen {
+    layout: vertical;
+    background: #050810;
+    color: #e5e9f0;
+}
+
+/* Header / footer */
+Header {
+    background: #0b1120;
+}
+
+Footer {
+    background: #020617;
+}
+
+/* Main container */
+Container {
+    layout: horizontal;
+    height: 1fr;
+    padding: 1 2;
+    grid-gutter: 1 2;
+}
+
+/* Columns */
+#left, #middle, #right {
+    border: tall #1f2937;
+    padding: 1;
+    background: #020617;
+}
+
+#left {
+    width: 30%;
+}
+
+#middle {
+    width: 35%;
+}
+
+#right {
+    width: 35%;
+}
+
+/* Panel titles */
+.panel-title {
+    content-align: center middle;
+    text-style: bold;
+    color: #7dd3fc;
+    background: #020617;
+    height: 1;
+    margin-bottom: 1;
+}
+
+/* Tables */
+DataTable {
+    height: 1fr;
+    border: tall #111827;
+}
+
+#mcp-table, #env-table {
+    margin-top: 1;
+}
+
+/* Inputs & buttons */
+Input {
+    margin-top: 1;
+    background: #020617;
+    border: round #1f2937;
+}
+
+Button {
+    margin-top: 1;
+}
+
+Button.-primary {
+    background: #22c55e;
+    color: black;
+    text-style: bold;
+}
+
+/* Preview panel */
+#preview {
+    border: round #1f2937;
+    background: #020617;
+    padding: 1;
+    height: 7;
+    margin-top: 1;
+}
+
+/* Enabled / disabled styles for MCP table (used via Rich Text styles) */
+.mcp-enabled {
+    color: #22c55e;
+}
+
+.mcp-disabled {
+    color: #6b7280;
+}
+
+.env-ok {
+    color: #22c55e;
+}
+
+.env-missing {
+    color: #f97316;
+}

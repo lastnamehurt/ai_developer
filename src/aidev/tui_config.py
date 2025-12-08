@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 from typing import Optional
 
+from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Horizontal, Vertical
@@ -21,7 +22,7 @@ from aidev.profiles import ProfileManager
 class ProfileConfigApp(App):
     """TUI for profile configuration."""
 
-    CSS_PATH = None
+    CSS_PATH = "tui_config.tcss"
     BINDINGS = [
         Binding("s", "save", "Save"),
         Binding("q", "quit", "Quit"),
@@ -108,7 +109,14 @@ class ProfileConfigApp(App):
             config = self.mcp_manager.get_server_config(server.name)
             if config:
                 desc = config.get("description", "")
-            mcp_table.add_row(server.name, "on" if server.enabled else "off", desc)
+
+            enabled_icon = Text("● enabled", style="mcp-enabled") if server.enabled else Text("○ disabled", style="mcp-disabled")
+
+            mcp_table.add_row(
+                server.name,
+                enabled_icon,
+                desc,
+            )
         if mcp_table.row_count:
             mcp_table.focus()
             mcp_table.cursor_coordinate = (0, 0)
@@ -116,8 +124,8 @@ class ProfileConfigApp(App):
         env_table = self.query_one("#env-table", DataTable)
         env_table.clear()
         for key, value in sorted(profile.environment.items()):
-            status = "set" if value else "missing"
-            env_table.add_row(key, value or "", status)
+            status_text = Text("set", style="env-ok") if value else Text("missing", style="env-missing")
+            env_table.add_row(key, value or "", status_text)
         if env_table.row_count:
             env_table.cursor_coordinate = (0, 0)
 
@@ -137,7 +145,12 @@ class ProfileConfigApp(App):
         name = server.name
         new_enabled = not server.enabled
         try:
-            table.update_cell(row, "Enabled", "on" if new_enabled else "off")
+            enabled_text = Text("● enabled", style="mcp-enabled") if new_enabled else Text("○ disabled", style="mcp-disabled")
+            try:
+                table.update_cell(row, "Enabled", enabled_text)
+            except Exception:
+                # Some Textual versions expect column index instead of label
+                table.update_cell(row, 1, enabled_text)
         except Exception:
             # Fall back silently if table API changed; state is tracked on the profile object
             pass
@@ -170,8 +183,8 @@ class ProfileConfigApp(App):
         table = self.query_one("#env-table", DataTable)
         table.clear()
         for key, value in sorted(self.current_profile.environment.items()):
-            status = "set" if value else "missing"
-            table.add_row(key, value or "", status)
+            status_text = Text("set", style="env-ok") if value else Text("missing", style="env-missing")
+            table.add_row(key, value or "", status_text)
 
     async def on_select_changed(self, event: Select.Changed) -> None:
         """Handle profile change selection."""
@@ -226,15 +239,18 @@ class ProfileConfigApp(App):
         if not self.current_profile or not self.current_profile_name:
             return
         enabled_servers = [s.name for s in self.current_profile.mcp_servers if s.enabled]
-        env_lines = [f"- {k}: {'***' if v else '(missing)'}" for k, v in sorted(self.current_profile.environment.items())]
+        env_lines = [f"- `{k}`: {'`***`' if v else '**(missing)**'}" for k, v in sorted(self.current_profile.environment.items())]
+
         text = f"""
-**Profile:** {self.current_profile_name}
+### Profile summary
 
-**MCP Servers (enabled):**
-{', '.join(enabled_servers) if enabled_servers else 'None'}
+**Name:** `{self.current_profile_name}`
 
-**Env:**
-{chr(10).join(env_lines) if env_lines else 'None'}
+**Enabled MCP Servers**
+{', '.join(f'`{name}`' for name in enabled_servers) if enabled_servers else '_None_'}
+
+**Environment**
+{chr(10).join(env_lines) if env_lines else '_None_'}
 """
         self.query_one("#preview", Markdown).update(text)
 

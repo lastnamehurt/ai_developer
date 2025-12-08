@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 from typing import Optional
 
+import importlib.resources as pkg_resources
 import requests
 
 from aidev.constants import (
@@ -28,7 +29,11 @@ class MCPManager:
         self.cache_dir = CACHE_DIR
         self.registry_url = os.getenv("AIDEV_MCP_REGISTRY", DEFAULT_MCP_REGISTRY)
         self.registry_cache = self.cache_dir / "mcp-registry.json"
-        self.fallback_registry = CONFIGS_DIR.parent / "examples" / "mcp-registry.json"
+        try:
+            self.fallback_registry = pkg_resources.files("aidev.examples") / "mcp-registry.json"
+        except Exception:
+            # Fallback to package-relative path
+            self.fallback_registry = CONFIGS_DIR.parent / "examples" / "mcp-registry.json"
 
     def list_installed(self) -> list[str]:
         """
@@ -99,12 +104,14 @@ class MCPManager:
         Returns:
             List of registry entries
         """
-        # Try cache first
+        data: list[dict] | None = None
+
+        # Try cache first (when not forcing)
         if not force and self.registry_cache.exists():
-            data = load_json(self.registry_cache)
-            if data:
+            cached = load_json(self.registry_cache, default=[])
+            if cached:
                 try:
-                    return [MCPServerRegistry(**item) for item in data]
+                    return [MCPServerRegistry(**item) for item in cached]
                 except Exception:
                     pass
 
@@ -114,26 +121,35 @@ class MCPManager:
             response = requests.get(self.registry_url, timeout=10)
             response.raise_for_status()
             data = response.json()
-
-            # Cache the result
-            save_json(self.registry_cache, data)
-
-            return [MCPServerRegistry(**item) for item in data]
         except Exception as e:
             console.print(f"[yellow]Registry fetch failed: {e} (using cache/fallback if available)[/yellow]")
-            cached = load_json(self.registry_cache, default=[])
-            if cached:
-                try:
-                    return [MCPServerRegistry(**item) for item in cached]
-                except Exception:
-                    pass
-            if self.fallback_registry.exists():
-                fallback = load_json(self.fallback_registry, default=[])
-                try:
-                    return [MCPServerRegistry(**item) for item in fallback]
-                except Exception:
-                    pass
-            return []
+
+        # If we got data from remote, cache and return it
+        if data:
+            save_json(self.registry_cache, data)
+            try:
+                return [MCPServerRegistry(**item) for item in data]
+            except Exception as exc:
+                console.print(f"[yellow]Failed to parse fetched registry: {exc}[/yellow]")
+
+        # Try cache again (covers cases where force=True but network failed)
+        cached = load_json(self.registry_cache, default=[])
+        if cached:
+            try:
+                return [MCPServerRegistry(**item) for item in cached]
+            except Exception:
+                pass
+
+        # Bundled fallback
+        if self.fallback_registry.exists():
+            console.print(f"[yellow]Using bundled fallback registry at {self.fallback_registry}[/yellow]")
+            fallback = load_json(self.fallback_registry, default=[])
+            try:
+                return [MCPServerRegistry(**item) for item in fallback]
+            except Exception:
+                console.print("[yellow]Failed to parse bundled fallback registry.[/yellow]")
+
+        return []
 
     def search_registry(self, query: str) -> list[MCPServerRegistry]:
         """
