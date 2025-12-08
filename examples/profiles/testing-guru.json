@@ -1,0 +1,40 @@
+{
+  "name": "testing-guru",
+  "description": "Understanding flaky tests, dependencies, and test coverage",
+  "tags": [
+    "testing",
+    "qa",
+    "quality",
+    "automation"
+  ],
+  "mcp_servers": [
+    {
+      "name": "filesystem",
+      "enabled": true
+    },
+    {
+      "name": "git",
+      "enabled": true
+    },
+    {
+      "name": "github",
+      "enabled": true
+    },
+    {
+      "name": "cypress",
+      "enabled": true
+    },
+    {
+      "name": "memory-bank",
+      "enabled": true
+    }
+  ],
+  "environment": {
+    "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+  },
+  "tools": {
+    "cursor": {
+      "enabled": true
+    }
+  }
+}

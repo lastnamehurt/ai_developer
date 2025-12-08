@@ -1,0 +1,37 @@
+{
+  "name": "pair-programmer",
+  "description": "Optimized for inline pairing, refactoring, and iterative code generation",
+  "tags": [
+    "development",
+    "pairing",
+    "refactoring"
+  ],
+  "mcp_servers": [
+    {
+      "name": "filesystem",
+      "enabled": true
+    },
+    {
+      "name": "git",
+      "enabled": true
+    },
+    {
+      "name": "github",
+      "enabled": true
+    },
+    {
+      "name": "memory-bank",
+      "enabled": true
+    }
+  ],
+  "environment": {
+    "GITHUB_TOKEN": "${GITHUB_TOKEN}",
+    "AI_MODE": "pairing",
+    "MAX_CONTEXT_FILES": "25"
+  },
+  "tools": {
+    "cursor": {
+      "enabled": true
+    }
+  }
+}

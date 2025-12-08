@@ -1,0 +1,32 @@
+{
+  "name": "security",
+  "description": "Security posture: static analysis and isolated reasoning with restricted access",
+  "tags": [
+    "security",
+    "analysis",
+    "compliance"
+  ],
+  "mcp_servers": [
+    {
+      "name": "filesystem",
+      "enabled": true
+    },
+    {
+      "name": "git",
+      "enabled": true
+    },
+    {
+      "name": "memory-bank",
+      "enabled": true
+    }
+  ],
+  "environment": {
+    "AIDEV_SANDBOX": "true",
+    "ALLOW_NETWORK": "false"
+  },
+  "tools": {
+    "cursor": {
+      "enabled": true
+    }
+  }
+}
