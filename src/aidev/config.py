@@ -20,9 +20,12 @@ from aidev.constants import (
     TOOLS_CONFIG,
     SUPPORTED_TOOLS,
     ENGINEERING_WORKFLOW_TEMPLATE,
+    WORKFLOWS_TEMPLATE,
     PROJECT_CONFIG_DIR,
     PROJECT_ENV_FILE,
     PROJECT_PROFILE_FILE,
+    PROJECT_WORKFLOWS_FILE,
+    PROJECT_WORKFLOW_RUNS_DIR,
 )
 from aidev.utils import ensure_dir, load_json, save_json, load_env, save_env
 from aidev.secrets import decrypt_value, encrypt_value
@@ -196,6 +199,9 @@ class ConfigManager:
 
         # Set up project-local tool config folders for legacy compatibility
         self._init_project_tool_configs(base_dir)
+        # Seed workflows.yaml and runs dir
+        self._ensure_workflows_file(base_dir)
+        ensure_dir(base_dir / PROJECT_CONFIG_DIR / PROJECT_WORKFLOW_RUNS_DIR)
 
         return config_path
 
@@ -237,6 +243,8 @@ class ConfigManager:
 
         # Add shared engineering workflow guidance and ensure Cursor summarizes it
         self._ensure_engineering_workflow(project_dir)
+        # Ensure workflows.yaml exists alongside project config
+        self._ensure_workflows_file(project_dir)
 
     def _ensure_engineering_workflow(self, project_dir: Path) -> None:
         """Place engineering workflow guidance for assistants and add to Cursor rules."""
@@ -295,3 +303,16 @@ class ConfigManager:
         rules_data["summarize"] = summarize_list
 
         rules_path.write_text(json.dumps(rules_data, indent=2))
+
+    def _ensure_workflows_file(self, project_dir: Path) -> Path:
+        """Ensure workflows.yaml exists in the project config directory."""
+        config_dir = project_dir / PROJECT_CONFIG_DIR
+        ensure_dir(config_dir)
+        target = config_dir / PROJECT_WORKFLOWS_FILE
+        if target.exists():
+            return target
+        try:
+            target.write_text(WORKFLOWS_TEMPLATE.read_text())
+        except Exception:
+            target.write_text("workflows: {}\n")
+        return target

@@ -1,5 +1,7 @@
 # Include MCP server configurations (now under package)
 recursive-include src/aidev/configs *.json *.md
+include src/aidev/configs/workflows.yaml
+recursive-include src/aidev/prompts *.txt
 
 # Include documentation
 include README.md

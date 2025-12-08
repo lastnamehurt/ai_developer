@@ -33,6 +33,7 @@ dependencies = [
     "requests>=2.31.0",
     "textual>=0.50.0",
     "cryptography>=41.0.0",
+    "pyyaml>=6.0.1",
 ]
 
 [project.optional-dependencies]
@@ -57,7 +58,7 @@ Issues = "https://github.com/lastnamehurt/aidev/issues"
 where = ["src"]
 
 [tool.setuptools.package-data]
-"aidev" = ["configs/**/*"]
+"aidev" = ["configs/**/*", "prompts/**/*"]
 
 # Include configs directory in the package
 [tool.setuptools]

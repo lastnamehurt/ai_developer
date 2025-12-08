@@ -1,0 +1,99 @@
+workflows:
+  implement_ticket:
+    description: "Given a ticket or file, produce understanding, impact, plan, diffs, tests, and a ticket-ready summary."
+    input:
+      kind: ticket
+      allow_file: true
+    steps:
+      - name: understand_ticket
+        profile: onboarding
+        prompt: ticket_understander
+        uses_issue_mcp: true
+      - name: discover_impact
+        profile: code-surgeon
+        prompt: impact_analyzer
+      - name: plan_implementation
+        profile: pair-programmer
+        prompt: implementation_planner
+      - name: draft_changes
+        profile: code-surgeon
+        prompt: code_diff_generator
+      - name: tests_and_validation
+        profile: testing-guru
+        prompt: test_author
+      - name: summarize_for_ticket
+        profile: pair-programmer
+        prompt: ticket_comment_summarizer
+        uses_issue_mcp: true
+
+  refactor_scout:
+    description: "Inspect a file for refactoring opportunities and draft an issue/ticket summary."
+    input:
+      kind: text
+      allow_file: true
+    steps:
+      - name: analyze_refactor
+        profile: code-surgeon
+        prompt: refactor_analyzer
+      - name: plan_refactor
+        profile: pair-programmer
+        prompt: refactor_plan
+      - name: draft_ticket
+        profile: documentation-writer
+        prompt: refactor_ticket_writer
+
+  bug_triage:
+    description: "Given a bug ticket/logs, triage, find impact, draft repro plan, and suggest a fix sketch plus ticket comment."
+    input:
+      kind: ticket
+      allow_file: true
+    steps:
+      - name: parse_bug
+        profile: onboarding
+        prompt: bug_parser
+        uses_issue_mcp: true
+      - name: assess_impact
+        profile: code-surgeon
+        prompt: impact_analyzer
+      - name: plan_repro
+        profile: testing-guru
+        prompt: repro_planner
+      - name: sketch_fix
+        profile: pair-programmer
+        prompt: fix_sketcher
+      - name: ticket_update
+        profile: documentation-writer
+        prompt: bug_ticket_writer
+        uses_issue_mcp: true
+
+  test_hardener:
+    description: "Analyze test gaps for a file/path or failing output, propose tests, and draft a ticket note."
+    input:
+      kind: text
+      allow_file: true
+    steps:
+      - name: analyze_gaps
+        profile: testing-guru
+        prompt: test_gap_analyzer
+      - name: propose_tests
+        profile: testing-guru
+        prompt: test_author
+      - name: draft_ticket
+        profile: documentation-writer
+        prompt: test_ticket_writer
+
+  doc_improver:
+    description: "Review a doc file and propose quality improvements plus a ticket/PR note."
+    input:
+      kind: text
+      allow_file: true
+    steps:
+      - name: analyze_doc
+        profile: documentation-writer
+        prompt: doc_analyzer
+      - name: outline_fix
+        profile: pair-programmer
+        prompt: doc_outline_planner
+      - name: draft_ticket
+        profile: documentation-writer
+        prompt: doc_ticket_writer
