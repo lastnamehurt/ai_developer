@@ -192,6 +192,36 @@ ai use infra                                # For deployment work
 ai status                                   # Quickly see the active profile and environment for the current project
 ```
 
+### AI Pair Programming with Aider
+
+[Aider](https://aider.chat) is a free, open-source CLI tool for AI pair programming that works alongside `aidev`:
+
+```bash
+# Install Aider (included in install.sh)
+pip install aider-chat
+
+# Use Aider with aidev profile environment
+ai use aider                                # Switch to Aider-optimized profile
+aider --model claude-sonnet-4-5             # Start AI pair programming
+
+# Or use with any profile
+ai use web
+export ANTHROPIC_API_KEY=your-key
+aider --model claude-sonnet-4-5 --yes       # Auto-accept changes
+
+# Aider automatically commits changes to git
+aider --message "Add user authentication"   # Ask Aider to implement a feature
+```
+
+**Why use Aider with aidev?**
+- **Free & Open Source**: No licensing costs, only pay for LLM API usage (~$10/month)
+- **CLI-First**: Perfect for terminal workflows, works with any editor
+- **Git-Integrated**: Auto-commits work well with aidev's git workflows
+- **Multi-Model**: Supports OpenAI, Anthropic, DeepSeek, and local models via Ollama
+
+Learn more: https://aider.chat
+```
+
 ### Machine Migration
 
 Easily migrate your `aidev` configuration between machines.
