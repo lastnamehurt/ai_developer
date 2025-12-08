@@ -300,6 +300,9 @@ class ConfigManager:
         summarize_list = rules_data.get("summarize", [])
         if ".claude/engineering-workflow.md" not in summarize_list:
             summarize_list.append(".claude/engineering-workflow.md")
+        rules_data["summarize"] = summarize_list
+
+        rules_path.write_text(json.dumps(rules_data, indent=2))
 
     def _ensure_workflows_file(self, project_dir: Path) -> Path:
         """Ensure workflows.yaml exists in the project config directory."""
@@ -313,6 +316,3 @@ class ConfigManager:
         except Exception:
             target.write_text("workflows: {}\n")
         return target
-        rules_data["summarize"] = summarize_list
-
-        rules_path.write_text(json.dumps(rules_data, indent=2))
