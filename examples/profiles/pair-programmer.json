@@ -28,10 +28,5 @@
     "GITHUB_TOKEN": "${GITHUB_TOKEN}",
     "AI_MODE": "pairing",
     "MAX_CONTEXT_FILES": "25"
-  },
-  "tools": {
-    "cursor": {
-      "enabled": true
-    }
   }
 }

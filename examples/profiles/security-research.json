@@ -43,13 +43,5 @@
     "SHODAN_API_KEY": "${SHODAN_API_KEY}",
     "VIRUSTOTAL_API_KEY": "${VIRUSTOTAL_API_KEY}",
     "NVD_API_KEY": "${NVD_API_KEY}"
-  },
-  "tools": {
-    "cursor": {
-      "enabled": true
-    },
-    "claude": {
-      "enabled": true
-    }
   }
 }

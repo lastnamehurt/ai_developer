@@ -48,14 +48,5 @@
     "DATABASE_URL": "${DATABASE_URL}",
     "REDIS_URL": "${REDIS_URL}",
     "NODE_ENV": "development"
-  },
-  "tools": {
-    "cursor": {
-      "enabled": true,
-      "settings": {
-        "theme": "dark",
-        "fontSize": 14
-      }
-    }
   }
 }

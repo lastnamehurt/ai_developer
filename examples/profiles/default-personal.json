@@ -37,13 +37,5 @@
   "environment": {
     "GITHUB_TOKEN": "${GITHUB_TOKEN}",
     "MEMORY_BANK_ROOT": "${HOME}/.aidev/memory-banks/personal"
-  },
-  "tools": {
-    "cursor": {
-      "enabled": true
-    },
-    "claude": {
-      "enabled": true
-    }
   }
 }

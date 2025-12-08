@@ -33,10 +33,5 @@
     "GITHUB_TOKEN": "${GITHUB_TOKEN}",
     "KUBECONFIG": "${KUBECONFIG}",
     "DEBUG_MODE": "true"
-  },
-  "tools": {
-    "cursor": {
-      "enabled": true
-    }
   }
 }

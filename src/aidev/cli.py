@@ -50,7 +50,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "AI Tools",
-            "commands": ["cursor", "claude", "codex", "gemini", "tool", "review"],
+            "commands": ["cursor", "claude", "codex", "gemini", "ollama", "tool", "review"],
         },
         {
             "name": "Utilities",
@@ -541,6 +541,14 @@ def codex(profile: str, args: tuple) -> None:
 def gemini(profile: str, args: tuple) -> None:
     """Launch Gemini Code Assist with aidev configuration"""
     _launch_tool_with_profile("gemini", profile, args)
+
+
+@cli.command()
+@click.option("--profile", help="Profile to use")
+@click.argument("args", nargs=-1)
+def ollama(profile: str, args: tuple) -> None:
+    """Launch Ollama with aidev configuration"""
+    _launch_tool_with_profile("ollama", profile, args)
 
 
 @cli.command()

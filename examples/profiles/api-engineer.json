@@ -32,10 +32,5 @@
   "environment": {
     "GITHUB_TOKEN": "${GITHUB_TOKEN}",
     "POSTGRES_URL": "${POSTGRES_URL}"
-  },
-  "tools": {
-    "cursor": {
-      "enabled": true
-    }
   }
 }
