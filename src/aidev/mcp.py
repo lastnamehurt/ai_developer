@@ -402,12 +402,20 @@ class MCPManager:
             console.print("[yellow]Warning: Built-in MCP server configs not found[/yellow]")
             return
 
+        # Ensure target directory exists
+        self.mcp_servers_dir.mkdir(parents=True, exist_ok=True)
+
         # Copy bundled configs to user's mcp-servers directory
         import shutil
+        copied_count = 0
         for config_file in bundled_configs_dir.glob("*.json"):
             target_path = self.mcp_servers_dir / config_file.name
             if not target_path.exists():
                 shutil.copy(config_file, target_path)
+                copied_count += 1
+
+        if copied_count > 0:
+            console.print(f"[dim]Installed {copied_count} MCP server configs[/dim]")
 
     def _get_bundled_configs_dir(self) -> Optional[Path]:
         """Get the bundled MCP server configs directory"""
