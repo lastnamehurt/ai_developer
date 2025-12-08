@@ -183,13 +183,38 @@ def test_mcp_list_command(runner, isolated_cli):
 
 
 def test_doctor_command(runner, isolated_cli):
-    """Test doctor command"""
-    with patch('aidev.cli.preflight') as mock_preflight:
-        mock_preflight.return_value = []  # No errors
+    """Test doctor command (no fix)"""
+    with patch('aidev.cli.preflight') as mock_preflight, \
+         patch('aidev.cli._which_all') as mock_which_all, \
+         patch('aidev.cli._pipx_bin_dir') as mock_pipx_bin, \
+         patch('aidev.cli.config_manager') as mock_config:
+        mock_config.is_initialized.return_value = True
+        mock_preflight.return_value = True
+        mock_which_all.return_value = ['/usr/bin/ai']
+        mock_pipx_bin.return_value = '/home/user/.local/bin'
 
         result = runner.invoke(cli, ['doctor'])
 
         assert result.exit_code == 0
+        mock_preflight.assert_called_once()
+
+
+def test_doctor_command_fix_path(runner, isolated_cli):
+    """Test doctor command with --fix-path triggers remediation"""
+    with patch('aidev.cli.preflight') as mock_preflight, \
+         patch('aidev.cli._which_all') as mock_which_all, \
+         patch('aidev.cli._pipx_bin_dir') as mock_pipx_bin, \
+         patch('aidev.cli._fix_path_and_reinstall') as mock_fix, \
+         patch('aidev.cli.config_manager') as mock_config:
+        mock_config.is_initialized.return_value = True
+        mock_preflight.return_value = True
+        mock_which_all.return_value = []
+        mock_pipx_bin.return_value = '/home/user/.local/bin'
+
+        result = runner.invoke(cli, ['doctor', '--fix-path'])
+
+        assert result.exit_code == 0
+        mock_fix.assert_called_once()
 
 
 def test_status_command(runner, isolated_cli):

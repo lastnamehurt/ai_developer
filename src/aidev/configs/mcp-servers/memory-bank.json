@@ -4,6 +4,7 @@
   "type": "stdio",
   "command": "npx",
   "args": ["-y", "@allpepper/memory-bank-mcp"],
+  "repository": "https://github.com/alioshr/memory-bank-mcp",
   "env": {
     "MEMORY_BANK_ROOT": "${MEMORY_BANK_ROOT:-${HOME}/.aidev/memory-banks}"
   },
