@@ -1,0 +1,36 @@
+{
+  "name": "code-surgeon",
+  "description": "Advanced reasoning and restructuring support for large complex codebases",
+  "tags": [
+    "refactoring",
+    "architecture",
+    "legacy",
+    "monolith"
+  ],
+  "mcp_servers": [
+    {
+      "name": "filesystem",
+      "enabled": true
+    },
+    {
+      "name": "git",
+      "enabled": true
+    },
+    {
+      "name": "github",
+      "enabled": true
+    },
+    {
+      "name": "memory-bank",
+      "enabled": true
+    }
+  ],
+  "environment": {
+    "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+  },
+  "tools": {
+    "cursor": {
+      "enabled": true
+    }
+  }
+}

@@ -21,7 +21,7 @@ def mock_supported_tools(monkeypatch):
     tools = {
         "cursor": {
             "name": "Cursor",
-            "binary": "cursor",
+            "binary": "cursor-agent",
             "app_name": "Cursor",
             "config_path": "~/.cursor/mcp.json",
             "install_url": "https://cursor.sh"
@@ -47,12 +47,12 @@ def mock_supported_tools(monkeypatch):
 
 def test_detect_tool_installed(tool_manager, mock_supported_tools):
     """Test detecting an installed tool"""
-    with patch("aidev.tools.find_binary", return_value=Path("/usr/bin/cursor")):
+    with patch("aidev.tools.find_binary", return_value=Path("/usr/bin/cursor-agent")):
         with patch.object(tool_manager, "_get_version", return_value="1.0.0"):
             tool_info = tool_manager.detect_tool("cursor")
 
     assert tool_info.name == "Cursor"
-    assert tool_info.binary == "cursor"
+    assert tool_info.binary == "cursor-agent"
     assert tool_info.installed is True
     assert tool_info.version == "1.0.0"
 
@@ -76,8 +76,8 @@ def test_detect_tool_unsupported(tool_manager, mock_supported_tools):
 def test_detect_all_tools(tool_manager):
     """Test detecting all tools"""
     def find_binary_side_effect(binary):
-        if binary == "cursor":
-            return Path("/usr/bin/cursor")
+        if binary == "cursor-agent":
+            return Path("/usr/bin/cursor-agent")
         elif binary == "gemini":
             return Path("/usr/bin/gemini")
         return None
@@ -97,7 +97,7 @@ def test_detect_all_tools(tool_manager):
 
 def test_get_tool_config_path(tool_manager, mock_supported_tools):
     """Test getting tool config path"""
-    with patch("aidev.tools.find_binary", return_value=Path("/usr/bin/cursor")):
+    with patch("aidev.tools.find_binary", return_value=Path("/usr/bin/cursor-agent")):
         config_path = tool_manager.get_tool_config_path("cursor")
 
     assert ".cursor/mcp.json" in str(config_path)
@@ -127,7 +127,7 @@ def test_launch_tool_not_installed(tool_manager, mock_supported_tools):
 
 def test_launch_tool_gui_app(tool_manager, mock_supported_tools):
     """Test launching a GUI tool (non-interactive)"""
-    with patch("aidev.tools.find_binary", return_value=Path("/usr/bin/cursor")):
+    with patch("aidev.tools.find_binary", return_value=Path("/usr/bin/cursor-agent")):
         with patch.object(tool_manager, "_get_version", return_value=None):
             with patch("subprocess.Popen") as mock_popen:
                 with patch("aidev.tools.console"):
@@ -135,7 +135,7 @@ def test_launch_tool_gui_app(tool_manager, mock_supported_tools):
 
     mock_popen.assert_called_once()
     args, kwargs = mock_popen.call_args
-    assert args[0] == ["cursor", ".", "--flag"]
+    assert args[0] == ["cursor-agent", ".", "--flag"]
     assert "env" in kwargs
     assert kwargs["start_new_session"] is True
 
@@ -152,7 +152,7 @@ def test_launch_tool_interactive_cli(tool_manager, mock_supported_tools):
 
 def test_launch_tool_with_env(tool_manager, mock_supported_tools):
     """Test launching tool with custom environment"""
-    with patch("aidev.tools.find_binary", return_value=Path("/usr/bin/cursor")):
+    with patch("aidev.tools.find_binary", return_value=Path("/usr/bin/cursor-agent")):
         with patch("subprocess.Popen") as mock_popen:
             with patch("aidev.tools.console"):
                 tool_manager.launch_tool("cursor", env={"CUSTOM_VAR": "value"})
@@ -164,7 +164,7 @@ def test_launch_tool_with_env(tool_manager, mock_supported_tools):
 
 def test_launch_tool_wait(tool_manager, mock_supported_tools):
     """Test launching tool with wait flag"""
-    with patch("aidev.tools.find_binary", return_value=Path("/usr/bin/cursor")):
+    with patch("aidev.tools.find_binary", return_value=Path("/usr/bin/cursor-agent")):
         with patch.object(tool_manager, "_get_version", return_value=None):
             with patch("subprocess.run") as mock_run:
                 with patch("aidev.tools.console"):
@@ -175,7 +175,7 @@ def test_launch_tool_wait(tool_manager, mock_supported_tools):
 
 def test_launch_tool_exception(tool_manager, mock_supported_tools):
     """Test launch handles exceptions"""
-    with patch("aidev.tools.find_binary", return_value=Path("/usr/bin/cursor")):
+    with patch("aidev.tools.find_binary", return_value=Path("/usr/bin/cursor-agent")):
         with patch("subprocess.Popen", side_effect=Exception("Launch failed")):
             with patch("aidev.tools.console") as mock_console:
                 tool_manager.launch_tool("cursor")
@@ -190,7 +190,7 @@ def test_get_version_success(tool_manager):
     mock_result.stdout = "Cursor 1.2.3\nOther info"
 
     with patch("subprocess.run", return_value=mock_result):
-        version = tool_manager._get_version("cursor", Path("/usr/bin/cursor"))
+        version = tool_manager._get_version("cursor-agent", Path("/usr/bin/cursor-agent"))
 
     assert version == "Cursor 1.2.3"
 
@@ -205,7 +205,7 @@ def test_get_version_tries_multiple_flags(tool_manager):
     mock_success.stdout = "1.0.0"
 
     with patch("subprocess.run", side_effect=[mock_fail, mock_success]):
-        version = tool_manager._get_version("cursor", Path("/usr/bin/cursor"))
+        version = tool_manager._get_version("cursor-agent", Path("/usr/bin/cursor-agent"))
 
     assert version == "1.0.0"
 
@@ -213,7 +213,7 @@ def test_get_version_tries_multiple_flags(tool_manager):
 def test_get_version_timeout(tool_manager):
     """Test version detection handles timeouts"""
     with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("cmd", 5)):
-        version = tool_manager._get_version("cursor", Path("/usr/bin/cursor"))
+        version = tool_manager._get_version("cursor-agent", Path("/usr/bin/cursor-agent"))
 
     assert version is None
 
@@ -221,7 +221,7 @@ def test_get_version_timeout(tool_manager):
 def test_get_version_exception(tool_manager):
     """Test version detection handles exceptions"""
     with patch("subprocess.run", side_effect=Exception("Error")):
-        version = tool_manager._get_version("cursor", Path("/usr/bin/cursor"))
+        version = tool_manager._get_version("cursor-agent", Path("/usr/bin/cursor-agent"))
 
     assert version is None
 

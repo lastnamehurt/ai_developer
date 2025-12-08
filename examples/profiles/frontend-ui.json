@@ -1,0 +1,41 @@
+{
+  "name": "frontend-ui",
+  "description": "Helps navigate component trees and style systems in modern UI frameworks",
+  "tags": [
+    "frontend",
+    "ui",
+    "react",
+    "vue",
+    "web"
+  ],
+  "mcp_servers": [
+    {
+      "name": "filesystem",
+      "enabled": true
+    },
+    {
+      "name": "git",
+      "enabled": true
+    },
+    {
+      "name": "github",
+      "enabled": true
+    },
+    {
+      "name": "cypress",
+      "enabled": true
+    },
+    {
+      "name": "memory-bank",
+      "enabled": true
+    }
+  ],
+  "environment": {
+    "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+  },
+  "tools": {
+    "cursor": {
+      "enabled": true
+    }
+  }
+}

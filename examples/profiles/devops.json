@@ -1,0 +1,42 @@
+{
+  "name": "devops",
+  "description": "A profile for CI/CD reasoning, containers, and build system analysis",
+  "tags": [
+    "devops",
+    "infrastructure",
+    "kubernetes",
+    "docker",
+    "cicd"
+  ],
+  "mcp_servers": [
+    {
+      "name": "filesystem",
+      "enabled": true
+    },
+    {
+      "name": "git",
+      "enabled": true
+    },
+    {
+      "name": "github",
+      "enabled": true
+    },
+    {
+      "name": "k8s",
+      "enabled": true
+    },
+    {
+      "name": "memory-bank",
+      "enabled": true
+    }
+  ],
+  "environment": {
+    "GITHUB_TOKEN": "${GITHUB_TOKEN}",
+    "KUBECONFIG": "${KUBECONFIG}"
+  },
+  "tools": {
+    "cursor": {
+      "enabled": true
+    }
+  }
+}

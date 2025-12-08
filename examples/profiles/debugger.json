@@ -1,0 +1,42 @@
+{
+  "name": "debugger",
+  "description": "Deep debugging with logs, Kubernetes signals, git history, and search tools",
+  "tags": [
+    "debugging",
+    "troubleshooting",
+    "devops",
+    "backend"
+  ],
+  "mcp_servers": [
+    {
+      "name": "filesystem",
+      "enabled": true
+    },
+    {
+      "name": "git",
+      "enabled": true
+    },
+    {
+      "name": "github",
+      "enabled": true
+    },
+    {
+      "name": "k8s",
+      "enabled": true
+    },
+    {
+      "name": "memory-bank",
+      "enabled": true
+    }
+  ],
+  "environment": {
+    "GITHUB_TOKEN": "${GITHUB_TOKEN}",
+    "KUBECONFIG": "${KUBECONFIG}",
+    "DEBUG_MODE": "true"
+  },
+  "tools": {
+    "cursor": {
+      "enabled": true
+    }
+  }
+}
