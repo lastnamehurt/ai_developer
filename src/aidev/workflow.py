@@ -127,6 +127,8 @@ class WorkflowEngine:
         self.project_dir = Path(project_dir or Path.cwd())
         self.tool_manager = ToolManager()
         self.resolver = AssistantResolver(self.tool_manager)
+        # Runner hook for step execution; can be overridden in tests
+        self._runner: Callable[[dict[str, Any]], dict[str, Any]] = self._default_runner
 
     # ------------------------------------------------------------------ #
     # Loading
@@ -388,7 +390,7 @@ class WorkflowEngine:
                 "stderr": proc.stderr,
                 "prompt_used": prompt_text[:2000],
             }
-        except shutil.subprocess.TimeoutExpired as exc:
+        except subprocess.TimeoutExpired as exc:
             raise RuntimeError(f"Timeout after {timeout_sec}s: {exc}")
 
     def _assistant_command(self, assistant: str, prompt_text: str, input_preview: str) -> Optional[list[str]]:
@@ -401,14 +403,19 @@ class WorkflowEngine:
         - ollama: `ollama run <model>` with prompt text
         """
         merged = f"{prompt_text}\n\nINPUT:\n{input_preview}"
+        def _cmd(bin_name: str, args: list[str]) -> Optional[list[str]]:
+            return [bin_name, *args] if shutil.which(bin_name) else None
+
         if assistant == "claude":
-            return ["claude", "chat", "--message", merged]
+            return _cmd("claude", ["chat", "--message", merged])
         if assistant == "codex":
-            return ["codex", "chat", "--message", merged]
+            return _cmd("codex", ["chat", "--message", merged])
         if assistant == "gemini":
-            return ["gemini", "prompt", "--text", merged]
+            return _cmd("gemini", ["prompt", "--text", merged])
         if assistant == "ollama":
-            return ["ollama", "run", "llama3.1", merged]
+            return _cmd("ollama", ["run", "llama3.1", merged])
         if assistant == "cursor":
             return ["echo", merged]
-        return None
+
+        # If assistant binary is unavailable, fallback to echo to avoid hard failure
+        return ["echo", f"[assistant '{assistant}' unavailable] {merged}"]
