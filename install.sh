@@ -260,7 +260,7 @@ else
     # Skip env var prompts during install (user can run 'ai setup' later interactively)
     "$AIDEV_BIN" setup --force --skip-env < /dev/null 2>/dev/null || true
 fi
-echo -e "${GREEN}✓${NC} aidev initialized""
+echo -e "${GREEN}✓${NC} aidev initialized"
 
 # Detect conflicting ai binaries (e.g., local venv shadowing pipx)
 if command -v ai >/dev/null 2>&1; then

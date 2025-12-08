@@ -421,17 +421,31 @@ class MCPManager:
         """Get the bundled MCP server configs directory"""
         import sys
 
-        # Check if we're in development mode (installed with -e)
-        module_path = Path(__file__).parent.parent.parent  # Go up to project root
-        configs_dir = module_path / "configs" / "mcp-servers"
+        # First, try development mode (installed with -e)
+        try:
+            module_path = Path(__file__).parent.parent.parent  # Go up to project root
+            configs_dir = module_path / "configs" / "mcp-servers"
+            if configs_dir.exists():
+                return configs_dir
+        except Exception:
+            pass
 
-        if configs_dir.exists():
-            return configs_dir
+        # Try using importlib.resources (works for installed packages)
+        try:
+            # For Python 3.9+
+            if hasattr(pkg_resources, 'files'):
+                configs_path = pkg_resources.files('aidev').joinpath('configs').joinpath('mcp-servers')
+                if configs_path.is_dir():
+                    # Convert to Path object
+                    return Path(str(configs_path))
+        except Exception:
+            pass
 
-        # Check if configs are installed with the package
+        # Check if configs are installed with the package (PyInstaller bundle)
         if hasattr(sys, '_MEIPASS'):
-            # Running in PyInstaller bundle
-            return Path(sys._MEIPASS) / "configs" / "mcp-servers"
+            configs_dir = Path(sys._MEIPASS) / "configs" / "mcp-servers"
+            if configs_dir.exists():
+                return configs_dir
 
         return None
 
