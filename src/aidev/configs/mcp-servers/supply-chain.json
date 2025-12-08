@@ -1,0 +1,18 @@
+{
+  "name": "supply-chain",
+  "description": "Supply chain security analysis for dependencies and vulnerabilities",
+  "type": "stdio",
+  "command": "supply-chain-mcp-server",
+  "args": [],
+  "env": {},
+  "notes": {
+    "installation": "Install supply-chain-mcp-server",
+    "capabilities": [
+      "Read SBOM and lockfiles",
+      "Detect vulnerable versions",
+      "Find license incompatibilities",
+      "Identify outdated dependencies"
+    ],
+    "supported_formats": ["npm", "pip", "bundler", "cargo", "go.mod", "maven", "gradle"]
+  }
+}

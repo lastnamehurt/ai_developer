@@ -1,0 +1,18 @@
+{
+  "name": "build-system",
+  "description": "Build system analysis for Make, Bazel, Gradle, NPM scripts",
+  "type": "stdio",
+  "command": "build-mcp-server",
+  "args": [],
+  "env": {},
+  "notes": {
+    "installation": "Install build-mcp-server",
+    "capabilities": [
+      "Understand build graph",
+      "Identify slowest build steps",
+      "Detect caching issues",
+      "Recommend build optimizations"
+    ],
+    "supported_systems": ["make", "bazel", "gradle", "npm", "yarn", "pnpm"]
+  }
+}

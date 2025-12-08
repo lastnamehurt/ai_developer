@@ -1,0 +1,17 @@
+{
+  "name": "nodejs-project",
+  "description": "Node.js project inspector for npm scripts, webpack, and TypeScript config",
+  "type": "stdio",
+  "command": "nodejs-project-mcp-server",
+  "args": [],
+  "env": {},
+  "notes": {
+    "installation": "Install nodejs-project-mcp-server",
+    "capabilities": [
+      "List NPM scripts",
+      "Parse webpack config",
+      "Inspect Vite config",
+      "Read TypeScript compiler options"
+    ]
+  }
+}

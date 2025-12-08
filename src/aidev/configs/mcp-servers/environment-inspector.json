@@ -1,0 +1,17 @@
+{
+  "name": "environment-inspector",
+  "description": "Environment configuration inspector for .env, direnv, and toolchain state",
+  "type": "stdio",
+  "command": "env-inspector-mcp-server",
+  "args": [],
+  "env": {},
+  "notes": {
+    "installation": "Install env-inspector-mcp-server",
+    "capabilities": [
+      "Read .env and .envrc files",
+      "Inspect direnv configuration",
+      "Analyze Poetry/Pyenv/NVM state",
+      "Diagnose environment conflicts"
+    ]
+  }
+}

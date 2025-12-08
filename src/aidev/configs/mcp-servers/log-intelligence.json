@@ -1,0 +1,17 @@
+{
+  "name": "log-intelligence",
+  "description": "Log analysis with pattern detection and error clustering",
+  "type": "stdio",
+  "command": "log-intelligence-mcp-server",
+  "args": [],
+  "env": {},
+  "notes": {
+    "installation": "Install log-intelligence-mcp-server",
+    "capabilities": [
+      "Ingest local log files",
+      "Detect error patterns",
+      "Cluster similar errors",
+      "Merge timelines across services"
+    ]
+  }
+}

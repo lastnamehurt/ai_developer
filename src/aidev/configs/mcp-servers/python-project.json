@@ -1,0 +1,17 @@
+{
+  "name": "python-project",
+  "description": "Python project inspector for virtualenv, dependencies, and type checking",
+  "type": "stdio",
+  "command": "python-project-mcp-server",
+  "args": [],
+  "env": {},
+  "notes": {
+    "installation": "Install python-project-mcp-server",
+    "capabilities": [
+      "Inspect virtualenv state",
+      "Build pip dependency graph",
+      "Read pyproject.toml metadata",
+      "Show type-checking results"
+    ]
+  }
+}

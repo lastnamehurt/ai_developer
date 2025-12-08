@@ -1,0 +1,17 @@
+{
+  "name": "architecture-mapper",
+  "description": "Architecture visualization and module boundary analysis",
+  "type": "stdio",
+  "command": "architecture-mapper-mcp-server",
+  "args": [],
+  "env": {},
+  "notes": {
+    "installation": "Install architecture-mapper-mcp-server",
+    "capabilities": [
+      "Generate system diagrams",
+      "Identify module boundaries",
+      "Create ownership mappings",
+      "Produce directed graphs in Mermaid format"
+    ]
+  }
+}

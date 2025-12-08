@@ -1,0 +1,17 @@
+{
+  "name": "coverage",
+  "description": "Code coverage intelligence and test-to-code mapping",
+  "type": "stdio",
+  "command": "coverage-mcp-server",
+  "args": [],
+  "env": {},
+  "notes": {
+    "installation": "Install coverage-mcp-server",
+    "capabilities": [
+      "Read coverage reports",
+      "Identify uncovered files and functions",
+      "Map tests to code paths",
+      "Analyze PR coverage impact"
+    ]
+  }
+}

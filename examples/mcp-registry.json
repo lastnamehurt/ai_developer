@@ -298,5 +298,362 @@
       "research",
       "omni"
     ]
+  },
+  {
+    "name": "grep",
+    "description": "Advanced search with regex, semantic filters, and structural search",
+    "author": "247arjun",
+    "repository": "https://github.com/247arjun/mcp-grep",
+    "version": "1.0.0",
+    "install": {
+      "type": "npm",
+      "command": "npm install -g mcp-grep"
+    },
+    "configuration": {
+      "required": [],
+      "optional": []
+    },
+    "tags": [
+      "search",
+      "grep",
+      "regex",
+      "code-search"
+    ]
+  },
+  {
+    "name": "dependency-graph",
+    "description": "Repository dependency graph with cycle detection and dead code analysis",
+    "author": "community",
+    "repository": "https://github.com/mcp-servers/dependency-graph",
+    "version": "1.0.0",
+    "install": {
+      "type": "manual",
+      "command": "Install dependency-graph-mcp-server"
+    },
+    "configuration": {
+      "required": [],
+      "optional": []
+    },
+    "tags": [
+      "architecture",
+      "dependencies",
+      "refactoring",
+      "analysis"
+    ]
+  },
+  {
+    "name": "symbol-index",
+    "description": "Project symbol index for functions, classes, methods with LSP-like capabilities",
+    "author": "community",
+    "repository": "https://github.com/mcp-servers/symbol-index",
+    "version": "1.0.0",
+    "install": {
+      "type": "manual",
+      "command": "Install symbol-index-mcp-server"
+    },
+    "configuration": {
+      "required": [],
+      "optional": []
+    },
+    "tags": [
+      "indexing",
+      "code-navigation",
+      "ide",
+      "symbols"
+    ]
+  },
+  {
+    "name": "build-system",
+    "description": "Build system analysis for Make, Bazel, Gradle, NPM scripts",
+    "author": "community",
+    "repository": "https://github.com/mcp-servers/build-system",
+    "version": "1.0.0",
+    "install": {
+      "type": "manual",
+      "command": "Install build-mcp-server"
+    },
+    "configuration": {
+      "required": [],
+      "optional": []
+    },
+    "tags": [
+      "build",
+      "performance",
+      "devops",
+      "optimization"
+    ]
+  },
+  {
+    "name": "test-graph",
+    "description": "Test graph analysis for flaky test detection and coverage mapping",
+    "author": "community",
+    "repository": "https://github.com/mcp-servers/test-graph",
+    "version": "1.0.0",
+    "install": {
+      "type": "manual",
+      "command": "Install test-graph-mcp-server"
+    },
+    "configuration": {
+      "required": [],
+      "optional": []
+    },
+    "tags": [
+      "testing",
+      "qa",
+      "quality",
+      "coverage"
+    ]
+  },
+  {
+    "name": "docker",
+    "description": "Docker container and image analysis, Dockerfile optimization",
+    "author": "community",
+    "repository": "https://github.com/mcp-servers/docker",
+    "version": "1.0.0",
+    "install": {
+      "type": "manual",
+      "command": "Install docker-mcp-server"
+    },
+    "configuration": {
+      "required": [],
+      "optional": []
+    },
+    "tags": [
+      "docker",
+      "containers",
+      "devops",
+      "optimization"
+    ]
+  },
+  {
+    "name": "environment-inspector",
+    "description": "Environment configuration inspector for .env, direnv, and toolchain state",
+    "author": "community",
+    "repository": "https://github.com/mcp-servers/environment-inspector",
+    "version": "1.0.0",
+    "install": {
+      "type": "manual",
+      "command": "Install env-inspector-mcp-server"
+    },
+    "configuration": {
+      "required": [],
+      "optional": []
+    },
+    "tags": [
+      "environment",
+      "debugging",
+      "onboarding",
+      "configuration"
+    ]
+  },
+  {
+    "name": "lint-analysis",
+    "description": "Unified linter and static analysis across ESLint, RuboCop, Flake8, mypy, Semgrep",
+    "author": "community",
+    "repository": "https://github.com/mcp-servers/lint-analysis",
+    "version": "1.0.0",
+    "install": {
+      "type": "manual",
+      "command": "Install lint-mcp-server"
+    },
+    "configuration": {
+      "required": [],
+      "optional": []
+    },
+    "tags": [
+      "linting",
+      "static-analysis",
+      "quality",
+      "code-quality"
+    ]
+  },
+  {
+    "name": "coverage",
+    "description": "Code coverage intelligence and test-to-code mapping",
+    "author": "community",
+    "repository": "https://github.com/mcp-servers/coverage",
+    "version": "1.0.0",
+    "install": {
+      "type": "manual",
+      "command": "Install coverage-mcp-server"
+    },
+    "configuration": {
+      "required": [],
+      "optional": []
+    },
+    "tags": [
+      "testing",
+      "coverage",
+      "qa",
+      "quality"
+    ]
+  },
+  {
+    "name": "process-inspector",
+    "description": "Local process inspection for debugging hanging servers and resource issues",
+    "author": "community",
+    "repository": "https://github.com/mcp-servers/process-inspector",
+    "version": "1.0.0",
+    "install": {
+      "type": "manual",
+      "command": "Install process-inspector-mcp-server"
+    },
+    "configuration": {
+      "required": [],
+      "optional": []
+    },
+    "tags": [
+      "debugging",
+      "performance",
+      "monitoring",
+      "processes"
+    ]
+  },
+  {
+    "name": "log-intelligence",
+    "description": "Log analysis with pattern detection and error clustering",
+    "author": "community",
+    "repository": "https://github.com/mcp-servers/log-intelligence",
+    "version": "1.0.0",
+    "install": {
+      "type": "manual",
+      "command": "Install log-intelligence-mcp-server"
+    },
+    "configuration": {
+      "required": [],
+      "optional": []
+    },
+    "tags": [
+      "logging",
+      "debugging",
+      "monitoring",
+      "analysis"
+    ]
+  },
+  {
+    "name": "secrets-detector",
+    "description": "Local secrets detection for hardcoded API keys and leaked tokens",
+    "author": "community",
+    "repository": "https://github.com/mcp-servers/secrets-detector",
+    "version": "1.0.0",
+    "install": {
+      "type": "manual",
+      "command": "Install secrets-detector-mcp-server"
+    },
+    "configuration": {
+      "required": [],
+      "optional": []
+    },
+    "tags": [
+      "security",
+      "compliance",
+      "secrets",
+      "scanning"
+    ]
+  },
+  {
+    "name": "supply-chain",
+    "description": "Supply chain security analysis for dependencies and vulnerabilities",
+    "author": "community",
+    "repository": "https://github.com/mcp-servers/supply-chain",
+    "version": "1.0.0",
+    "install": {
+      "type": "manual",
+      "command": "Install supply-chain-mcp-server"
+    },
+    "configuration": {
+      "required": [],
+      "optional": []
+    },
+    "tags": [
+      "security",
+      "dependencies",
+      "supply-chain",
+      "vulnerabilities"
+    ]
+  },
+  {
+    "name": "architecture-mapper",
+    "description": "Architecture visualization and module boundary analysis",
+    "author": "community",
+    "repository": "https://github.com/mcp-servers/architecture-mapper",
+    "version": "1.0.0",
+    "install": {
+      "type": "manual",
+      "command": "Install architecture-mapper-mcp-server"
+    },
+    "configuration": {
+      "required": [],
+      "optional": []
+    },
+    "tags": [
+      "architecture",
+      "visualization",
+      "onboarding",
+      "documentation"
+    ]
+  },
+  {
+    "name": "python-project",
+    "description": "Python project inspector for virtualenv, dependencies, and type checking",
+    "author": "community",
+    "repository": "https://github.com/mcp-servers/python-project",
+    "version": "1.0.0",
+    "install": {
+      "type": "manual",
+      "command": "Install python-project-mcp-server"
+    },
+    "configuration": {
+      "required": [],
+      "optional": []
+    },
+    "tags": [
+      "python",
+      "language-specific",
+      "dependencies",
+      "environment"
+    ]
+  },
+  {
+    "name": "nodejs-project",
+    "description": "Node.js project inspector for npm scripts, webpack, and TypeScript config",
+    "author": "community",
+    "repository": "https://github.com/mcp-servers/nodejs-project",
+    "version": "1.0.0",
+    "install": {
+      "type": "manual",
+      "command": "Install nodejs-project-mcp-server"
+    },
+    "configuration": {
+      "required": [],
+      "optional": []
+    },
+    "tags": [
+      "nodejs",
+      "javascript",
+      "language-specific",
+      "build"
+    ]
+  },
+  {
+    "name": "rails-project",
+    "description": "Ruby on Rails monolith inspector with Packwerk and ActiveRecord support",
+    "author": "community",
+    "repository": "https://github.com/mcp-servers/rails-project",
+    "version": "1.0.0",
+    "install": {
+      "type": "manual",
+      "command": "Install rails-mcp-server"
+    },
+    "configuration": {
+      "required": [],
+      "optional": []
+    },
+    "tags": [
+      "ruby",
+      "rails",
+      "monolith",
+      "language-specific"
+    ]
   }
 ]

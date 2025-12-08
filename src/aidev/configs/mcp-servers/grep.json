@@ -1,0 +1,12 @@
+{
+  "name": "grep",
+  "description": "Advanced search with regex, semantic filters, and structural search",
+  "type": "stdio",
+  "command": "npx",
+  "args": ["-y", "mcp-grep"],
+  "env": {},
+  "notes": {
+    "installation": "npm install -g mcp-grep",
+    "repository": "https://github.com/247arjun/mcp-grep"
+  }
+}
