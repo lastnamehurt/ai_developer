@@ -240,6 +240,28 @@
     ]
   },
   {
+    "name": "memory-bank",
+    "description": "Persistent memory bank for long-term context",
+    "author": "Aliosh Pimenta",
+    "repository": "https://github.com/alioshr/memory-bank-mcp",
+    "version": "0.2.1",
+    "install": {
+      "type": "npm",
+      "command": "npm install -g @allpepper/memory-bank-mcp"
+    },
+    "configuration": {
+      "required": [],
+      "optional": [
+        "MEMORY_BANK_ROOT"
+      ]
+    },
+    "tags": [
+      "memory",
+      "context",
+      "persistence"
+    ]
+  },
+  {
     "name": "snyk",
     "command": "snyk",
     "args": [

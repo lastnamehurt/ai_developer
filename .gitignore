@@ -56,6 +56,13 @@ Thumbs.db
 
 # Project specific
 *.log
-.aidev/
 configs/local_*
 .claude/settings.local.json
+
+.aidev/
+.claude
+.cursor
+.codex
+.gemini
+.zed
+.aider
