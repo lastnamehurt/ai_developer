@@ -8,6 +8,14 @@ Managing AI development tools (like Claude Code, Cursor, Codex, or Gemini) can b
 
 `aidev` simplifies this by providing a unified command-line interface to manage all your AI development environments. Use profiles to instantly switch contexts, centralize your secrets, and launch AI tools with full, consistent configurations.
 
+## Requirements
+
+- Python 3.10+ (check with `python --version`)
+- macOS or Linux shell environment with `git`
+- `pipx` recommended (isolated CLI install) or `pip`
+
+If you install with `pip`, ensure `~/.local/bin` (or your site-packages bin path) is on `PATH` so the `ai` CLI is available.
+
 ## ✨ Features
 
 *   **Smart Quickstart**: Automatically detects your project's tech stack and configures an optimal profile and MCP servers.
@@ -39,6 +47,14 @@ pipx install "git+https://github.com/lastnamehurt/ai_developer.git@main"
 # Fallback: Install with pip (system or user scope)
 # pip install "git+https://github.com/lastnamehurt/ai_developer.git@main"
 ```
+
+After installation, verify the CLI is on your `PATH`:
+
+```bash
+ai --version
+```
+
+If that fails, restart your shell or ensure the pip/pipx bin directory is on `PATH`.
 
 ### First Run
 
@@ -74,9 +90,19 @@ Follow these steps to set up `aidev` and configure your first project:
     ai cursor --profile infra # Launch Cursor with a specific profile
     ```
 
+Config files are written to `~/.aidev/` (global) and `./.aidev/` in the current project.
+
 ## 📖 In-Depth Guides
 
 Explore `aidev`'s capabilities in more detail:
+
+### Configuration at a glance
+
+| Area | Core commands |
+| --- | --- |
+| Profiles | `ai profile list`, `ai profile show <name>`, `ai use <name>` |
+| Env vars | `ai env set KEY val [--project]`, `ai env list`, `ai env unlock` |
+| MCP servers | `ai mcp list`, `ai mcp install <name>`, `ai mcp test <name>` |
 
 ### Profile Management
 
@@ -181,6 +207,15 @@ Workflows are defined in `.aidev/workflows.yaml` and can coordinate multiple AI 
 - Assistant handoff mechanism
 - Execution modes (interactive vs automated)
 - Troubleshooting and best practices
+
+## 🛠️ Troubleshooting & Maintenance
+
+- `ai` command not found: ensure pipx/pip bin directory is on `PATH` (run `pipx ensurepath` or re-source your shell), then retry `ai --version`.
+- Install failures: confirm Python 3.10+ and upgrade packaging tools (`pipx upgrade pipx` or `python -m pip install -U pip`).
+- Missing or locked secrets: add with `ai env set KEY value [--project]` and unlock with `ai env unlock` when prompted.
+- MCP connectivity issues: run `ai mcp test <server>` after install to validate.
+- Upgrade: `pipx upgrade aidev` (or `pip install -U "git+https://github.com/lastnamehurt/ai_developer.git@main"`).
+- Uninstall/cleanup: `pipx uninstall aidev` (or `pip uninstall aidev`). Project-specific config lives in `./.aidev/` if you need a clean slate.
 
 ## 🏗️ Advanced Usage
 
