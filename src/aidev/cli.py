@@ -331,6 +331,7 @@ def doctor(fix_path: bool) -> None:
 
 @cli.command()
 @click.argument("workflow_name", required=False)
+@click.argument("input_value", required=False)
 @click.option("--ticket", help="Ticket key, URL, or org/repo#123")
 @click.option("--file", "ticket_file", type=click.Path(exists=True, dir_okay=False, path_type=Path), help="Load ticket text from file")
 @click.option("--tool", "tool_override", help="Force assistant/tool to use (e.g., claude, codex)")
@@ -338,8 +339,8 @@ def doctor(fix_path: bool) -> None:
 @click.option("--from-step", "from_step", help="Start execution from this step name")
 @click.option("--step-only", is_flag=True, help="Run only the selected step")
 @click.option("--output", "output_mode", type=click.Choice(["table", "json"], case_sensitive=False), default="table", help="Output format for run manifest")
-def workflow(workflow_name: Optional[str], ticket: Optional[str], ticket_file: Optional[Path], tool_override: Optional[str], list_only: bool, from_step: Optional[str], step_only: bool, output_mode: str) -> None:
-    """Run or list workflows defined in .aidev/workflows.yaml"""
+def workflow(workflow_name: Optional[str], input_value: Optional[str], ticket: Optional[str], ticket_file: Optional[Path], tool_override: Optional[str], list_only: bool, from_step: Optional[str], step_only: bool, output_mode: str) -> None:
+    """Run or list workflows defined in .aidev/workflows.yaml. Input can be passed via --ticket/--file or as a positional value (ticket key or file path)."""
     engine = WorkflowEngine(project_dir=Path.cwd())
     workflows, warnings = engine.load_workflows()
 
@@ -356,6 +357,14 @@ def workflow(workflow_name: Optional[str], ticket: Optional[str], ticket_file: O
         for name, spec in workflows.items():
             console.print(f"• {name}: {spec.description}")
         return
+
+    # Interpret positional input if provided: prefer file if path exists, else ticket
+    if input_value and not ticket and not ticket_file:
+        candidate_path = Path(input_value)
+        if candidate_path.exists():
+            ticket_file = candidate_path
+        else:
+            ticket = input_value
 
     selected_name = workflow_name or ("implement_ticket" if "implement_ticket" in workflows else next(iter(workflows)))
     if selected_name not in workflows:
