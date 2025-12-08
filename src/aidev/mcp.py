@@ -110,8 +110,9 @@ class MCPManager:
         if not force and self.registry_cache.exists():
             cached = load_json(self.registry_cache, default=[])
             if cached:
+                normalized = self._normalize_registry_data(cached)
                 try:
-                    return [MCPServerRegistry(**item) for item in cached]
+                    return [MCPServerRegistry(**item) for item in normalized]
                 except Exception:
                     pass
 
@@ -126,30 +127,97 @@ class MCPManager:
 
         # If we got data from remote, cache and return it
         if data:
-            save_json(self.registry_cache, data)
+            normalized = self._normalize_registry_data(data)
+            save_json(self.registry_cache, normalized)
             try:
-                return [MCPServerRegistry(**item) for item in data]
+                return [MCPServerRegistry(**item) for item in normalized]
             except Exception as exc:
                 console.print(f"[yellow]Failed to parse fetched registry: {exc}[/yellow]")
 
         # Try cache again (covers cases where force=True but network failed)
         cached = load_json(self.registry_cache, default=[])
         if cached:
+            normalized = self._normalize_registry_data(cached)
             try:
-                return [MCPServerRegistry(**item) for item in cached]
+                return [MCPServerRegistry(**item) for item in normalized]
             except Exception:
                 pass
 
         # Bundled fallback
         if self.fallback_registry.exists():
             console.print(f"[yellow]Using bundled fallback registry at {self.fallback_registry}[/yellow]")
-            fallback = load_json(self.fallback_registry, default=[])
+            fallback = self._normalize_registry_data(load_json(self.fallback_registry, default=[]))
             try:
                 return [MCPServerRegistry(**item) for item in fallback]
             except Exception:
                 console.print("[yellow]Failed to parse bundled fallback registry.[/yellow]")
 
         return []
+
+    def _normalize_registry_data(self, data: object) -> list[dict]:
+        """
+        Normalize registry data into a list of dicts suitable for MCPServerRegistry.
+        Supports:
+        - Legacy list format
+        - New structured format with registry.verified / registry.conceptual
+        """
+        if isinstance(data, list):
+            return data
+
+        normalized: list[dict] = []
+        if isinstance(data, dict) and isinstance(data.get("registry"), dict):
+            registry = data["registry"]
+            sections = [
+                ("verified", "stable"),
+                ("conceptual", "concept"),
+            ]
+            for section, default_status in sections:
+                entries = registry.get(section, {})
+                if not isinstance(entries, dict):
+                    continue
+                for name, info in entries.items():
+                    if not isinstance(info, dict):
+                        continue
+                    status = info.get("status") or default_status
+                    description = info.get("description", "")
+                    version = info.get("version", "")
+                    repository = info.get("repository") or info.get("source") or ""
+                    author = info.get("author", "")
+                    package = info.get("package", "")
+                    endpoint = info.get("endpoint", "")
+                    command = info.get("command", "")
+                    tags = info.get("tags", [])
+                    configuration = info.get("configuration", {})
+                    compatible_profiles = info.get("compatible_profiles", [])
+                    install = info.get("install", {})
+
+                    # Build a best-effort install command if missing
+                    if not install:
+                        if package:
+                            install = {"type": "npm", "command": f"npm install -g {package}"}
+                        elif command:
+                            install = {"type": "binary", "command": command}
+
+                    normalized.append(
+                        {
+                            "name": name,
+                            "description": description,
+                            "author": author,
+                            "repository": repository,
+                            "version": version,
+                            "install": install,
+                            "configuration": configuration,
+                            "tags": tags,
+                            "compatible_profiles": compatible_profiles,
+                            "status": status,
+                            "package": package,
+                            "source": info.get("source", ""),
+                            "endpoint": endpoint,
+                            "command": command,
+                        }
+                    )
+
+        return normalized
 
     def search_registry(self, query: str) -> list[MCPServerRegistry]:
         """

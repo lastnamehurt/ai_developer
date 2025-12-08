@@ -75,7 +75,7 @@ class MCPBrowserApp(App):
             with Horizontal():
                 with Vertical(id="left"):
                     table = DataTable(id="registry-table", zebra_stripes=True)
-                    table.add_columns("Name", "Version", "Tags", "Status")
+                    table.add_columns("Name", "Version", "Stage", "Tags", "Install")
                     yield table
                 with Vertical(id="right"):
                     yield Static("Details", classes="panel-title")
@@ -124,6 +124,8 @@ class MCPBrowserApp(App):
         table.clear()
         for entry in self.filtered:
             tags = ", ".join(entry.tags) if entry.tags else "-"
+            stage_label = (entry.status or "unknown").lower()
+            stage_cell = Text(stage_label, style=self._status_style(stage_label))
             icon = self._icon_for_entry(entry)
             name_cell = f"{icon} {entry.name}"
 
@@ -132,7 +134,7 @@ class MCPBrowserApp(App):
             else:
                 status_cell = Text("available", style="mcp-available")
 
-            table.add_row(name_cell, entry.version, tags, status_cell, key=entry.name)
+            table.add_row(name_cell, entry.version or "-", stage_cell, tags, status_cell, key=entry.name)
 
         if table.row_count:
             table.cursor_coordinate = (0, 0)
@@ -158,11 +160,12 @@ class MCPBrowserApp(App):
         repo = entry.repository or "-"
 
         status_line = "✅ Installed" if entry.name in self.installed else "⬇️ Available to install"
+        stage = entry.status or "unknown"
 
         body = (
             f"### {entry.name}\n\n"
             f"{entry.description}\n\n"
-            f"{status_line}\n\n"
+            f"{status_line} — **Stage:** `{stage}`\n\n"
             f"- **Author:** `{entry.author}`\n"
             f"- **Version:** `{entry.version}`\n"
             f"- **Tags:** {tags or '-'}\n"
@@ -197,6 +200,19 @@ class MCPBrowserApp(App):
         if "logs" in name:
             return "📜"
         return "✨"
+
+    def _status_style(self, status: str) -> str:
+        """Map registry status to a style class."""
+        status = status.lower()
+        if status in {"stable", "verified"}:
+            return "status-stable"
+        if status in {"experimental", "beta"}:
+            return "status-experimental"
+        if status in {"deprecated"}:
+            return "status-deprecated"
+        if status in {"concept", "conceptual", "unavailable"}:
+            return "status-concept"
+        return ""
 
     async def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         """Update details when selection changes."""

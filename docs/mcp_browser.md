@@ -21,7 +21,7 @@ This Textual-based TUI lets you browse, filter, and install MCP servers without 
 ## Panels
 
 - **Filters**: live search + tag filter to narrow results.
-- **Registry table**: glyph + name, version, tags, and install status chip (`✓ installed` vs `available`).
+- **Registry table**: glyph + name, version, status badge (`stable`/`experimental`/`deprecated`/`concept`), tags, and install status chip (`✓ installed` vs `available`).
 - **Details**: description, metadata, and install command block for the selected server.
 
 ## Offline fallback
@@ -37,5 +37,6 @@ If the network registry cannot be fetched, the app loads the bundled fallback at
 ## Troubleshooting
 
 - Empty list? Press `r`. If still empty, check the status line for fetch errors; offline should still show the bundled registry.  
+- Concept-only entries: staged as `concept`; installs will typically be unavailable (placeholder).  
 - Icon rendering: use a Nerd Font–compatible terminal for the glyphs to display correctly.  
 - To reset cache: remove `~/.aidev/cache/mcp-registry.json` and relaunch with `--refresh`.

@@ -44,11 +44,16 @@ class MCPServerRegistry(BaseModel):
     description: str
     author: str | None = ""
     repository: str | None = ""
-    version: str
-    install: dict[str, str]
+    version: str | None = ""
+    install: dict[str, str] = Field(default_factory=dict)
     configuration: dict[str, list[str]] = Field(default_factory=dict)
     tags: list[str] = Field(default_factory=list)
     compatible_profiles: list[str] = Field(default_factory=list)
+    status: str = "stable"
+    package: str | None = ""
+    source: str | None = ""
+    endpoint: str | None = ""
+    command: str | None = ""
 
 
 class ProjectConfig(BaseModel):

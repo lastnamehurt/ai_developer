@@ -1,681 +1,209 @@
-[
-  {
-    "name": "filesystem",
-    "description": "File system access and manipulation",
-    "author": "Anthropic",
-    "repository": "https://github.com/modelcontextprotocol/servers",
-    "version": "1.0.0",
-    "install": {
-      "type": "npm",
-      "command": "npm install -g @modelcontextprotocol/server-filesystem"
+{
+  "registry": {
+    "verified": {
+      "filesystem": {
+        "status": "stable",
+        "description": "Official MCP filesystem server.",
+        "package": "@modelcontextprotocol/server-filesystem",
+        "source": "https://github.com/modelcontextprotocol/servers",
+        "version": "1.0.0",
+        "tags": ["filesystem", "files", "core"]
+      },
+      "github": {
+        "status": "stable",
+        "description": "Official GitHub MCP server.",
+        "package": "@modelcontextprotocol/server-github",
+        "source": "https://github.com/modelcontextprotocol/servers",
+        "version": "1.0.0",
+        "tags": ["github", "git", "api"]
+      },
+      "gitlab": {
+        "status": "stable",
+        "description": "Official GitLab MCP server.",
+        "package": "@zereight/mcp-gitlab",
+        "source": "https://github.com/zereight/mcp-gitlab",
+        "version": "1.0.0",
+        "tags": ["gitlab", "git", "api"]
+      },
+      "git": {
+        "status": "stable",
+        "description": "MCP server enabling git operations.",
+        "repository": "https://github.com/cyanheads/git-mcp-server",
+        "version": "1.0.0",
+        "tags": ["git", "version-control", "core"]
+      },
+      "k8s": {
+        "status": "stable",
+        "description": "Kubernetes server used for querying cluster resources.",
+        "repository": "https://github.com/spacelift-io/k8s-mcp-server",
+        "version": "1.0.0",
+        "tags": ["k8s", "kubernetes", "ops"]
+      },
+      "s3": {
+        "status": "stable",
+        "description": "AWS sample S3 MCP server.",
+        "repository": "https://github.com/aws-samples/sample-mcp-server-s3",
+        "version": "1.0.0",
+        "tags": ["aws", "s3", "storage"]
+      },
+      "postgres": {
+        "status": "deprecated",
+        "description": "Deprecated Postgres server with known vulnerabilities.",
+        "package": "@modelcontextprotocol/server-postgres",
+        "source": "https://github.com/modelcontextprotocol/servers",
+        "version": "1.0.0",
+        "tags": ["postgres", "database"]
+      },
+      "atlassian": {
+        "status": "stable",
+        "description": "Atlassian remote MCP server for Jira/Confluence.",
+        "endpoint": "https://mcp.atlassian.com/v1/sse",
+        "version": "",
+        "tags": ["atlassian", "jira", "confluence"]
+      },
+      "web-search": {
+        "status": "stable",
+        "description": "Search server powered by SerpApi.",
+        "repository": "https://github.com/serpapi/mcp-server",
+        "version": "1.0.0",
+        "tags": ["search", "web"]
+      },
+      "memory": {
+        "status": "stable",
+        "description": "Official persistent memory server.",
+        "package": "@modelcontextprotocol/server-memory",
+        "source": "https://github.com/modelcontextprotocol/servers",
+        "version": "1.0.0",
+        "tags": ["memory", "state"]
+      },
+      "memory-bank": {
+        "status": "stable",
+        "description": "Long-term local memory MCP server.",
+        "repository": "https://github.com/alioshr/memory-bank-mcp",
+        "version": "1.0.0",
+        "tags": ["memory", "local"]
+      },
+      "snyk": {
+        "status": "experimental",
+        "description": "Snyk security scanning MCP server via CLI.",
+        "command": "snyk mcp --experimental",
+        "repository": "https://github.com/snyk/snyk",
+        "version": "",
+        "tags": ["security", "snyk"]
+      },
+      "omnisearch": {
+        "status": "stable",
+        "description": "Multi-source omnipresent search MCP server.",
+        "repository": "https://github.com/spences10/mcp-omnisearch",
+        "version": "1.0.0",
+        "tags": ["search", "multi-source"]
+      },
+      "grep": {
+        "status": "stable",
+        "description": "Command-line grep exposed as an MCP server.",
+        "package": "@247arjun/mcp-grep",
+        "repository": "https://github.com/247arjun/mcp-grep",
+        "version": "1.0.0",
+        "tags": ["grep", "search", "cli"]
+      }
     },
-    "configuration": {
-      "required": [],
-      "optional": [
-        "allowedPaths"
-      ]
-    },
-    "tags": [
-      "filesystem",
-      "files",
-      "core"
-    ]
-  },
-  {
-    "name": "git",
-    "description": "Git repository operations and version control",
-    "author": "Community",
-    "repository": "https://github.com/modelcontextprotocol/servers",
-    "version": "1.0.0",
-    "install": {
-      "type": "binary",
-      "command": "cargo install git-mcp-server"
-    },
-    "configuration": {
-      "required": [],
-      "optional": [
-        "allowedRepos"
-      ]
-    },
-    "tags": [
-      "git",
-      "version-control",
-      "core"
-    ]
-  },
-  {
-    "name": "github",
-    "description": "GitHub API integration for issues, PRs, and repositories",
-    "author": "Anthropic",
-    "repository": "https://github.com/modelcontextprotocol/servers",
-    "version": "1.0.0",
-    "install": {
-      "type": "npm",
-      "command": "npm install -g @modelcontextprotocol/server-github"
-    },
-    "configuration": {
-      "required": [
-        "GITHUB_TOKEN"
-      ],
-      "optional": [
-        "owner",
-        "repo"
-      ]
-    },
-    "tags": [
-      "github",
-      "git",
-      "api"
-    ]
-  },
-  {
-    "name": "gitlab",
-    "description": "GitLab API integration for issues, MRs, CI/CD, wikis, and pipelines",
-    "author": "@zereight",
-    "version": "1.0.0",
-    "install": {
-      "type": "npm",
-      "command": "npm install -g @zereight/mcp-gitlab"
-    },
-    "configuration": {
-      "required": [
-        "GITLAB_PERSONAL_ACCESS_TOKEN",
-        "GITLAB_URL",
-        "GITLAB_API_URL"
-      ],
-      "optional": [
-        "GITLAB_READ_ONLY_MODE",
-        "USE_GITLAB_WIKI",
-        "USE_MILESTONE",
-        "USE_PIPELINE"
-      ]
-    },
-    "tags": [
-      "gitlab",
-      "git",
-      "api",
-      "cicd",
-      "wiki"
-    ]
-  },
-  {
-    "name": "postgres",
-    "description": "PostgreSQL database access and query execution",
-    "author": "Anthropic",
-    "repository": "https://github.com/modelcontextprotocol/servers",
-    "version": "1.0.0",
-    "install": {
-      "type": "npm",
-      "command": "npm install -g @modelcontextprotocol/server-postgres"
-    },
-    "configuration": {
-      "required": [
-        "POSTGRES_URL"
-      ],
-      "optional": []
-    },
-    "tags": [
-      "database",
-      "postgres",
-      "sql"
-    ]
-  },
-  {
-    "name": "k8s",
-    "description": "Kubernetes cluster management and operations",
-    "author": "community",
-    "repository": "https://github.com/aws-samples/k8s-mcp-server",
-    "version": "1.0.0",
-    "install": {
-      "type": "binary",
-      "command": "cargo install k8s-mcp-server"
-    },
-    "configuration": {
-      "required": [],
-      "optional": [
-        "KUBECONFIG",
-        "context",
-        "namespace"
-      ]
-    },
-    "tags": [
-      "devops",
-      "kubernetes",
-      "infrastructure"
-    ]
-  },
-  {
-    "name": "atlassian",
-    "description": "Atlassian suite (JIRA, Confluence) via remote MCP",
-    "author": "Atlassian",
-    "repository": "https://mcp.atlassian.com",
-    "version": "1.0.0",
-    "install": {
-      "type": "remote",
-      "command": "npx -y mcp-remote https://mcp.atlassian.com/v1/sse"
-    },
-    "configuration": {
-      "required": [],
-      "optional": []
-    },
-    "tags": [
-      "project-management",
-      "jira",
-      "confluence",
-      "atlassian"
-    ]
-  },
-  {
-    "name": "s3",
-    "description": "AWS S3 bucket operations and file storage",
-    "author": "community",
-    "repository": "https://github.com/aws-samples/sample-mcp-server-s3",
-    "version": "1.0.0",
-    "install": {
-      "type": "manual",
-      "command": "git clone https://github.com/aws-samples/sample-mcp-server-s3 ~/.aidev/mcp-servers/s3 && cd ~/.aidev/mcp-servers/s3 && npm install"
-    },
-    "configuration": {
-      "required": [
-        "AWS_ACCESS_KEY_ID",
-        "AWS_SECRET_ACCESS_KEY"
-      ],
-      "optional": [
-        "buckets",
-        "region"
-      ]
-    },
-    "tags": [
-      "cloud",
-      "aws",
-      "storage"
-    ]
-  },
-  {
-    "name": "web-search",
-    "description": "Web search capabilities using multiple search engines",
-    "author": "community",
-    "repository": "https://github.com/serpapi/mcp-serpapi",
-    "version": "1.0.0",
-    "install": {
-      "type": "remote",
-      "command": "npx -y mcp-remote https://mcp.serpapi.com"
-    },
-    "configuration": {
-      "required": [
-        "SERPAPI_API_KEY"
-      ],
-      "optional": [
-        "GOOGLE_API_KEY",
-        "BING_API_KEY"
-      ]
-    },
-    "tags": [
-      "search",
-      "web",
-      "research"
-    ]
-  },
-  {
-    "name": "memory",
-    "description": "Persistent memory and context preservation across sessions",
-    "author": "community",
-    "repository": "https://github.com/modelcontextprotocol/servers",
-    "version": "1.0.0",
-    "install": {
-      "type": "npm",
-      "command": "npm install -g @modelcontextprotocol/server-memory"
-    },
-    "configuration": {
-      "required": [],
-      "optional": [
-        "MEMORY_BANK_ROOT",
-        "retention"
-      ]
-    },
-    "tags": [
-      "memory",
-      "context",
-      "persistence"
-    ]
-  },
-  {
-    "name": "memory-bank",
-    "description": "Persistent memory bank for long-term context",
-    "author": "Aliosh Pimenta",
-    "repository": "https://github.com/alioshr/memory-bank-mcp",
-    "version": "0.2.1",
-    "install": {
-      "type": "npm",
-      "command": "npm install -g @allpepper/memory-bank-mcp"
-    },
-    "configuration": {
-      "required": [],
-      "optional": [
-        "MEMORY_BANK_ROOT"
-      ]
-    },
-    "tags": [
-      "memory",
-      "context",
-      "persistence"
-    ]
-  },
-  {
-    "name": "snyk",
-    "command": "snyk",
-    "args": [
-      "mcp",
-      "--experimental"
-    ],
-    "description": "Scans for vulnerabilities in code and dependencies using the Snyk CLI.",
-    "author": "Snyk",
-    "repository": "https://github.com/snyk/cli",
-    "version": "1.0.0",
-    "install": {
-      "type": "npm",
-      "command": "npm install -g snyk"
-    },
-    "configuration": {
-      "required": [
-        "SNYK_TOKEN"
-      ],
-      "optional": []
-    },
-    "tags": [
-      "security",
-      "devsecops",
-      "vulnerability",
-      "scanner"
-    ]
-  },
-  {
-    "name": "omnisearch",
-    "command": "mcp-omnisearch",
-    "description": "Unified access to multiple search, content processing, and AI response services.",
-    "author": "spences10",
-    "repository": "https://github.com/spences10/mcp-omnisearch",
-    "version": "0.0.18",
-    "install": {
-      "type": "npm",
-      "command": "npm install -g mcp-omnisearch"
-    },
-    "configuration": {
-      "required": [],
-      "optional": [
-        "TAVILY_API_KEY",
-        "PERPLEXITY_API_KEY",
-        "KAGI_API_KEY",
-        "JINA_AI_API_KEY",
-        "BRAVE_API_KEY",
-        "GITHUB_API_KEY",
-        "EXA_API_KEY",
-        "FIRECRAWL_API_KEY"
-      ]
-    },
-    "tags": [
-      "search",
-      "web",
-      "ai",
-      "research",
-      "omni"
-    ]
-  },
-  {
-    "name": "grep",
-    "description": "Advanced search with regex, semantic filters, and structural search",
-    "author": "247arjun",
-    "repository": "https://github.com/247arjun/mcp-grep",
-    "version": "1.0.0",
-    "install": {
-      "type": "npm",
-      "command": "npm install -g mcp-grep"
-    },
-    "configuration": {
-      "required": [],
-      "optional": []
-    },
-    "tags": [
-      "search",
-      "grep",
-      "regex",
-      "code-search"
-    ]
-  },
-  {
-    "name": "dependency-graph",
-    "description": "Repository dependency graph with cycle detection and dead code analysis",
-    "author": "community",
-    "repository": "https://github.com/mcp-servers/dependency-graph",
-    "version": "1.0.0",
-    "install": {
-      "type": "manual",
-      "command": "Install dependency-graph-mcp-server"
-    },
-    "configuration": {
-      "required": [],
-      "optional": []
-    },
-    "tags": [
-      "architecture",
-      "dependencies",
-      "refactoring",
-      "analysis"
-    ]
-  },
-  {
-    "name": "symbol-index",
-    "description": "Project symbol index for functions, classes, methods with LSP-like capabilities",
-    "author": "community",
-    "repository": "https://github.com/mcp-servers/symbol-index",
-    "version": "1.0.0",
-    "install": {
-      "type": "manual",
-      "command": "Install symbol-index-mcp-server"
-    },
-    "configuration": {
-      "required": [],
-      "optional": []
-    },
-    "tags": [
-      "indexing",
-      "code-navigation",
-      "ide",
-      "symbols"
-    ]
-  },
-  {
-    "name": "build-system",
-    "description": "Build system analysis for Make, Bazel, Gradle, NPM scripts",
-    "author": "community",
-    "repository": "https://github.com/mcp-servers/build-system",
-    "version": "1.0.0",
-    "install": {
-      "type": "manual",
-      "command": "Install build-mcp-server"
-    },
-    "configuration": {
-      "required": [],
-      "optional": []
-    },
-    "tags": [
-      "build",
-      "performance",
-      "devops",
-      "optimization"
-    ]
-  },
-  {
-    "name": "test-graph",
-    "description": "Test graph analysis for flaky test detection and coverage mapping",
-    "author": "community",
-    "repository": "https://github.com/mcp-servers/test-graph",
-    "version": "1.0.0",
-    "install": {
-      "type": "manual",
-      "command": "Install test-graph-mcp-server"
-    },
-    "configuration": {
-      "required": [],
-      "optional": []
-    },
-    "tags": [
-      "testing",
-      "qa",
-      "quality",
-      "coverage"
-    ]
-  },
-  {
-    "name": "docker",
-    "description": "Docker container and image analysis, Dockerfile optimization",
-    "author": "community",
-    "repository": "https://github.com/mcp-servers/docker",
-    "version": "1.0.0",
-    "install": {
-      "type": "manual",
-      "command": "Install docker-mcp-server"
-    },
-    "configuration": {
-      "required": [],
-      "optional": []
-    },
-    "tags": [
-      "docker",
-      "containers",
-      "devops",
-      "optimization"
-    ]
-  },
-  {
-    "name": "environment-inspector",
-    "description": "Environment configuration inspector for .env, direnv, and toolchain state",
-    "author": "community",
-    "repository": "https://github.com/mcp-servers/environment-inspector",
-    "version": "1.0.0",
-    "install": {
-      "type": "manual",
-      "command": "Install env-inspector-mcp-server"
-    },
-    "configuration": {
-      "required": [],
-      "optional": []
-    },
-    "tags": [
-      "environment",
-      "debugging",
-      "onboarding",
-      "configuration"
-    ]
-  },
-  {
-    "name": "lint-analysis",
-    "description": "Unified linter and static analysis across ESLint, RuboCop, Flake8, mypy, Semgrep",
-    "author": "community",
-    "repository": "https://github.com/mcp-servers/lint-analysis",
-    "version": "1.0.0",
-    "install": {
-      "type": "manual",
-      "command": "Install lint-mcp-server"
-    },
-    "configuration": {
-      "required": [],
-      "optional": []
-    },
-    "tags": [
-      "linting",
-      "static-analysis",
-      "quality",
-      "code-quality"
-    ]
-  },
-  {
-    "name": "coverage",
-    "description": "Code coverage intelligence and test-to-code mapping",
-    "author": "community",
-    "repository": "https://github.com/mcp-servers/coverage",
-    "version": "1.0.0",
-    "install": {
-      "type": "manual",
-      "command": "Install coverage-mcp-server"
-    },
-    "configuration": {
-      "required": [],
-      "optional": []
-    },
-    "tags": [
-      "testing",
-      "coverage",
-      "qa",
-      "quality"
-    ]
-  },
-  {
-    "name": "process-inspector",
-    "description": "Local process inspection for debugging hanging servers and resource issues",
-    "author": "community",
-    "repository": "https://github.com/mcp-servers/process-inspector",
-    "version": "1.0.0",
-    "install": {
-      "type": "manual",
-      "command": "Install process-inspector-mcp-server"
-    },
-    "configuration": {
-      "required": [],
-      "optional": []
-    },
-    "tags": [
-      "debugging",
-      "performance",
-      "monitoring",
-      "processes"
-    ]
-  },
-  {
-    "name": "log-intelligence",
-    "description": "Log analysis with pattern detection and error clustering",
-    "author": "community",
-    "repository": "https://github.com/mcp-servers/log-intelligence",
-    "version": "1.0.0",
-    "install": {
-      "type": "manual",
-      "command": "Install log-intelligence-mcp-server"
-    },
-    "configuration": {
-      "required": [],
-      "optional": []
-    },
-    "tags": [
-      "logging",
-      "debugging",
-      "monitoring",
-      "analysis"
-    ]
-  },
-  {
-    "name": "secrets-detector",
-    "description": "Local secrets detection for hardcoded API keys and leaked tokens",
-    "author": "community",
-    "repository": "https://github.com/mcp-servers/secrets-detector",
-    "version": "1.0.0",
-    "install": {
-      "type": "manual",
-      "command": "Install secrets-detector-mcp-server"
-    },
-    "configuration": {
-      "required": [],
-      "optional": []
-    },
-    "tags": [
-      "security",
-      "compliance",
-      "secrets",
-      "scanning"
-    ]
-  },
-  {
-    "name": "supply-chain",
-    "description": "Supply chain security analysis for dependencies and vulnerabilities",
-    "author": "community",
-    "repository": "https://github.com/mcp-servers/supply-chain",
-    "version": "1.0.0",
-    "install": {
-      "type": "manual",
-      "command": "Install supply-chain-mcp-server"
-    },
-    "configuration": {
-      "required": [],
-      "optional": []
-    },
-    "tags": [
-      "security",
-      "dependencies",
-      "supply-chain",
-      "vulnerabilities"
-    ]
-  },
-  {
-    "name": "architecture-mapper",
-    "description": "Architecture visualization and module boundary analysis",
-    "author": "community",
-    "repository": "https://github.com/mcp-servers/architecture-mapper",
-    "version": "1.0.0",
-    "install": {
-      "type": "manual",
-      "command": "Install architecture-mapper-mcp-server"
-    },
-    "configuration": {
-      "required": [],
-      "optional": []
-    },
-    "tags": [
-      "architecture",
-      "visualization",
-      "onboarding",
-      "documentation"
-    ]
-  },
-  {
-    "name": "python-project",
-    "description": "Python project inspector for virtualenv, dependencies, and type checking",
-    "author": "community",
-    "repository": "https://github.com/mcp-servers/python-project",
-    "version": "1.0.0",
-    "install": {
-      "type": "manual",
-      "command": "Install python-project-mcp-server"
-    },
-    "configuration": {
-      "required": [],
-      "optional": []
-    },
-    "tags": [
-      "python",
-      "language-specific",
-      "dependencies",
-      "environment"
-    ]
-  },
-  {
-    "name": "nodejs-project",
-    "description": "Node.js project inspector for npm scripts, webpack, and TypeScript config",
-    "author": "community",
-    "repository": "https://github.com/mcp-servers/nodejs-project",
-    "version": "1.0.0",
-    "install": {
-      "type": "manual",
-      "command": "Install nodejs-project-mcp-server"
-    },
-    "configuration": {
-      "required": [],
-      "optional": []
-    },
-    "tags": [
-      "nodejs",
-      "javascript",
-      "language-specific",
-      "build"
-    ]
-  },
-  {
-    "name": "rails-project",
-    "description": "Ruby on Rails monolith inspector with Packwerk and ActiveRecord support",
-    "author": "community",
-    "repository": "https://github.com/mcp-servers/rails-project",
-    "version": "1.0.0",
-    "install": {
-      "type": "manual",
-      "command": "Install rails-mcp-server"
-    },
-    "configuration": {
-      "required": [],
-      "optional": []
-    },
-    "tags": [
-      "ruby",
-      "rails",
-      "monolith",
-      "language-specific"
-    ]
+    "conceptual": {
+      "dependency-graph": {
+        "status": "concept",
+        "description": "Analyzes project dependency graphs.",
+        "repository": "https://github.com/mcp-servers/dependency-graph (nonexistent placeholder)",
+        "tags": ["concept"]
+      },
+      "symbol-index": {
+        "status": "concept",
+        "description": "Global code symbol indexer.",
+        "repository": "https://github.com/mcp-servers/symbol-index (nonexistent placeholder)",
+        "tags": ["concept"]
+      },
+      "build-system": {
+        "status": "concept",
+        "description": "Standardized build system abstraction.",
+        "repository": "https://github.com/mcp-servers/build-system (nonexistent placeholder)",
+        "tags": ["concept"]
+      },
+      "test-graph": {
+        "status": "concept",
+        "description": "Test dependency / coverage graph MCP server.",
+        "repository": "https://github.com/mcp-servers/test-graph (nonexistent placeholder)",
+        "tags": ["concept"]
+      },
+      "docker": {
+        "status": "concept",
+        "description": "MCP server for interacting with local Docker daemon.",
+        "repository": "https://github.com/mcp-servers/docker (nonexistent placeholder)",
+        "tags": ["concept"]
+      },
+      "environment-inspector": {
+        "status": "concept",
+        "description": "Analyzes system environment and runtime.",
+        "repository": "https://github.com/mcp-servers/environment-inspector (nonexistent placeholder)",
+        "tags": ["concept"]
+      },
+      "lint-analysis": {
+        "status": "concept",
+        "description": "Unified lint engine via MCP.",
+        "repository": "https://github.com/mcp-servers/lint-analysis (nonexistent placeholder)",
+        "tags": ["concept"]
+      },
+      "coverage": {
+        "status": "concept",
+        "description": "Standardized code coverage index MCP server.",
+        "repository": "https://github.com/mcp-servers/coverage (nonexistent placeholder)",
+        "tags": ["concept"]
+      },
+      "process-inspector": {
+        "status": "concept",
+        "description": "Process graph mapping & system observability.",
+        "repository": "https://github.com/mcp-servers/process-inspector (nonexistent placeholder)",
+        "tags": ["concept"]
+      },
+      "log-intelligence": {
+        "status": "concept",
+        "description": "Machine-learning powered log analyzer.",
+        "repository": "https://github.com/mcp-servers/log-intelligence (nonexistent placeholder)",
+        "tags": ["concept"]
+      },
+      "secrets-detector": {
+        "status": "concept",
+        "description": "Detects secrets & leaks across repos.",
+        "repository": "https://github.com/mcp-servers/secrets-detector (nonexistent placeholder)",
+        "tags": ["concept"]
+      },
+      "supply-chain": {
+        "status": "concept",
+        "description": "SBOM & supply chain security MCP server.",
+        "repository": "https://github.com/mcp-servers/supply-chain (nonexistent placeholder)",
+        "tags": ["concept"]
+      },
+      "architecture-mapper": {
+        "status": "concept",
+        "description": "Automatic system architecture mapping.",
+        "repository": "https://github.com/mcp-servers/architecture-mapper (nonexistent placeholder)",
+        "tags": ["concept"]
+      },
+      "python-project": {
+        "status": "concept",
+        "description": "Language-specific helper for Python projects.",
+        "repository": "https://github.com/mcp-servers/python-project (nonexistent placeholder)",
+        "tags": ["concept"]
+      },
+      "nodejs-project": {
+        "status": "concept",
+        "description": "Language-specific helper for Node.js projects.",
+        "repository": "https://github.com/mcp-servers/nodejs-project (nonexistent placeholder)",
+        "tags": ["concept"]
+      },
+      "rails-project": {
+        "status": "concept",
+        "description": "Rails project tooling & insights via MCP.",
+        "repository": "https://github.com/mcp-servers/rails-project (nonexistent placeholder)",
+        "tags": ["concept"]
+      }
+    }
   }
-]
+}

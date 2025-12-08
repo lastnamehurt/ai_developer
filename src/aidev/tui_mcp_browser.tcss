@@ -86,3 +86,19 @@ Container {
 .mcp-available {
     color: #4b5563;
 }
+
+.status-stable {
+    color: #22c55e;
+}
+
+.status-experimental {
+    color: #fbbf24;
+}
+
+.status-deprecated {
+    color: #f97316;
+}
+
+.status-concept {
+    color: #a855f7;
+}
