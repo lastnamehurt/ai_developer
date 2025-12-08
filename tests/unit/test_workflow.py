@@ -39,20 +39,23 @@ def test_workflow_engine_seeds_and_runs(tmp_path: Path):
     project_dir = tmp_path
     engine = WorkflowEngine(project_dir=project_dir)
 
-    workflows = engine.load_workflows()
+    workflows, warnings = engine.load_workflows()
     assert "implement_ticket" in workflows
     assert "refactor_scout" in workflows
+    assert warnings == []
 
     spec = WorkflowSpec(
         name="demo",
         description="demo workflow",
-        steps=[WorkflowStep(name="step1", profile="default", prompt="ticket_understander")],
+        steps=[WorkflowStep(name="step1", profile="default", prompt="ticket_understander", tool="claude")],
     )
-    run_path = engine.run_workflow(spec, ticket="ABC-1", ticket_file=None, tool_override=None)
+    run_path = engine.run_workflow(spec, ticket="ABC-1", ticket_file=None, tool_override=None, from_step=None, step_only=False)
     assert run_path.exists()
     data = json.loads(run_path.read_text())
     assert data["workflow"] == "demo"
     assert data["steps"][0]["prompt_id"] == "ticket_understander"
+    assert data["schema_version"] == "1.1"
+    assert data["steps"][0]["tool_timeout_sec"] == 30
 
 
 def test_refactor_scout_stub(tmp_path: Path):
@@ -60,8 +63,8 @@ def test_refactor_scout_stub(tmp_path: Path):
     code_file = tmp_path / "example.py"
     code_file.write_text("print('hello')")
     engine = WorkflowEngine(project_dir=project_dir)
-    wf = engine.load_workflows()["refactor_scout"]
+    wf = engine.load_workflows()[0]["refactor_scout"]
 
-    engine.run_workflow(wf, ticket=None, ticket_file=code_file, tool_override=None)
+    engine.run_workflow(wf, ticket=None, ticket_file=code_file, tool_override=None, from_step=None, step_only=False)
     runs = list((tmp_path / ".aidev" / "workflow-runs").glob("refactor_scout-*-draft.md"))
     assert runs, "Expected refactor_scout to write a draft ticket file"

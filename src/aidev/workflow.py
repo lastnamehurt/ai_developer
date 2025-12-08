@@ -31,6 +31,9 @@ class WorkflowStep:
     profile: str
     prompt: str
     uses_issue_mcp: bool = False
+    tool: Optional[str] = None
+    timeout_sec: int = 30
+    retries: int = 0
 
 
 @dataclass
@@ -42,6 +45,7 @@ class WorkflowSpec:
     input_kind: str = "text"
     allow_file: bool = False
     steps: list[WorkflowStep] = field(default_factory=list)
+    tool_default: Optional[str] = None
 
 
 class AssistantResolver:
@@ -148,29 +152,41 @@ class WorkflowEngine:
             console.print(f"[yellow]![/yellow] Could not seed workflows: {exc}")
         return target
 
-    def load_workflows(self) -> dict[str, WorkflowSpec]:
-        """Load workflows from YAML (project-local with template fallback)."""
+    def load_workflows(self) -> tuple[dict[str, WorkflowSpec], list[str]]:
+        """Load workflows from YAML (project-local with template fallback) with validation warnings."""
         path = self.ensure_workflows_file()
         data = yaml.safe_load(path.read_text()) or {}
         workflows: dict[str, WorkflowSpec] = {}
+        warnings: list[str] = []
         for name, spec in (data.get("workflows") or {}).items():
-            steps = [
-                WorkflowStep(
-                    name=s.get("name"),
-                    profile=s.get("profile"),
-                    prompt=s.get("prompt"),
-                    uses_issue_mcp=bool(s.get("uses_issue_mcp", False)),
+            try:
+                steps = []
+                for s in spec.get("steps", []):
+                    if not s.get("name") or not s.get("profile") or not s.get("prompt"):
+                        raise ValueError("step missing name/profile/prompt")
+                    steps.append(
+                        WorkflowStep(
+                            name=s.get("name"),
+                            profile=s.get("profile"),
+                            prompt=s.get("prompt"),
+                            uses_issue_mcp=bool(s.get("uses_issue_mcp", False)),
+                            tool=s.get("tool"),
+                            timeout_sec=int(s.get("timeout_sec", 30)),
+                            retries=int(s.get("retries", 0)),
+                        )
+                    )
+
+                workflows[name] = WorkflowSpec(
+                    name=name,
+                    description=spec.get("description", ""),
+                    input_kind=spec.get("input", {}).get("kind", "text"),
+                    allow_file=bool(spec.get("input", {}).get("allow_file", False)),
+                    tool_default=spec.get("tool"),
+                    steps=steps,
                 )
-                for s in spec.get("steps", [])
-            ]
-            workflows[name] = WorkflowSpec(
-                name=name,
-                description=spec.get("description", ""),
-                input_kind=spec.get("input", {}).get("kind", "text"),
-                allow_file=bool(spec.get("input", {}).get("allow_file", False)),
-                steps=steps,
-            )
-        return workflows
+            except Exception as exc:
+                warnings.append(f"{name}: {exc}")
+        return workflows, warnings
 
     # ------------------------------------------------------------------ #
     # Execution
@@ -183,6 +199,8 @@ class WorkflowEngine:
         ticket_file: Optional[Path],
         tool_override: Optional[str],
         project_default_assistant: Optional[str] = None,
+        from_step: Optional[str] = None,
+        step_only: bool = False,
     ) -> Path:
         """
         Execute a workflow (lightweight stub): resolve assistants, assemble prompts,
@@ -192,10 +210,23 @@ class WorkflowEngine:
         ticket_text = self._load_ticket_text(ticket, ticket_file)
         steps_output: list[dict[str, Any]] = []
 
-        for step in workflow.steps:
+        step_iter = workflow.steps
+        if from_step:
+            filtered = []
+            seen = False
+            for step in workflow.steps:
+                if step.name == from_step:
+                    seen = True
+                if seen:
+                    filtered.append(step)
+            if not seen:
+                raise ValueError(f"Step '{from_step}' not found in workflow '{workflow.name}'")
+            step_iter = filtered
+
+        for step in step_iter:
             assistant = self.resolver.resolve(
                 cli_override=tool_override,
-                workflow_tool=None,
+                workflow_tool=step.tool or workflow.tool_default,
                 env_default=self._env_default_assistant(),
                 project_default=project_default_assistant,
             )
@@ -208,17 +239,25 @@ class WorkflowEngine:
                     "prompt_text": prompt_text,
                     "assistant": assistant,
                     "uses_issue_mcp": step.uses_issue_mcp,
+                    "tool_timeout_sec": step.timeout_sec,
+                    "retries": step.retries,
                     "input": {
                         "ticket_source": ticket_source,
                         "ticket_text_preview": ticket_text[:4000] if ticket_text else "",
                     },
-                    "output": None,  # placeholder for future agent output
+                    "output": {
+                        "status": "not-run",
+                        "result": None,
+                    },
                 }
             )
+            if step_only:
+                break
 
         manifest = {
             "workflow": workflow.name,
             "description": workflow.description,
+            "schema_version": "1.1",
             "ticket_source": ticket_source,
             "ticket_arg": ticket,
             "ticket_file": str(ticket_file) if ticket_file else None,
