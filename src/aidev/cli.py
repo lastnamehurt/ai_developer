@@ -183,6 +183,10 @@ def _launch_tool_with_profile(tool_id: str, profile: str, args: tuple) -> None:
     if tool_id == "cursor" and not args:
         tool_args = ["."]
 
+    # For Claude Code, pass the MCP config file via --mcp-config flag
+    if tool_id == "claude":
+        tool_args = ["--mcp-config", str(tool_config_path)] + tool_args
+
     # Launch tool (it will run in the current working directory)
     tool_manager.launch_tool(tool_id, args=tool_args if tool_args else None)
 
