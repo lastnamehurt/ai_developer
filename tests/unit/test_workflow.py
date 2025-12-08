@@ -41,6 +41,7 @@ def test_workflow_engine_seeds_and_runs(tmp_path: Path):
 
     workflows = engine.load_workflows()
     assert "implement_ticket" in workflows
+    assert "refactor_scout" in workflows
 
     spec = WorkflowSpec(
         name="demo",
@@ -52,3 +53,15 @@ def test_workflow_engine_seeds_and_runs(tmp_path: Path):
     data = json.loads(run_path.read_text())
     assert data["workflow"] == "demo"
     assert data["steps"][0]["prompt_id"] == "ticket_understander"
+
+
+def test_refactor_scout_stub(tmp_path: Path):
+    project_dir = tmp_path
+    code_file = tmp_path / "example.py"
+    code_file.write_text("print('hello')")
+    engine = WorkflowEngine(project_dir=project_dir)
+    wf = engine.load_workflows()["refactor_scout"]
+
+    engine.run_workflow(wf, ticket=None, ticket_file=code_file, tool_override=None)
+    runs = list((tmp_path / ".aidev" / "workflow-runs").glob("refactor_scout-*-draft.md"))
+    assert runs, "Expected refactor_scout to write a draft ticket file"

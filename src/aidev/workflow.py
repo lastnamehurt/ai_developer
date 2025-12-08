@@ -228,6 +228,9 @@ class WorkflowEngine:
 
         run_path = self._persist_run(workflow.name, manifest)
         console.print(f"[green]✓[/green] Workflow '{workflow.name}' prepared. Run manifest: {run_path}")
+        # For refactor_scout, emit a local draft ticket for V1 (no remote post)
+        if workflow.name == "refactor_scout":
+            self._persist_refactor_stub(ticket_file, ticket_text)
         return run_path
 
     # ------------------------------------------------------------------ #
@@ -256,3 +259,24 @@ class WorkflowEngine:
 
     def _env_default_assistant(self) -> Optional[str]:
         return shutil.os.environ.get("AIDEV_DEFAULT_ASSISTANT")
+
+    def _persist_refactor_stub(self, ticket_file: Optional[Path], ticket_text: str) -> None:
+        """Write a local ticket draft for refactor_scout workflow."""
+        ensure_dir(self.runs_dir())
+        ts = time.strftime("%Y%m%d-%H%M%S")
+        file_hint = str(ticket_file) if ticket_file else "N/A"
+        body = [
+            "# Refactor Opportunity",
+            f"- File: {file_hint}",
+            "- Status: draft (local only, V1)",
+            "",
+            "## Summary",
+            ticket_text[:2000] if ticket_text else "Describe the refactor opportunity here.",
+            "",
+            "## Next Steps",
+            "- Convert to issue/ticket when ready",
+            "- Validate tests/impact before posting",
+        ]
+        stub_path = self.runs_dir() / f"refactor_scout-{ts}-draft.md"
+        stub_path.write_text("\n".join(body))
+        console.print(f"[cyan]Refactor draft saved to[/cyan] {stub_path}")

@@ -25,3 +25,19 @@ workflows:
         profile: pair-programmer
         prompt: ticket_comment_summarizer
         uses_issue_mcp: true
+
+  refactor_scout:
+    description: "Inspect a file for refactoring opportunities and draft an issue/ticket summary."
+    input:
+      kind: text
+      allow_file: true
+    steps:
+      - name: analyze_refactor
+        profile: code-surgeon
+        prompt: refactor_analyzer
+      - name: plan_refactor
+        profile: pair-programmer
+        prompt: refactor_plan
+      - name: draft_ticket
+        profile: documentation-writer
+        prompt: refactor_ticket_writer
