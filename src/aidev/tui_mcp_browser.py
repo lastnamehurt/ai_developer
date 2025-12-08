@@ -6,6 +6,7 @@ from __future__ import annotations
 import asyncio
 from typing import Iterable, Optional
 
+from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Horizontal, Vertical
@@ -45,7 +46,7 @@ def filter_registry_entries(
 class MCPBrowserApp(App):
     """TUI for browsing, filtering, and installing MCP servers."""
 
-    CSS_PATH = None
+    CSS_PATH = "tui_mcp_browser.tcss"
     BINDINGS = [
         Binding("q", "quit", "Quit"),
         Binding("/", "focus_search", "Search"),
@@ -123,8 +124,15 @@ class MCPBrowserApp(App):
         table.clear()
         for entry in self.filtered:
             tags = ", ".join(entry.tags) if entry.tags else "-"
-            status = "installed" if entry.name in self.installed else ""
-            table.add_row(entry.name, entry.version, tags, status, key=entry.name)
+            icon = self._icon_for_entry(entry)
+            name_cell = f"{icon} {entry.name}"
+
+            if entry.name in self.installed:
+                status_cell = Text("✓ installed", style="mcp-installed")
+            else:
+                status_cell = Text("available", style="mcp-available")
+
+            table.add_row(name_cell, entry.version, tags, status_cell, key=entry.name)
 
         if table.row_count:
             table.cursor_coordinate = (0, 0)
@@ -148,17 +156,47 @@ class MCPBrowserApp(App):
         profiles = ", ".join(entry.compatible_profiles) if entry.compatible_profiles else "-"
         install_cmd = entry.install.get("command", "")
         repo = entry.repository or "-"
+
+        status_line = "✅ Installed" if entry.name in self.installed else "⬇️ Available to install"
+
         body = (
             f"### {entry.name}\n\n"
             f"{entry.description}\n\n"
-            f"- **Author:** {entry.author}\n"
-            f"- **Version:** {entry.version}\n"
-            f"- **Tags:** {tags}\n"
+            f"{status_line}\n\n"
+            f"- **Author:** `{entry.author}`\n"
+            f"- **Version:** `{entry.version}`\n"
+            f"- **Tags:** {tags or '-'}\n"
             f"- **Profiles:** {profiles or '-'}\n"
-            f"- **Repository:** {repo}\n"
-            f"- **Install:** `{install_cmd}`\n"
+            f"- **Repository:** {repo}\n\n"
         )
+
+        if install_cmd:
+            body += f"**Install command**\n\n```bash\n{install_cmd}\n```"
+
         self.query_one("#details", Markdown).update(body)
+
+    def _icon_for_entry(self, entry: MCPServerRegistry) -> str:
+        """Return a glyph based on common server names/tags."""
+        name = entry.name.lower()
+        tags = {t.lower() for t in entry.tags}
+
+        if "github" in name:
+            return ""
+        if "gitlab" in name:
+            return ""
+        if "git" in name:
+            return ""
+        if "k8s" in name or "kubernetes" in tags:
+            return "⎈"
+        if "s3" in name:
+            return "🪣"
+        if "memory" in name:
+            return "🧠"
+        if "search" in name:
+            return "🔍"
+        if "logs" in name:
+            return "📜"
+        return "✨"
 
     async def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         """Update details when selection changes."""

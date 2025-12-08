@@ -42,8 +42,8 @@ class MCPServerRegistry(BaseModel):
     """MCP Server registry entry"""
     name: str
     description: str
-    author: str
-    repository: str
+    author: str | None = ""
+    repository: str | None = ""
     version: str
     install: dict[str, str]
     configuration: dict[str, list[str]] = Field(default_factory=dict)
