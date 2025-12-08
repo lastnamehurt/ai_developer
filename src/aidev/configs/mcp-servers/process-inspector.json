@@ -1,0 +1,18 @@
+{
+  "name": "process-inspector",
+  "description": "Local process inspection for debugging hanging servers and resource issues",
+  "type": "stdio",
+  "command": "process-inspector-mcp-server",
+  "args": [],
+  "env": {},
+  "notes": {
+    "installation": "Install process-inspector-mcp-server",
+    "capabilities": [
+      "List running processes",
+      "Show open ports",
+      "Display resource usage",
+      "Capture stack dumps for Python/Node/Ruby"
+    ],
+    "scope": "Local only - safe for development"
+  }
+}

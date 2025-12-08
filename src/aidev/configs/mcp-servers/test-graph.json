@@ -1,0 +1,17 @@
+{
+  "name": "test-graph",
+  "description": "Test graph analysis for flaky test detection and coverage mapping",
+  "type": "stdio",
+  "command": "test-graph-mcp-server",
+  "args": [],
+  "env": {},
+  "notes": {
+    "installation": "Install test-graph-mcp-server",
+    "capabilities": [
+      "Link tests to code paths and dependencies",
+      "Detect redundant test suites",
+      "Identify missing coverage",
+      "Predict flakes via historical patterns"
+    ]
+  }
+}

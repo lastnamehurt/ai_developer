@@ -1,0 +1,17 @@
+{
+  "name": "symbol-index",
+  "description": "Project symbol index for functions, classes, methods with LSP-like capabilities",
+  "type": "stdio",
+  "command": "symbol-index-mcp-server",
+  "args": [],
+  "env": {},
+  "notes": {
+    "installation": "Install symbol-index-mcp-server",
+    "capabilities": [
+      "Expose all functions, classes, methods and their definitions",
+      "Provide reference counts",
+      "Support call hierarchy lookup",
+      "Enable global symbol search"
+    ]
+  }
+}

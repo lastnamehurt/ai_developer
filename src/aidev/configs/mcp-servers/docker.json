@@ -1,0 +1,17 @@
+{
+  "name": "docker",
+  "description": "Docker container and image analysis, Dockerfile optimization",
+  "type": "stdio",
+  "command": "docker-mcp-server",
+  "args": [],
+  "env": {},
+  "notes": {
+    "installation": "Install docker-mcp-server binary",
+    "capabilities": [
+      "Analyze Dockerfiles for inefficiencies",
+      "Detect layer bloat and caching issues",
+      "Identify security vulnerabilities",
+      "Optimize build steps"
+    ]
+  }
+}

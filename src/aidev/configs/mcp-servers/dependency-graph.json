@@ -1,0 +1,17 @@
+{
+  "name": "dependency-graph",
+  "description": "Repository dependency graph with cycle detection and dead code analysis",
+  "type": "stdio",
+  "command": "dependency-graph-mcp-server",
+  "args": [],
+  "env": {},
+  "notes": {
+    "installation": "Install dependency-graph-mcp-server",
+    "capabilities": [
+      "Build class/module dependency graph",
+      "Generate file-level import graph",
+      "Detect circular dependencies",
+      "Identify dead code"
+    ]
+  }
+}
