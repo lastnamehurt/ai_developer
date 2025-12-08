@@ -38,13 +38,5 @@
     "ANDROID_HOME": "${HOME}/Library/Android/sdk",
     "JAVA_HOME": "${JAVA_HOME}",
     "EXPO_TOKEN": "${EXPO_TOKEN}"
-  },
-  "tools": {
-    "cursor": {
-      "enabled": true
-    },
-    "zed": {
-      "enabled": true
-    }
   }
 }

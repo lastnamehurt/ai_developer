@@ -48,13 +48,5 @@
     "GITLAB_API_URL": "${GITLAB_API_URL}",
     "KUBECONFIG": "${KUBECONFIG}",
     "MEMORY_BANK_ROOT": "${HOME}/.aidev/memory-banks/work"
-  },
-  "tools": {
-    "cursor": {
-      "enabled": true
-    },
-    "claude": {
-      "enabled": true
-    }
   }
 }

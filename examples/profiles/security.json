@@ -23,10 +23,5 @@
   "environment": {
     "AIDEV_SANDBOX": "true",
     "ALLOW_NETWORK": "false"
-  },
-  "tools": {
-    "cursor": {
-      "enabled": true
-    }
   }
 }

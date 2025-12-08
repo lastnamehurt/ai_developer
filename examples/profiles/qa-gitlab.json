@@ -48,10 +48,5 @@
     "USE_MILESTONE": "true",
     "USE_PIPELINE": "true",
     "MEMORY_BANK_ROOT": "${HOME}/.aidev/memory-banks/qa"
-  },
-  "tools": {
-    "cursor": {
-      "enabled": true
-    }
   }
 }

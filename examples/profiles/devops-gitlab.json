@@ -53,10 +53,5 @@
     "USE_MILESTONE": "true",
     "USE_PIPELINE": "true",
     "KUBECONFIG": "${KUBECONFIG}"
-  },
-  "tools": {
-    "cursor": {
-      "enabled": true
-    }
   }
 }

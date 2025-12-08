@@ -260,6 +260,29 @@ else
     echo -e "${YELLOW}!${NC} Go not found; skipping git-mcp-go install"
 fi
 
+# Install Ollama
+echo
+echo -e "${CYAN}Installing Ollama...${NC}"
+if command -v ollama &> /dev/null; then
+    echo -e "${GREEN}✓${NC} Ollama is already installed."
+elif command -v brew &> /dev/null; then
+    if brew install ollama; then
+        echo -e "${GREEN}✓${NC} Ollama installed successfully via Homebrew."
+    else
+        echo -e "${RED}Error: Failed to install Ollama via Homebrew.${NC}"
+    fi
+elif command -v curl &> /dev/null; then
+    echo -e "${CYAN}Attempting to install Ollama via install script...${NC}"
+    if curl -fsSL https://ollama.com/install.sh | sh; then
+        echo -e "${GREEN}✓${NC} Ollama installed successfully."
+    else
+        echo -e "${RED}Error: Failed to install Ollama via install script.${NC}"
+    fi
+else
+    echo -e "${YELLOW}! Neither Homebrew nor curl found; skipping Ollama install.${NC}"
+    echo -e "${YELLOW}  Please install Ollama manually from https://ollama.com${NC}"
+fi
+
 # Summary
 echo
 echo -e "${GREEN}========================================${NC}"

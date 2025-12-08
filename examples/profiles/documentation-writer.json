@@ -45,13 +45,5 @@
   ],
   "environment": {
     "GITHUB_TOKEN": "${GITHUB_TOKEN}"
-  },
-  "tools": {
-    "cursor": {
-      "enabled": true
-    },
-    "zed": {
-      "enabled": true
-    }
   }
 }

@@ -53,13 +53,5 @@
     "AWS_SECRET_ACCESS_KEY": "${AWS_SECRET_ACCESS_KEY}",
     "MLFLOW_TRACKING_URI": "${MLFLOW_TRACKING_URI}",
     "CUDA_VISIBLE_DEVICES": "0"
-  },
-  "tools": {
-    "cursor": {
-      "enabled": true,
-      "settings": {
-        "pythonPath": "~/.pyenv/versions/ml/bin/python"
-      }
-    }
   }
 }
