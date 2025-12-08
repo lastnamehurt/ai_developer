@@ -368,34 +368,22 @@ class WorkflowEngine:
         prompt_text = step.get("prompt_text", "")
         input_preview = step.get("input", {}).get("ticket_text_preview", "")
         timeout_sec = int(step.get("tool_timeout_sec", 30))
+        merged = f"{prompt_text}\n\nINPUT:\n{input_preview}"
 
-        cmd = self._assistant_command(assistant, prompt_text, input_preview)
+        cmd = self._assistant_command(assistant, prompt_text, input_preview, merged)
         if not cmd:
             raise RuntimeError(f"No runner available for assistant '{assistant}'")
 
         try:
             proc = subprocess.run(
                 cmd,
-                input=input_preview,
+                input=merged,
                 text=True,
                 capture_output=True,
                 timeout=timeout_sec,
             )
             if proc.returncode != 0:
-                # Fallback to echo to avoid hard failure when assistant CLI rejects flags
-                echo_proc = subprocess.run(
-                    ["echo", f"[assistant {assistant} failed rc={proc.returncode}] {merged}"],
-                    text=True,
-                    capture_output=True,
-                    timeout=timeout_sec,
-                )
-                return {
-                    "assistant": f"{assistant} (fallback echo)",
-                    "returncode": proc.returncode,
-                    "stdout": echo_proc.stdout,
-                    "stderr": proc.stderr,
-                    "prompt_used": prompt_text[:2000],
-                }
+                raise RuntimeError(f"{' '.join(cmd)} -> rc={proc.returncode}, stderr={proc.stderr[:200]}")
             return {
                 "assistant": assistant,
                 "returncode": proc.returncode,
@@ -406,29 +394,29 @@ class WorkflowEngine:
         except subprocess.TimeoutExpired as exc:
             raise RuntimeError(f"Timeout after {timeout_sec}s: {exc}")
 
-    def _assistant_command(self, assistant: str, prompt_text: str, input_preview: str) -> Optional[list[str]]:
+    def _assistant_command(self, assistant: str, prompt_text: str, input_preview: str, merged: str) -> Optional[list[str]]:
         """
-        Map assistant id to a CLI command. Minimal, best-effort:
-        - claude: `claude chat --message <prompt+input>`
-        - codex: `codex chat --message <prompt+input>`
-        - gemini: `gemini prompt --text <prompt+input>`
-        - cursor: fallback to `echo` (no direct CLI)
-        - ollama: `ollama run <model>` with prompt text
+        Map assistant id to a CLI command using prompt flags (no chat subcommand):
+        - claude: claude --system-prompt <prompt> --prompt <input>
+        - codex:  codex --prompt <merged>
+        - gemini: gemini --prompt <merged>
+        - ollama: ollama run llama3.1 --prompt <merged>
+        - cursor: unsupported (returns None)
         """
-        merged = f"{prompt_text}\n\nINPUT:\n{input_preview}"
         def _cmd(bin_name: str, args: list[str]) -> Optional[list[str]]:
             return [bin_name, *args] if shutil.which(bin_name) else None
 
         if assistant == "claude":
-            return _cmd("claude", ["chat", "--message", merged])
+            # Claude: set system prompt flag, send user content via stdin
+            return _cmd("claude", ["--system-prompt", prompt_text])
         if assistant == "codex":
-            return _cmd("codex", ["chat", "--message", merged])
+            # Codex: positional prompt
+            return _cmd("codex", [merged])
         if assistant == "gemini":
-            return _cmd("gemini", ["prompt", "--text", merged])
+            # Gemini: positional prompt (headless)
+            return _cmd("gemini", [merged])
         if assistant == "ollama":
-            return _cmd("ollama", ["run", "llama3.1", merged])
+            return _cmd("ollama", ["run", "llama3.1", "--prompt", merged])
         if assistant == "cursor":
-            return ["echo", merged]
-
-        # If assistant binary is unavailable, fallback to echo to avoid hard failure
-        return ["echo", f"[assistant '{assistant}' unavailable] {merged}"]
+            return None
+        return None
