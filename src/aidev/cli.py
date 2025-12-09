@@ -183,9 +183,8 @@ def _launch_tool_with_profile(tool_id: str, profile: str, args: tuple) -> None:
     if tool_id == "cursor" and not args:
         tool_args = ["."]
 
-    # For Claude Code, pass the MCP config file via --mcp-config flag
-    if tool_id == "claude":
-        tool_args = ["--mcp-config", str(tool_config_path)] + tool_args
+    # Claude Code reads MCP config from ~/.claude.json automatically
+    # No need to pass --mcp-config flag; just ensure config is written there
 
     # Load environment variables to pass to the tool
     tool_env = config_manager.get_env()
