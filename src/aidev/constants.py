@@ -38,6 +38,7 @@ with pkg_resources.path('aidev.configs', 'workflows.yaml') as p:
 # Files
 ENV_FILE: Final[Path] = AIDEV_DIR / ".env"
 TOOLS_CONFIG: Final[Path] = CONFIG_DIR / "tools.json"
+ACTIVE_PROFILE_FILE: Final[Path] = AIDEV_DIR / ".active-profile"
 
 # Project-specific
 PROJECT_CONFIG_DIR: Final[str] = ".aidev"

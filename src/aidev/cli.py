@@ -17,6 +17,7 @@ from aidev.tools import ToolManager
 from aidev.profiles import ProfileManager
 from aidev.mcp import MCPManager
 from aidev.mcp_config_generator import MCPConfigGenerator
+from aidev.constants import ACTIVE_PROFILE_FILE
 from aidev.quickstart import QuickstartRunner
 from aidev.backup import BackupManager
 from aidev.tutorial import Tutorial
@@ -147,21 +148,31 @@ def _launch_tool_with_profile(tool_id: str, profile: str, args: tuple) -> None:
 
     Args:
         tool_id: Tool identifier (cursor, claude, zed)
-        profile: Profile name to use (or None for default)
+        profile: Profile name to use (or None to use active profile)
         args: Additional arguments to pass to the tool
     """
     # Determine profile to use
     profile_name = profile
     if not profile_name:
-        # Check for project-specific profile
-        project_config_dir = config_manager.get_project_config_path()
-        if project_config_dir:
-            profile_file = project_config_dir / "profile"
-            if profile_file.exists():
-                profile_name = profile_file.read_text().strip()
+        # Check for active profile (globally set by user)
+        if ACTIVE_PROFILE_FILE.exists():
+            profile_name = ACTIVE_PROFILE_FILE.read_text().strip()
 
+        # Fall back to project-specific profile
+        if not profile_name:
+            project_config_dir = config_manager.get_project_config_path()
+            if project_config_dir:
+                profile_file = project_config_dir / "profile"
+                if profile_file.exists():
+                    profile_name = profile_file.read_text().strip()
+
+        # Fall back to default profile
         if not profile_name:
             profile_name = "default"
+    else:
+        # User specified a profile, save it as active
+        ACTIVE_PROFILE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        ACTIVE_PROFILE_FILE.write_text(profile_name)
 
     console.print(f"[cyan]Using profile: {profile_name}[/cyan]")
 
@@ -175,6 +186,21 @@ def _launch_tool_with_profile(tool_id: str, profile: str, args: tuple) -> None:
     tool_config_path = tool_manager.get_tool_config_path(tool_id)
     mcp_config_generator.generate_config(tool_id, loaded_profile, tool_config_path)
 
+    # For Claude, create a symlink from .mcp.json to ~/.claude.json in the current directory
+    # This ensures Claude Code finds the profile-specific config as a project-level override
+    if tool_id == "claude":
+        local_mcp_link = Path(".mcp.json")
+        global_mcp_path = Path.home() / ".claude.json"
+        try:
+            # Remove existing symlink or file if it exists
+            if local_mcp_link.exists() or local_mcp_link.is_symlink():
+                local_mcp_link.unlink()
+            # Create symlink to global config
+            local_mcp_link.symlink_to(global_mcp_path)
+            console.print(f"[dim]Created .mcp.json symlink → {global_mcp_path}[/dim]")
+        except Exception as e:
+            console.print(f"[yellow]Warning: Could not create .mcp.json symlink: {e}[/yellow]")
+
     # Build arguments
     tool_args = list(args) if args else []
 
@@ -183,8 +209,8 @@ def _launch_tool_with_profile(tool_id: str, profile: str, args: tuple) -> None:
     if tool_id == "cursor" and not args:
         tool_args = ["."]
 
-    # Claude Code reads MCP config from ~/.claude.json automatically
-    # No need to pass --mcp-config flag; just ensure config is written there
+    # Claude Code reads MCP config from .mcp.json (symlink) or ~/.claude.json
+    # The symlink ensures the project sees the global profile-specific config
 
     # Load environment variables to pass to the tool
     tool_env = config_manager.get_env()
