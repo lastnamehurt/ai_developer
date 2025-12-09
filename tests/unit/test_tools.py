@@ -127,11 +127,16 @@ def test_launch_tool_not_installed(tool_manager, mock_supported_tools):
 
 def test_launch_tool_gui_app(tool_manager, mock_supported_tools):
     """Test launching a GUI tool (non-interactive)"""
-    with patch("aidev.tools.find_binary", return_value=Path("/usr/bin/cursor-agent")):
-        with patch.object(tool_manager, "_get_version", return_value=None):
-            with patch("subprocess.Popen") as mock_popen:
-                with patch("aidev.tools.console"):
-                    tool_manager.launch_tool("cursor", args=[".", "--flag"])
+    with patch.object(tool_manager, 'detect_tool') as mock_detect:
+        mock_detect.return_value = ToolInfo(
+            name="Cursor",
+            binary="cursor-agent",
+            installed=True,
+            gui_app=True,
+        )
+        with patch("subprocess.Popen") as mock_popen:
+            with patch("aidev.tools.console"):
+                tool_manager.launch_tool("cursor", args=[".", "--flag"])
 
     mock_popen.assert_called_once()
     args, kwargs = mock_popen.call_args
@@ -152,11 +157,18 @@ def test_launch_tool_interactive_cli(tool_manager, mock_supported_tools):
 
 def test_launch_tool_with_env(tool_manager, mock_supported_tools):
     """Test launching tool with custom environment"""
-    with patch("aidev.tools.find_binary", return_value=Path("/usr/bin/cursor-agent")):
+    with patch.object(tool_manager, 'detect_tool') as mock_detect:
+        mock_detect.return_value = ToolInfo(
+            name="Cursor",
+            binary="cursor-agent",
+            installed=True,
+            gui_app=True,
+        )
         with patch("subprocess.Popen") as mock_popen:
             with patch("aidev.tools.console"):
                 tool_manager.launch_tool("cursor", env={"CUSTOM_VAR": "value"})
 
+    mock_popen.assert_called_once()
     args, kwargs = mock_popen.call_args
     assert "CUSTOM_VAR" in kwargs["env"]
     assert kwargs["env"]["CUSTOM_VAR"] == "value"
@@ -164,11 +176,16 @@ def test_launch_tool_with_env(tool_manager, mock_supported_tools):
 
 def test_launch_tool_wait(tool_manager, mock_supported_tools):
     """Test launching tool with wait flag"""
-    with patch("aidev.tools.find_binary", return_value=Path("/usr/bin/cursor-agent")):
-        with patch.object(tool_manager, "_get_version", return_value=None):
-            with patch("subprocess.run") as mock_run:
-                with patch("aidev.tools.console"):
-                    tool_manager.launch_tool("cursor", wait=True)
+    with patch.object(tool_manager, 'detect_tool') as mock_detect:
+        mock_detect.return_value = ToolInfo(
+            name="Cursor",
+            binary="cursor-agent",
+            installed=True,
+            gui_app=True,
+        )
+        with patch("subprocess.run") as mock_run:
+            with patch("aidev.tools.console"):
+                tool_manager.launch_tool("cursor", wait=True)
 
     mock_run.assert_called_once()
 

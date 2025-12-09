@@ -213,9 +213,7 @@ class WorkflowStep:
     """Represents a single workflow step."""
 
     name: str
-    profile: str
     prompt: str
-    uses_issue_mcp: bool = False
     tool: Optional[str] = None
     timeout_sec: int = 30
     retries: int = 0
@@ -227,8 +225,6 @@ class WorkflowSpec:
 
     name: str
     description: str
-    input_kind: str = "text"
-    allow_file: bool = False
     steps: list[WorkflowStep] = field(default_factory=list)
     tool_default: Optional[str] = None
 
@@ -303,6 +299,81 @@ def detect_ticket_source(ticket_arg: Optional[str], file_arg: Optional[Path]) ->
             return "github"
         return "raw"
     return "raw"
+
+
+def detect_issue_context(text: Optional[str]) -> dict[str, Any]:
+    """
+    Detect if text contains Jira, GitHub, or GitLab issue/MR references.
+
+    Returns dict with:
+        - is_issue: bool
+        - issue_type: "jira" | "github" | "gitlab" | None
+        - issue_id: str | None
+        - detected_pattern: str | None
+    """
+    if not text:
+        return {"is_issue": False, "issue_type": None, "issue_id": None, "detected_pattern": None}
+
+    # Jira URL pattern
+    if "atlassian.net" in text:
+        return {
+            "is_issue": True,
+            "issue_type": "jira",
+            "issue_id": None,
+            "detected_pattern": "atlassian_url"
+        }
+
+    # Jira pattern: ABC-123
+    jira_match = re.search(r'([A-Z]+-\d+)', text)
+    if jira_match:
+        return {
+            "is_issue": True,
+            "issue_type": "jira",
+            "issue_id": jira_match.group(1),
+            "detected_pattern": "jira_key"
+        }
+
+    # GitHub URL pattern (issues or PRs)
+    github_match = re.search(r'github\.com/([^/]+)/([^/]+)/(issues|pull)/(\d+)', text)
+    if github_match:
+        return {
+            "is_issue": True,
+            "issue_type": "github",
+            "issue_id": f"{github_match.group(1)}/{github_match.group(2)}#{github_match.group(4)}",
+            "detected_pattern": "github_url"
+        }
+
+    # GitHub shorthand: owner/repo#123
+    shorthand_match = re.match(r'([^/]+)/([^#]+)#(\d+)', text)
+    if shorthand_match:
+        return {
+            "is_issue": True,
+            "issue_type": "github",
+            "issue_id": text,
+            "detected_pattern": "github_shorthand"
+        }
+
+    # GitLab URL pattern (issues or MRs)
+    gitlab_match = re.search(r'gitlab(\.com|\.[^/]+)/([^/]+)/([^/]+)/-/(?:issues|merge_requests)/(\d+)', text)
+    if gitlab_match:
+        return {
+            "is_issue": True,
+            "issue_type": "gitlab",
+            "issue_id": f"{gitlab_match.group(2)}/{gitlab_match.group(3)}!{gitlab_match.group(4)}",
+            "detected_pattern": "gitlab_url"
+        }
+
+    # GitLab shorthand: owner/repo!123 (MR) or owner/repo#123 (issue)
+    gitlab_shorthand = re.match(r'([^/]+)/([^!#]+)[!#](\d+)', text)
+    if gitlab_shorthand and '!' in text:
+        return {
+            "is_issue": True,
+            "issue_type": "gitlab",
+            "issue_id": text,
+            "detected_pattern": "gitlab_shorthand"
+        }
+
+    return {"is_issue": False, "issue_type": None, "issue_id": None, "detected_pattern": None}
 
 
 class WorkflowEngine:
@@ -426,6 +497,8 @@ class WorkflowEngine:
         user_text = user_prompt or ticket_text
         steps_output: list[dict[str, Any]] = []
 
+        issue_context = detect_issue_context(user_text)
+
         step_iter = workflow.steps
         if from_step:
             filtered = []
@@ -450,17 +523,16 @@ class WorkflowEngine:
             steps_output.append(
                 {
                     "name": step.name,
-                    "profile": step.profile,
                     "prompt_id": step.prompt,
                     "prompt_text": prompt_text,
                     "assistant": assistant,
-                    "uses_issue_mcp": step.uses_issue_mcp,
                     "tool_timeout_sec": step.timeout_sec,
                     "retries": step.retries,
                     "input": {
                         "ticket_source": ticket_source,
                         "ticket_text_preview": ticket_text[:4000] if ticket_text else "",
                         "user_prompt": (user_text or "")[:4000],
+                        "issue_context": issue_context,
                     },
                     "output": {
                         "status": "not-run",
