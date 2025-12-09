@@ -187,8 +187,11 @@ def _launch_tool_with_profile(tool_id: str, profile: str, args: tuple) -> None:
     if tool_id == "claude":
         tool_args = ["--mcp-config", str(tool_config_path)] + tool_args
 
+    # Load environment variables to pass to the tool
+    tool_env = config_manager.get_env()
+
     # Launch tool (it will run in the current working directory)
-    tool_manager.launch_tool(tool_id, args=tool_args if tool_args else None)
+    tool_manager.launch_tool(tool_id, args=tool_args if tool_args else None, env=tool_env)
 
 
 @click.group()
