@@ -1,330 +1,217 @@
+#file: noinspection YAMLSchemaValidation
 workflows:
   implement_ticket:
     description: "Given a ticket or file, produce understanding, impact, plan, diffs, tests, and a ticket-ready summary."
-    input:
-      kind: ticket
-      allow_file: true
     steps:
       - name: understand_ticket
-        profile: onboarding
         prompt: ticket_understander
-        uses_issue_mcp: true
       - name: discover_impact
-        profile: code-surgeon
         prompt: impact_analyzer
       - name: plan_implementation
-        profile: pair-programmer
         prompt: implementation_planner
       - name: draft_changes
-        profile: code-surgeon
         prompt: code_diff_generator
       - name: tests_and_validation
-        profile: testing-guru
         prompt: test_author
       - name: summarize_for_ticket
-        profile: pair-programmer
         prompt: ticket_comment_summarizer
-        uses_issue_mcp: true
 
   refactor_scout:
     description: "Inspect a file for refactoring opportunities and draft an issue/ticket summary."
-    input:
-      kind: text
-      allow_file: true
     steps:
       - name: analyze_refactor
-        profile: code-surgeon
         prompt: refactor_analyzer
       - name: plan_refactor
-        profile: pair-programmer
         prompt: refactor_plan
       - name: draft_ticket
-        profile: documentation-writer
         prompt: refactor_ticket_writer
 
   bug_triage:
     description: "Given a bug ticket/logs, triage, find impact, draft repro plan, and suggest a fix sketch plus ticket comment."
-    input:
-      kind: ticket
-      allow_file: true
     steps:
       - name: parse_bug
-        profile: onboarding
         prompt: bug_parser
-        uses_issue_mcp: true
       - name: assess_impact
-        profile: code-surgeon
         prompt: impact_analyzer
       - name: plan_repro
-        profile: testing-guru
         prompt: repro_planner
       - name: sketch_fix
-        profile: pair-programmer
         prompt: fix_sketcher
       - name: ticket_update
-        profile: documentation-writer
         prompt: bug_ticket_writer
-        uses_issue_mcp: true
 
   test_hardener:
     description: "Analyze test gaps for a file/path or failing output, propose tests, and draft a ticket note."
-    input:
-      kind: text
-      allow_file: true
     steps:
       - name: analyze_gaps
-        profile: testing-guru
         prompt: test_gap_analyzer
       - name: propose_tests
-        profile: testing-guru
         prompt: test_author
       - name: draft_ticket
-        profile: documentation-writer
         prompt: test_ticket_writer
 
   doc_improver:
     description: "Review a doc file and propose quality improvements plus a ticket/PR note."
-    input:
-      kind: text
-      allow_file: true
     steps:
       - name: analyze_doc
-        profile: documentation-writer
         prompt: doc_analyzer
       - name: outline_fix
-        profile: pair-programmer
         prompt: doc_outline_planner
       - name: draft_ticket
-        profile: documentation-writer
         prompt: doc_ticket_writer
 
   # Developer Experience Engineer Workflows
   onboarding_guide:
     description: "Create a comprehensive onboarding guide for new developers. Input can be a ticket describing onboarding needs, existing docs, or a project path."
-    input:
-      kind: text
-      allow_file: true
     steps:
       - name: understand_requirements
-        profile: onboarding
         prompt: ticket_understander
-        uses_issue_mcp: true
       - name: analyze_existing_docs
-        profile: documentation-writer
         prompt: doc_analyzer
       - name: plan_onboarding_structure
-        profile: pair-programmer
         prompt: doc_outline_planner
       - name: draft_onboarding_guide
-        profile: documentation-writer
         prompt: doc_ticket_writer
 
   error_message_improver:
     description: "Analyze error messages and developer-facing feedback to improve clarity, actionability, and developer experience."
-    input:
-      kind: text
-      allow_file: true
     steps:
       - name: analyze_error_messages
-        profile: code-surgeon
         prompt: impact_analyzer
       - name: plan_improvements
-        profile: pair-programmer
         prompt: implementation_planner
       - name: draft_improved_messages
-        profile: documentation-writer
         prompt: doc_ticket_writer
 
   migration_guide:
     description: "Create a migration guide for breaking changes, API updates, or major version upgrades. Input can be a ticket, changelog, or diff."
-    input:
-      kind: ticket
-      allow_file: true
     steps:
       - name: understand_changes
-        profile: onboarding
         prompt: ticket_understander
-        uses_issue_mcp: true
       - name: assess_impact
-        profile: code-surgeon
         prompt: impact_analyzer
       - name: plan_migration_steps
-        profile: pair-programmer
         prompt: implementation_planner
       - name: draft_migration_guide
-        profile: documentation-writer
         prompt: doc_ticket_writer
 
   api_doc_improver:
     description: "Improve API documentation by analyzing code, existing docs, and developer feedback. Focus on clarity, examples, and completeness."
-    input:
-      kind: text
-      allow_file: true
     steps:
       - name: analyze_api_docs
-        profile: documentation-writer
         prompt: doc_analyzer
       - name: assess_api_code
-        profile: code-surgeon
         prompt: impact_analyzer
       - name: plan_doc_improvements
-        profile: pair-programmer
         prompt: doc_outline_planner
       - name: draft_improved_docs
-        profile: documentation-writer
         prompt: doc_ticket_writer
 
   developer_feedback_analyzer:
     description: "Analyze developer feedback, surveys, or support tickets to identify common pain points and improvement opportunities."
-    input:
-      kind: ticket
-      allow_file: true
     steps:
       - name: parse_feedback
-        profile: onboarding
         prompt: bug_parser
-        uses_issue_mcp: true
       - name: identify_patterns
-        profile: code-surgeon
         prompt: impact_analyzer
       - name: prioritize_improvements
-        profile: pair-programmer
         prompt: implementation_planner
       - name: draft_improvement_plan
-        profile: documentation-writer
         prompt: doc_ticket_writer
 
   troubleshooting_guide:
     description: "Create a troubleshooting guide from bug reports, error logs, or support tickets. Helps developers self-serve common issues."
-    input:
-      kind: ticket
-      allow_file: true
     steps:
       - name: parse_issues
-        profile: onboarding
         prompt: bug_parser
-        uses_issue_mcp: true
       - name: categorize_problems
-        profile: code-surgeon
         prompt: impact_analyzer
       - name: plan_troubleshooting_steps
-        profile: testing-guru
         prompt: repro_planner
       - name: draft_troubleshooting_guide
-        profile: documentation-writer
         prompt: doc_ticket_writer
 
   quickstart_creator:
     description: "Create a quickstart or getting started guide for developers. Analyzes project structure and creates step-by-step setup instructions."
-    input:
-      kind: text
-      allow_file: true
     steps:
       - name: understand_project_structure
-        profile: onboarding
         prompt: ticket_understander
       - name: identify_setup_requirements
-        profile: code-surgeon
         prompt: impact_analyzer
       - name: plan_quickstart_steps
-        profile: pair-programmer
         prompt: doc_outline_planner
       - name: draft_quickstart_guide
-        profile: documentation-writer
         prompt: doc_ticket_writer
 
   ci_cd_dx_improver:
     description: "Improve CI/CD developer experience by analyzing pipeline failures, developer feedback, and proposing clearer error messages and faster feedback loops."
-    input:
-      kind: text
-      allow_file: true
     steps:
       - name: analyze_ci_issues
-        profile: devops
         prompt: bug_parser
       - name: assess_developer_impact
-        profile: code-surgeon
         prompt: impact_analyzer
       - name: plan_dx_improvements
-        profile: pair-programmer
         prompt: implementation_planner
       - name: draft_improvement_proposal
-        profile: documentation-writer
         prompt: doc_ticket_writer
-
+  
   sync_branch:
     description: "Rebase a branch onto a target branch (defaults to main/master), resolve merge conflicts, and force push. Input format: 'source-branch' or 'source-branch target-branch' (defaults to current branch if source not provided)."
-    input:
-      kind: text
-      allow_file: false
     steps:
       - name: detect_branches
-        profile: pair-programmer
         prompt: git_rebase_resolver
       - name: fetch_and_rebase
-        profile: pair-programmer
         prompt: git_rebase_resolver
       - name: resolve_conflicts
-        profile: code-surgeon
         prompt: git_rebase_resolver
       - name: force_push
-        profile: pair-programmer
         prompt: git_rebase_resolver
 
   implement_with_aider:
     description: "Use Aider to implement code changes from a ticket, feature request, or task description. Supports both local (Ollama) and cloud (Claude) models."
-    input:
-      kind: text
-      allow_file: true
     steps:
       - name: understand_requirements
-        profile: pair-programmer
         prompt: ticket_understander
       - name: plan_implementation
-        profile: pair-programmer
         prompt: implementation_planner
       - name: implement_with_aider
-        profile: aider
         prompt: aider_implementer
       - name: verify_changes
-        profile: pair-programmer
         prompt: test_author
 
   quick_refactor:
     description: "Quick refactoring task using Aider with local Ollama model. Perfect for proprietary code or cost-sensitive refactoring."
-    input:
-      kind: text
-      allow_file: true
     steps:
       - name: analyze_code
-        profile: code-surgeon
         prompt: refactor_analyzer
       - name: refactor_with_aider
-        profile: aider
         prompt: aider_implementer
 
   # Code Review & Feedback Workflows
   address_pr_feedback:
     description: "Address Merge Request or Pull Request feedback comprehensively. Supports GitHub and GitLab. Analyzes review comments, implements changes, verifies solutions, and prepares for re-review."
-    input:
-      kind: ticket
-      allow_file: false
     steps:
       - name: fetch_and_categorize_feedback
-        profile: code-surgeon
         prompt: pr_feedback_extractor
       - name: plan_response_strategy
-        profile: pair-programmer
         prompt: pr_feedback_planner
       - name: implement_changes
-        profile: code-surgeon
         prompt: code_diff_generator
       - name: verify_feedback_addressed
-        profile: testing-guru
         prompt: pr_verification_checker
       - name: draft_response_comments
-        profile: documentation-writer
         prompt: pr_response_writer
       - name: prepare_for_review
-        profile: pair-programmer
         prompt: pr_review_prep
+
+  code_reviewer:
+    description: "Review a pull request, analyze code changes, suggest improvements, and draft review comments."
+    steps:
+      - name: understand_pr
+        prompt: pr_understander
+      - name: analyze_code_changes
+        prompt: code_change_analyzer
+      - name: suggest_improvements
+        prompt: improvement_suggester
+      - name: draft_review_comments
+        prompt: review_comment_drafter

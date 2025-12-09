@@ -314,15 +314,6 @@ def detect_issue_context(text: Optional[str]) -> dict[str, Any]:
     if not text:
         return {"is_issue": False, "issue_type": None, "issue_id": None, "detected_pattern": None}
 
-    # Jira URL pattern
-    if "atlassian.net" in text:
-        return {
-            "is_issue": True,
-            "issue_type": "jira",
-            "issue_id": None,
-            "detected_pattern": "atlassian_url"
-        }
-
     # Jira pattern: ABC-123
     jira_match = re.search(r'([A-Z]+-\d+)', text)
     if jira_match:
@@ -331,6 +322,15 @@ def detect_issue_context(text: Optional[str]) -> dict[str, Any]:
             "issue_type": "jira",
             "issue_id": jira_match.group(1),
             "detected_pattern": "jira_key"
+        }
+
+    # Jira URL pattern
+    if "atlassian.net" in text:
+        return {
+            "is_issue": True,
+            "issue_type": "jira",
+            "issue_id": None,
+            "detected_pattern": "atlassian_url"
         }
 
     # GitHub URL pattern (issues or PRs)
@@ -354,13 +354,23 @@ def detect_issue_context(text: Optional[str]) -> dict[str, Any]:
         }
 
     # GitLab URL pattern (issues or MRs)
-    gitlab_match = re.search(r'gitlab(\.com|\.[^/]+)/([^/]+)/([^/]+)/-/(?:issues|merge_requests)/(\d+)', text)
+    gitlab_match = re.search(r'gitlab\.com/([^/]+)/([^/]+)/-(issues|merge_requests)/(\d+)', text)
     if gitlab_match:
         return {
             "is_issue": True,
             "issue_type": "gitlab",
-            "issue_id": f"{gitlab_match.group(2)}/{gitlab_match.group(3)}!{gitlab_match.group(4)}",
+            "issue_id": f"{gitlab_match.group(1)}/{gitlab_match.group(2)}!{gitlab_match.group(4)}",
             "detected_pattern": "gitlab_url"
+        }
+
+    # GitLab self-hosted pattern
+    gitlab_self_hosted = re.search(r'gitlab\.[^/]+/([^/]+)/([^/]+)/-(issues|merge_requests)/(\d+)', text)
+    if gitlab_self_hosted:
+        return {
+            "is_issue": True,
+            "issue_type": "gitlab",
+            "issue_id": f"{gitlab_self_hosted.group(1)}/{gitlab_self_hosted.group(2)}!{gitlab_self_hosted.group(4)}",
+            "detected_pattern": "gitlab_self_hosted_url"
         }
 
     # GitLab shorthand: owner/repo!123 (MR) or owner/repo#123 (issue)
@@ -447,14 +457,12 @@ class WorkflowEngine:
             try:
                 steps = []
                 for s in spec.get("steps", []):
-                    if not s.get("name") or not s.get("profile") or not s.get("prompt"):
-                        raise ValueError("step missing name/profile/prompt")
+                    if not s.get("name") or not s.get("prompt"):
+                        raise ValueError("step missing name/prompt")
                     steps.append(
                         WorkflowStep(
                             name=s.get("name"),
-                            profile=s.get("profile"),
                             prompt=s.get("prompt"),
-                            uses_issue_mcp=bool(s.get("uses_issue_mcp", False)),
                             tool=s.get("tool"),
                             timeout_sec=int(s.get("timeout_sec", 30)),
                             retries=int(s.get("retries", 0)),
@@ -464,8 +472,6 @@ class WorkflowEngine:
                 workflows[name] = WorkflowSpec(
                     name=name,
                     description=spec.get("description", ""),
-                    input_kind=spec.get("input", {}).get("kind", "text"),
-                    allow_file=bool(spec.get("input", {}).get("allow_file", False)),
                     tool_default=spec.get("tool"),
                     steps=steps,
                 )

@@ -46,42 +46,77 @@ Workflows are defined in `.aidev/workflows.yaml`:
 workflows:
   doc_improver:
     description: "Improve documentation quality"
-    input:
-      kind: text          # text, jira, github, file
-      allow_file: true    # Allow file input
     tool: claude          # Default assistant (optional)
     steps:
       - name: "Analyze content"
-        profile: default
         prompt: analyze_docs    # References src/aidev/prompts/analyze_docs.txt
         timeout_sec: 60
         retries: 1
 
       - name: "Generate improvements"
-        profile: default
         prompt: improve_docs
         tool: gemini        # Override default assistant
-        uses_issue_mcp: false
 ```
 
 ### Workflow Fields
 
 - **name**: Unique workflow identifier
 - **description**: Human-readable description
-- **input.kind**: Input type (`text`, `jira`, `github`, `file`, `raw`)
-- **input.allow_file**: Whether to accept file inputs
 - **tool**: Default assistant for all steps (optional)
 - **steps**: Array of workflow steps
 
 ### Step Fields
 
 - **name**: Step name (for logging and resume)
-- **profile**: Profile to use for this step
 - **prompt**: Prompt file ID (from `src/aidev/prompts/`)
 - **tool**: Assistant override for this step (optional)
 - **timeout_sec**: Execution timeout (default: 30)
 - **retries**: Number of retry attempts (default: 0)
-- **uses_issue_mcp**: Whether step needs issue MCP integration
+
+## Schema v2 Migration Guide
+
+### What Changed
+
+Schema v2 removes configuration complexity and moves intelligence to the engine:
+- Removed: `input.kind`, `input.allow_file`
+- Removed: `step.profile`
+- Removed: `step.uses_issue_mcp`
+
+### Migration Steps
+
+1. Remove the `input` section from your workflow
+2. Remove `profile` field from all steps
+3. Remove `uses_issue_mcp` field from steps that have it
+
+**Before:**
+```yaml
+workflows:
+  my_workflow:
+    description: "..."
+    input:
+      kind: ticket
+      allow_file: true
+    steps:
+      - name: step1
+        profile: default
+        prompt: my_prompt
+        uses_issue_mcp: true
+```
+
+**After:**
+```yaml
+workflows:
+  my_workflow:
+    description: "..."
+    steps:
+      - name: step1
+        prompt: my_prompt
+```
+
+The engine now automatically:
+- Detects Jira/GitHub issues from input
+- Accepts files when relevant
+- Uses the active profile at runtime
 
 ## Execution Modes
 
@@ -274,12 +309,8 @@ Edit `.aidev/workflows.yaml`:
 workflows:
   my_workflow:
     description: "My custom workflow"
-    input:
-      kind: text
-      allow_file: true
     steps:
       - name: "Step 1"
-        profile: default
         prompt: my_prompt
         timeout_sec: 120
 ```
@@ -423,17 +454,21 @@ Manifests are JSON with this structure:
   "steps": [
     {
       "name": "Analyze content",
-      "profile": "default",
       "prompt_id": "analyze_docs",
       "prompt_text": "...",
       "assistant": "claude",
-      "uses_issue_mcp": false,
       "tool_timeout_sec": 60,
       "retries": 1,
       "input": {
         "ticket_source": "file",
         "ticket_text_preview": "...",
-        "user_prompt": "..."
+        "user_prompt": "...",
+        "issue_context": {
+            "is_issue": false,
+            "issue_type": null,
+            "issue_id": null,
+            "detected_pattern": null
+        }
       },
       "output": {
         "status": "not-run",

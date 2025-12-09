@@ -108,41 +108,20 @@ Profiles can extend others via `extends` field. Merging logic in `ProfileManager
 Confidence scores aggregate to recommend profile by matching tags.
 
 ### Workflow System (`workflow.py`)
-The workflow engine orchestrates multi-step AI tasks by coordinating assistant execution.
+The workflow engine orchestrates multi-step AI tasks by coordinating assistant execution. It uses a minimal, declarative schema where workflows define *what* to do, and the engine handles *how* to do it.
 
-#### Workflow Execution Modes
-1. **Manifest Preparation**: `run_workflow()` creates a manifest JSON with step metadata
-2. **Interactive Handoff**: `handoff_to_assistant()` launches assistant CLI with file path reference
-3. **Automated Execution**: `execute_manifest()` runs steps non-interactively via `_default_runner()`
-
-#### Assistant Command Mapping
-Each assistant has a specific CLI invocation pattern for non-interactive execution:
-
-- **Claude**: `claude --system-prompt <system_prompt> <user_prompt>`
-  - System prompt sets context/role
-  - User prompt as positional argument
-  - No stdin piping (preserves raw mode for TUI)
-
-- **Codex**: `codex exec <prompt>`
-  - Uses `exec` subcommand for one-shot mode
-  - Positional prompt argument
-
-- **Gemini**: `gemini <prompt>`
-  - Positional prompt defaults to one-shot mode
-  - No special flags needed
-
-- **Ollama**: `ollama run llama3.1 --prompt <prompt>`
-  - Requires model selection (`llama3.1`)
-  - Uses `--prompt` flag
-
-- **Cursor**: Not supported (no headless mode)
+#### Smart Engine Behavior
+- **Smart Issue Detection**: The engine automatically detects Jira, GitHub, and GitLab issue/MR references from the input text. The `uses_issue_mcp` flag is no longer needed.
+- **Profile-Agnostic Workflows**: Workflows are no longer tied to specific profiles. The active profile is resolved at runtime.
+- **Implicit File Handling**: The engine accepts files when relevant, removing the need for `allow_file` flags.
 
 #### Handoff Mechanism
 When users run `ai workflow <name> <input>`:
 1. Workflow manifest is generated at `.aidev/workflow-runs/<name>-<timestamp>.json`
-2. Assistant is launched with instruction to read the manifest file (not raw content)
-3. Command example: `claude --system-prompt "You are a workflow executor..." "Read and execute the workflow manifest at: /path/to/manifest.json"`
-4. Assistant uses Read tool to access manifest and execute steps
+2. The manifest includes a `detected_issue_context` field with details about any detected issue.
+3. Assistant is launched with instruction to read the manifest file (not raw content)
+4. Command example: `claude --system-prompt "You are a workflow executor..." "Read and execute the workflow manifest at: /path/to/manifest.json"`
+5. Assistant uses Read tool to access manifest and execute steps
 
 **Key Design Decision**: File path reference instead of raw manifest content avoids:
 - Command-line argument length limits

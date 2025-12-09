@@ -49,7 +49,7 @@ def test_workflow_engine_seeds_and_runs(tmp_path: Path):
     spec = WorkflowSpec(
         name="demo",
         description="demo workflow",
-        steps=[WorkflowStep(name="step1", profile="default", prompt="ticket_understander", tool="claude")],
+        steps=[WorkflowStep(name="step1", prompt="ticket_understander", tool="claude")],
     )
     run_path = engine.run_workflow(
         spec,
@@ -91,3 +91,84 @@ def test_refactor_scout_stub(tmp_path: Path):
     )
     runs = list((tmp_path / ".aidev" / "workflow-runs").glob("refactor_scout-*-draft.md"))
     assert runs, "Expected refactor_scout to write a draft ticket file"
+
+
+def test_workflow_spec_minimal_schema():
+    """Verify WorkflowSpec works with minimal new schema."""
+    spec = WorkflowSpec(
+        name="minimal",
+        description="Minimal workflow",
+        steps=[
+            WorkflowStep(name="step1", prompt="prompt1"),
+            WorkflowStep(name="step2", prompt="prompt2", tool="claude"),
+        ],
+    )
+    assert spec.name == "minimal"
+    assert len(spec.steps) == 2
+    assert spec.steps[0].prompt == "prompt1"
+    assert spec.steps[1].tool == "claude"
+    # Deprecated fields should not exist
+    assert not hasattr(spec, "input_kind")
+    assert not hasattr(spec, "allow_file")
+    assert not hasattr(spec.steps[0], "profile")
+    assert not hasattr(spec.steps[0], "uses_issue_mcp")
+
+
+def test_loader_backward_compatibility(tmp_path):
+    """Loader should gracefully ignore old schema fields."""
+    old_schema_yaml = """
+workflows:
+  old_workflow:
+    description: "Old schema workflow"
+    input:
+      kind: ticket
+      allow_file: true
+    steps:
+      - name: step1
+        profile: default
+        prompt: prompt1
+        uses_issue_mcp: true
+"""
+    workflows_file = tmp_path / "workflows.yaml"
+    workflows_file.write_text(old_schema_yaml)
+
+    engine = WorkflowEngine(project_dir=tmp_path)
+    # Override workflows path to use our test file
+    engine.workflows_path = lambda: workflows_file
+
+    workflows, warnings = engine.load_workflows()
+    assert "old_workflow" in workflows
+    assert len(warnings) == 0  # Should load without errors
+
+    # Verify minimal fields are present
+    wf = workflows["old_workflow"]
+    assert wf.description == "Old schema workflow"
+    assert len(wf.steps) == 1
+    assert wf.steps[0].name == "step1"
+    assert wf.steps[0].prompt == "prompt1"
+
+
+def test_manifest_includes_issue_context(tmp_path):
+    """Verify generated manifest includes detected issue context."""
+    engine = WorkflowEngine(project_dir=tmp_path)
+    engine._runner = lambda step: {"assistant": "claude", "stdout": "ok"}
+
+    spec = WorkflowSpec(
+        name="test",
+        description="test",
+        steps=[WorkflowStep(name="s1", prompt="ticket_understander")],
+    )
+
+    run_path = engine.run_workflow(
+        spec,
+        ticket="ABC-123",
+        ticket_file=None,
+        user_prompt="Fix ABC-123",
+        tool_override=None,
+    )
+
+    data = json.loads(run_path.read_text())
+    issue_ctx = data["steps"][0]["input"]["issue_context"]
+    assert issue_ctx["is_issue"] is True
+    assert issue_ctx["issue_type"] == "jira"
+    assert issue_ctx["issue_id"] == "ABC-123"

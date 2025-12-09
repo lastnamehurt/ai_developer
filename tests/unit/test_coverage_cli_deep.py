@@ -27,8 +27,9 @@ def test_cursor_with_explicit_profile(runner):
                 mp.load_profile.assert_called_once_with('web')
 
 
-def test_cursor_with_project_profile(runner, tmp_path):
+def test_cursor_with_project_profile(runner, tmp_path, monkeypatch):
     """Test cursor command using project profile file"""
+    monkeypatch.setattr('aidev.cli.ACTIVE_PROFILE_FILE', tmp_path / "nonexistent")
     with patch('aidev.cli.profile_manager') as mp:
         with patch('aidev.cli.tool_manager') as mt:
             with patch('aidev.cli.mcp_config_generator') as mg:
@@ -48,8 +49,9 @@ def test_cursor_with_project_profile(runner, tmp_path):
                     mp.load_profile.assert_called_once_with('qa')
 
 
-def test_cursor_with_default_profile(runner):
+def test_cursor_with_default_profile(runner, monkeypatch):
     """Test cursor command falling back to default profile"""
+    monkeypatch.setattr('aidev.cli.ACTIVE_PROFILE_FILE', Path("/tmp/nonexistent"))
     with patch('aidev.cli.profile_manager') as mp:
         with patch('aidev.cli.tool_manager') as mt:
             with patch('aidev.cli.mcp_config_generator') as mg:
