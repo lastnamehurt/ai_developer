@@ -157,26 +157,21 @@ def _launch_tool_with_profile(tool_id: str, profile: str, args: tuple) -> None:
 
     # Determine profile to use
     profile_name = profile
-    console.print(f"[dim]DEBUG: _launch_tool_with_profile - initial 'profile' arg: {profile}[/dim]")
-    console.print(f"[dim]DEBUG: _launch_tool_with_profile - current 'profile_name': {profile_name}[/dim]")
 
     if not profile_name:
         # Check for active profile (globally set by user)
         if ACTIVE_PROFILE_FILE.exists():
             candidate_profile = ACTIVE_PROFILE_FILE.read_text().strip()
-            console.print(f"[dim]DEBUG: _launch_tool_with_profile - from ACTIVE_PROFILE_FILE: {candidate_profile}[/dim]")
             # Validate the profile exists before using it
             if candidate_profile and profile_manager.get_profile_path(candidate_profile):
                 profile_name = candidate_profile
             else:
                 # Profile doesn't exist, clear the invalid entry
-                console.print(f"[dim]DEBUG: _launch_tool_with_profile - clearing invalid profile from ACTIVE_PROFILE_FILE[/dim]")
                 ACTIVE_PROFILE_FILE.unlink()
 
         # Fall back to project-specific profile
         if not profile_name:
             project_config_dir = config_manager.get_project_config_path()
-            console.print(f"[dim]DEBUG: _launch_tool_with_profile - project_config_dir: {project_config_dir}[/dim]")
             if project_config_dir:
                 profile_file = project_config_dir / "profile"
                 if profile_file.exists():
@@ -184,12 +179,10 @@ def _launch_tool_with_profile(tool_id: str, profile: str, args: tuple) -> None:
                     # Validate the profile exists before using it
                     if candidate_profile and profile_manager.get_profile_path(candidate_profile):
                         profile_name = candidate_profile
-                        console.print(f"[dim]DEBUG: _launch_tool_with_profile - from project profile file: {profile_name}[/dim]")
 
         # Fall back to default profile
         if not profile_name:
             profile_name = "default"
-            console.print(f"[dim]DEBUG: _launch_tool_with_profile - fallback to default: {profile_name}[/dim]")
     else:
         # User specified a profile - validate it exists before saving as active
         if not profile_manager.get_profile_path(profile_name):
@@ -199,7 +192,6 @@ def _launch_tool_with_profile(tool_id: str, profile: str, args: tuple) -> None:
             # Profile exists, save it as active
             ACTIVE_PROFILE_FILE.parent.mkdir(parents=True, exist_ok=True)
             ACTIVE_PROFILE_FILE.write_text(profile_name)
-            console.print(f"[dim]DEBUG: _launch_tool_with_profile - user specified profile: {profile_name}[/dim]")
 
     console.print(f"[cyan]Using profile: {profile_name}[/cyan]")
 
