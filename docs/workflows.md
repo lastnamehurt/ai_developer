@@ -6,6 +6,7 @@ The workflow system in `aidev` allows you to orchestrate multi-step AI tasks acr
 - [Overview](#overview)
 - [Quick Start](#quick-start)
 - [Workflow Definitions](#workflow-definitions)
+- [Smart Issue Detection](#smart-issue-detection)
 - [Execution Modes](#execution-modes)
 - [Supported Assistants](#supported-assistants)
 - [Assistant Handoff Mechanism](#assistant-handoff-mechanism)
@@ -21,6 +22,9 @@ Workflows enable you to:
 - Execute steps interactively or automatically
 - Resume execution from a specific step
 - Configure retries and timeouts per step
+- **Automatically detect** Jira, GitHub, and GitLab issues from input
+- **Automatically accept** files when provided (no configuration needed)
+- Use the **active profile** at runtime (no per-step profile configuration)
 
 ## Quick Start
 
@@ -69,54 +73,57 @@ workflows:
 
 - **name**: Step name (for logging and resume)
 - **prompt**: Prompt file ID (from `src/aidev/prompts/`)
-- **tool**: Assistant override for this step (optional)
-- **timeout_sec**: Execution timeout (default: 30)
+- **tool**: Assistant override for this step (optional, overrides workflow default)
+- **timeout_sec**: Execution timeout in seconds (default: 30)
 - **retries**: Number of retry attempts (default: 0)
 
-## Schema v2 Migration Guide
+**Note:** The following fields are **no longer supported** (removed in schema v1.1):
+- ~~`profile`~~ - Uses active profile at runtime instead
+- ~~`uses_issue_mcp`~~ - Issue detection is automatic
 
-### What Changed
+## Smart Issue Detection
 
-Schema v2 removes configuration complexity and moves intelligence to the engine:
-- Removed: `input.kind`, `input.allow_file`
-- Removed: `step.profile`
-- Removed: `step.uses_issue_mcp`
+The workflow engine automatically detects Jira, GitHub, and GitLab issue/MR references from input text. No configuration needed!
 
-### Migration Steps
+### Supported Patterns
 
-1. Remove the `input` section from your workflow
-2. Remove `profile` field from all steps
-3. Remove `uses_issue_mcp` field from steps that have it
+**Jira:**
+- URL: `https://mycompany.atlassian.net/browse/ISSUE-789`
+- Key: `ABC-123` or `PROJ-456`
 
-**Before:**
-```yaml
-workflows:
-  my_workflow:
-    description: "..."
-    input:
-      kind: ticket
-      allow_file: true
-    steps:
-      - name: step1
-        profile: default
-        prompt: my_prompt
-        uses_issue_mcp: true
+**GitHub:**
+- URL: `https://github.com/owner/repo/issues/42` or `https://github.com/owner/repo/pull/789`
+- Shorthand: `owner/repo#123`
+
+**GitLab:**
+- URL: `https://gitlab.com/owner/repo/-/issues/42` or `https://gitlab.com/owner/project/-/merge_requests/123`
+- Self-hosted: `https://gitlab.mycompany.com/team/project/-/issues/99`
+- Shorthand: `owner/repo!456` (MR) or `owner/repo#123` (issue)
+
+### How It Works
+
+When you run a workflow, the engine:
+1. Analyzes the input text (ticket argument or file content)
+2. Detects issue patterns automatically
+3. Includes `issue_context` in each step's input with:
+   - `is_issue`: boolean indicating if an issue was detected
+   - `issue_type`: `"jira"`, `"github"`, `"gitlab"`, or `None`
+   - `issue_id`: The detected issue identifier (e.g., `"ABC-123"`, `"owner/repo#42"`)
+   - `detected_pattern`: The pattern type that matched (e.g., `"jira_key"`, `"github_url"`)
+
+**Example:**
+```bash
+# Jira ticket
+ai workflow implement_ticket "PROJ-123: Add user authentication"
+
+# GitHub issue
+ai workflow code_reviewer "owner/repo#42"
+
+# GitLab MR
+ai workflow address_pr_feedback "https://gitlab.com/team/project/-/merge_requests/99"
 ```
 
-**After:**
-```yaml
-workflows:
-  my_workflow:
-    description: "..."
-    steps:
-      - name: step1
-        prompt: my_prompt
-```
-
-The engine now automatically:
-- Detects Jira/GitHub issues from input
-- Accepts files when relevant
-- Uses the active profile at runtime
+The detected issue context is automatically included in each step's input, so prompts can reference it without any special configuration.
 
 ## Execution Modes
 
@@ -420,12 +427,13 @@ mkdir -p .aidev/workflow-runs/
 ### Custom Assistant Resolution
 
 Assistant priority order:
-1. CLI `--tool` flag
+1. CLI `--tool` flag (highest priority)
 2. Step-level `tool` field
 3. Workflow-level `tool` field
 4. `AIDEV_DEFAULT_ASSISTANT` environment variable
-5. Project default assistant
-6. Fallback: claude → codex → cursor → gemini → ollama
+5. Project default assistant (from `.aidev/config.json`)
+6. Hard default: `"claude"`
+7. Availability fallback: claude → codex → cursor → gemini → ollama (first installed)
 
 ### Environment Variables
 
@@ -439,7 +447,7 @@ ai workflow doc_improver README.md
 
 ### Manifest Schema
 
-Manifests are JSON with this structure:
+Manifests are JSON with this structure (schema version 1.1):
 
 ```json
 {
@@ -450,7 +458,6 @@ Manifests are JSON with this structure:
   "ticket_arg": null,
   "ticket_file": "README.md",
   "created_at": 1702053154,
-  "completed_at": null,
   "steps": [
     {
       "name": "Analyze content",
@@ -464,10 +471,10 @@ Manifests are JSON with this structure:
         "ticket_text_preview": "...",
         "user_prompt": "...",
         "issue_context": {
-            "is_issue": false,
-            "issue_type": null,
-            "issue_id": null,
-            "detected_pattern": null
+          "is_issue": true,
+          "issue_type": "github",
+          "issue_id": "owner/repo#42",
+          "detected_pattern": "github_url"
         }
       },
       "output": {
@@ -478,6 +485,12 @@ Manifests are JSON with this structure:
   ]
 }
 ```
+
+**Key Fields:**
+- `schema_version`: Currently `"1.1"`
+- `ticket_source`: One of `"file"`, `"jira"`, `"github"`, or `"raw"`
+- `issue_context`: Automatically detected issue information (present in every step's input)
+- `steps[].input.issue_context`: Contains detected issue details for that step
 
 ### Programmatic Access
 
