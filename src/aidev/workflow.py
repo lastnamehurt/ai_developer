@@ -314,6 +314,15 @@ def detect_issue_context(text: Optional[str]) -> dict[str, Any]:
     if not text:
         return {"is_issue": False, "issue_type": None, "issue_id": None, "detected_pattern": None}
 
+    # Jira URL pattern (check before key pattern to prioritize URL context)
+    if "atlassian.net" in text:
+        return {
+            "is_issue": True,
+            "issue_type": "jira",
+            "issue_id": None,
+            "detected_pattern": "atlassian_url"
+        }
+
     # Jira pattern: ABC-123
     jira_match = re.search(r'([A-Z]+-\d+)', text)
     if jira_match:
@@ -322,15 +331,6 @@ def detect_issue_context(text: Optional[str]) -> dict[str, Any]:
             "issue_type": "jira",
             "issue_id": jira_match.group(1),
             "detected_pattern": "jira_key"
-        }
-
-    # Jira URL pattern
-    if "atlassian.net" in text:
-        return {
-            "is_issue": True,
-            "issue_type": "jira",
-            "issue_id": None,
-            "detected_pattern": "atlassian_url"
         }
 
     # GitHub URL pattern (issues or PRs)
@@ -354,7 +354,7 @@ def detect_issue_context(text: Optional[str]) -> dict[str, Any]:
         }
 
     # GitLab URL pattern (issues or MRs)
-    gitlab_match = re.search(r'gitlab\.com/([^/]+)/([^/]+)/-(issues|merge_requests)/(\d+)', text)
+    gitlab_match = re.search(r'gitlab\.com/([^/]+)/([^/]+)/-/(issues|merge_requests)/(\d+)', text)
     if gitlab_match:
         return {
             "is_issue": True,
@@ -364,7 +364,7 @@ def detect_issue_context(text: Optional[str]) -> dict[str, Any]:
         }
 
     # GitLab self-hosted pattern
-    gitlab_self_hosted = re.search(r'gitlab\.[^/]+/([^/]+)/([^/]+)/-(issues|merge_requests)/(\d+)', text)
+    gitlab_self_hosted = re.search(r'gitlab\.[^/]+/([^/]+)/([^/]+)/-/(issues|merge_requests)/(\d+)', text)
     if gitlab_self_hosted:
         return {
             "is_issue": True,
