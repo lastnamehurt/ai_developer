@@ -253,7 +253,7 @@ workflows:
         prompt: doc_ticket_writer
 
   sync_branch:
-    description: "Rebase a branch onto the default branch (main/master), resolve merge conflicts, and force push. Takes branch name as input (defaults to current branch)."
+    description: "Rebase a branch onto a target branch (defaults to main/master), resolve merge conflicts, and force push. Input format: 'source-branch' or 'source-branch target-branch' (defaults to current branch if source not provided)."
     input:
       kind: text
       allow_file: false
