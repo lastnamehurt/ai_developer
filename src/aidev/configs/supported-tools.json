@@ -10,7 +10,7 @@
     "name": "Claude Code",
     "binary": "claude",
     "app_name": "Claude",
-    "config_path": "~/.claude/.mcp.json",
+    "config_path": "~/.claude.json",
     "install_url": "https://claude.ai/code"
   },
   "codex": {
