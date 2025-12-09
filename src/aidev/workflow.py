@@ -41,6 +41,173 @@ PROPOSAL_EXEC_SUFFIX = """
 """
 
 
+class WorkflowManifest:
+    """
+    Helper for executors to safely and incrementally update workflow manifests.
+
+    Usage:
+        manifest = WorkflowManifest('/path/to/manifest.json')
+        manifest.mark_step_complete('step_name', 'Result summary')
+
+    This ensures steps are updated immediately as they complete, rather than
+    being batched at the end.
+    """
+
+    def __init__(self, manifest_path: str | Path) -> None:
+        """Initialize manifest helper.
+
+        Args:
+            manifest_path: Path to the workflow manifest JSON file
+        """
+        self.path = Path(manifest_path)
+        self.data = self._load()
+
+    def _load(self) -> dict[str, Any]:
+        """Load manifest from disk."""
+        if not self.path.exists():
+            raise FileNotFoundError(f"Manifest not found: {self.path}")
+        try:
+            return json.loads(self.path.read_text())
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid JSON in manifest: {e}")
+
+    def _save(self) -> None:
+        """Save manifest to disk with formatted JSON."""
+        self.path.write_text(json.dumps(self.data, indent=2))
+
+    def mark_step_complete(
+        self,
+        step_name: str,
+        result: str,
+        status: str = "ok",
+        save: bool = True,
+    ) -> None:
+        """Mark a step as complete with its result.
+
+        Call this immediately after each step completes (not at the end).
+
+        Args:
+            step_name: Name of the step to update (must match manifest)
+            result: Summary of what was accomplished
+            status: Status code ('ok', 'failed', or custom). Defaults to 'ok'
+            save: Whether to save manifest immediately. Defaults to True
+
+        Raises:
+            ValueError: If step not found in manifest
+
+        Example:
+            result = execute_detect_branches()
+            manifest.mark_step_complete('detect_branches', result)
+        """
+        for step in self.data.get("steps", []):
+            if step["name"] == step_name:
+                step["output"]["status"] = status
+                step["output"]["result"] = result
+                if save:
+                    self._save()
+                return
+        raise ValueError(f"Step '{step_name}' not found in manifest")
+
+    def mark_step_failed(
+        self,
+        step_name: str,
+        error: str,
+        save: bool = True,
+    ) -> None:
+        """Mark a step as failed with error details.
+
+        Args:
+            step_name: Name of the step that failed
+            error: Error message or summary
+            save: Whether to save manifest immediately
+
+        Example:
+            manifest.mark_step_failed('fetch_and_rebase', 'Merge conflict detected')
+        """
+        self.mark_step_complete(step_name, error, status="failed", save=save)
+
+    def batch_update(self, updates: dict[str, str]) -> None:
+        """Update multiple steps at once (less ideal, prefer incremental updates).
+
+        Args:
+            updates: Dict of {step_name: result_string}
+
+        Note:
+            This should be avoided in favor of mark_step_complete() called
+            after EACH step completes, which provides better tracking.
+        """
+        for step_name, result in updates.items():
+            for step in self.data.get("steps", []):
+                if step["name"] == step_name:
+                    step["output"]["status"] = "ok"
+                    step["output"]["result"] = result
+                    break
+        self._save()
+
+    def get_step(self, step_name: str) -> dict[str, Any] | None:
+        """Get a step's configuration by name.
+
+        Args:
+            step_name: Name of the step to retrieve
+
+        Returns:
+            Step configuration dict or None if not found
+        """
+        for step in self.data.get("steps", []):
+            if step["name"] == step_name:
+                return step
+        return None
+
+    def validate(self) -> list[str]:
+        """Validate that all steps have been completed.
+
+        Returns:
+            List of incomplete step names (empty if all steps done)
+
+        Example:
+            incomplete = manifest.validate()
+            if incomplete:
+                raise RuntimeError(f"Incomplete steps: {incomplete}")
+        """
+        incomplete = []
+        for step in self.data.get("steps", []):
+            if step.get("output", {}).get("status") == "not-run":
+                incomplete.append(step["name"])
+        return incomplete
+
+    def get_all_steps(self) -> list[dict[str, Any]]:
+        """Get all steps in the manifest.
+
+        Returns:
+            List of step configurations
+        """
+        return self.data.get("steps", [])
+
+    def get_completed_steps(self) -> list[str]:
+        """Get names of completed steps.
+
+        Returns:
+            List of step names with status='ok'
+        """
+        return [
+            step["name"]
+            for step in self.data.get("steps", [])
+            if step.get("output", {}).get("status") == "ok"
+        ]
+
+    def get_failed_steps(self) -> list[str]:
+        """Get names of failed steps.
+
+        Returns:
+            List of step names with status='failed'
+        """
+        return [
+            step["name"]
+            for step in self.data.get("steps", [])
+            if step.get("output", {}).get("status") == "failed"
+        ]
+
+
 @dataclass
 class WorkflowStep:
     """Represents a single workflow step."""
@@ -417,14 +584,19 @@ class WorkflowEngine:
         # Set up profile and MCP config before launching (for tools that support it)
         if assistant in {"cursor", "claude", "codex", "gemini", "zed"}:
             self._setup_tool_profile_and_mcp(assistant, manifest_path)
-        
+
         instruction = (
             "You are a workflow executor. Read the manifest JSON file and execute the steps sequentially. "
             "Use the system prompt as given and the user prompt/ticket content as input. "
             "Narrate your actions and produce outputs per step.\n\n"
-            "IMPORTANT: After completing each step, update the manifest JSON file by setting "
+            "IMPORTANT: After completing EACH step, update the manifest JSON file immediately by setting "
             "the step's output.status to 'ok' and output.result to a summary of what was accomplished. "
-            "This allows workflow status tracking to work correctly."
+            "This allows workflow status tracking to work correctly.\n\n"
+            "TIP: Use the WorkflowManifest helper for safe and easy updates:\n"
+            "  from aidev import WorkflowManifest\n"
+            "  manifest = WorkflowManifest(manifest_path)\n"
+            "  manifest.mark_step_complete('step_name', 'Result summary')\n"
+            "This ensures updates happen incrementally as steps complete, not batched at the end."
         )
         user_prompt = f"Read and execute the workflow manifest at: {manifest_path}"
         cmd = self._assistant_command(assistant, instruction, user_prompt, user_prompt, interactive=True)
