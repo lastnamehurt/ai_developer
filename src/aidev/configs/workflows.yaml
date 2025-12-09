@@ -302,3 +302,29 @@ workflows:
       - name: refactor_with_aider
         profile: aider
         prompt: aider_implementer
+
+  # Code Review & Feedback Workflows
+  address_pr_feedback:
+    description: "Address Merge Request or Pull Request feedback comprehensively. Supports GitHub and GitLab. Analyzes review comments, implements changes, verifies solutions, and prepares for re-review."
+    input:
+      kind: ticket
+      allow_file: false
+    steps:
+      - name: fetch_and_categorize_feedback
+        profile: code-surgeon
+        prompt: pr_feedback_extractor
+      - name: plan_response_strategy
+        profile: pair-programmer
+        prompt: pr_feedback_planner
+      - name: implement_changes
+        profile: code-surgeon
+        prompt: code_diff_generator
+      - name: verify_feedback_addressed
+        profile: testing-guru
+        prompt: pr_verification_checker
+      - name: draft_response_comments
+        profile: documentation-writer
+        prompt: pr_response_writer
+      - name: prepare_for_review
+        profile: pair-programmer
+        prompt: pr_review_prep
