@@ -260,7 +260,7 @@ def test_setup_execution(runner):
         with patch('aidev.cli.profile_manager') as mp:
             with patch('aidev.cli.mcp_manager') as mm:
                 mc.is_initialized.return_value = False
-                result = runner.invoke(cli, ['setup'])
+                result = runner.invoke(cli, ['setup', '--skip-env'])
                 assert result.exit_code == 0
 
 
