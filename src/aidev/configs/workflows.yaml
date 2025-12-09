@@ -251,3 +251,22 @@ workflows:
       - name: draft_improvement_proposal
         profile: documentation-writer
         prompt: doc_ticket_writer
+
+  sync_branch:
+    description: "Rebase a branch onto the default branch (main/master), resolve merge conflicts, and force push. Takes branch name as input (defaults to current branch)."
+    input:
+      kind: text
+      allow_file: false
+    steps:
+      - name: detect_branches
+        profile: pair-programmer
+        prompt: git_rebase_resolver
+      - name: fetch_and_rebase
+        profile: pair-programmer
+        prompt: git_rebase_resolver
+      - name: resolve_conflicts
+        profile: code-surgeon
+        prompt: git_rebase_resolver
+      - name: force_push
+        profile: pair-programmer
+        prompt: git_rebase_resolver
