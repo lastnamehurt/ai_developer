@@ -21,8 +21,12 @@ from aidev.constants import (
     PROJECT_WORKFLOWS_FILE,
     PROJECT_WORKFLOW_RUNS_DIR,
     WORKFLOWS_TEMPLATE,
+    ACTIVE_PROFILE_FILE,
 )
 from aidev.tools import ToolManager
+from aidev.config import ConfigManager
+from aidev.profiles import ProfileManager
+from aidev.mcp_config_generator import MCPConfigGenerator
 from aidev.utils import console, ensure_dir, load_json
 from rich.table import Table
 
@@ -141,6 +145,9 @@ class WorkflowEngine:
         self.project_dir = Path(project_dir or Path.cwd())
         self.tool_manager = ToolManager()
         self.resolver = AssistantResolver(self.tool_manager)
+        self.config_manager = ConfigManager()
+        self.profile_manager = ProfileManager()
+        self.mcp_config_generator = MCPConfigGenerator()
         # Runner hook for step execution; can be overridden in tests
         self._runner: Callable[[dict[str, Any]], dict[str, Any]] = self._default_runner
 
@@ -407,10 +414,17 @@ class WorkflowEngine:
         Launch assistant CLI with an instruction to execute the manifest interactively.
         This opens the assistant; user can watch/drive the steps.
         """
+        # Set up profile and MCP config before launching (for tools that support it)
+        if assistant in {"cursor", "claude", "codex", "gemini", "zed"}:
+            self._setup_tool_profile_and_mcp(assistant, manifest_path)
+        
         instruction = (
             "You are a workflow executor. Read the manifest JSON file and execute the steps sequentially. "
             "Use the system prompt as given and the user prompt/ticket content as input. "
-            "Narrate your actions and produce outputs per step."
+            "Narrate your actions and produce outputs per step.\n\n"
+            "IMPORTANT: After completing each step, update the manifest JSON file by setting "
+            "the step's output.status to 'ok' and output.result to a summary of what was accomplished. "
+            "This allows workflow status tracking to work correctly."
         )
         user_prompt = f"Read and execute the workflow manifest at: {manifest_path}"
         cmd = self._assistant_command(assistant, instruction, user_prompt, user_prompt, interactive=True)
@@ -422,9 +436,13 @@ class WorkflowEngine:
             console.print(f"[red]✗[/red] No handoff command available for assistant '{assistant}'. Open the manifest manually: {manifest_path}")
             return
         try:
-            env = self._assistant_env(assistant)
+            # Merge assistant-specific env with config manager env
+            assistant_env = self._assistant_env(assistant) or {}
+            config_env = self.config_manager.get_env()
+            merged_env = {**os.environ, **config_env, **assistant_env}
+            
             # Run inline in the current terminal (avoid opening new Terminal windows).
-            result = subprocess.run(cmd, check=False, env=env)
+            result = subprocess.run(cmd, check=False, env=merged_env)
             if result.returncode != 0:
                 console.print(f"[red]✗[/red] Assistant '{assistant}' exited with code {result.returncode}.")
                 console.print(f"[yellow]Manifest:[/yellow] {manifest_path}")
@@ -444,6 +462,7 @@ class WorkflowEngine:
             steps = data.get("steps", [])
             completed_at = data.get("completed_at")
             created_at = data.get("created_at", 0)
+            proposal_output = data.get("proposal_output")
             
             console.print(f"\n[bold cyan]Workflow:[/bold cyan] {workflow_name}")
             if workflow_desc:
@@ -461,6 +480,14 @@ class WorkflowEngine:
             else:
                 console.print(f"[yellow]⏳ Workflow in progress...[/yellow]\n")
             
+            # Check if proposal output exists (indicates work was done)
+            has_proposal = False
+            if proposal_output:
+                proposal_path = Path(proposal_output)
+                if proposal_path.exists():
+                    has_proposal = True
+                    console.print(f"[dim]Proposal output:[/dim] {proposal_path} [green]✓[/green]")
+            
             # Show step status
             table = Table(show_header=True, header_style="bold cyan")
             table.add_column("Step", style="cyan", no_wrap=True)
@@ -477,7 +504,11 @@ class WorkflowEngine:
                 elif step_status == "error":
                     status_display = "[red]✗ Error[/red]"
                 elif step_status == "not-run":
-                    status_display = "[yellow]⏳ Pending[/yellow]"
+                    # If proposal exists and all steps are not-run, suggest they may be complete
+                    if has_proposal:
+                        status_display = "[yellow]⏳ Pending[/yellow] [dim](work detected)[/dim]"
+                    else:
+                        status_display = "[yellow]⏳ Pending[/yellow]"
                 else:
                     status_display = f"[dim]{step_status}[/dim]"
                 
@@ -492,16 +523,106 @@ class WorkflowEngine:
             
             console.print(f"\n[dim]Summary:[/dim] {completed} completed, {errors} errors, {pending} pending")
             
+            # If proposal exists but all steps show not-run, suggest marking as complete
+            if has_proposal and completed == 0 and errors == 0:
+                console.print(f"\n[yellow]💡[/yellow] [dim]Work detected but steps not marked complete. Run:[/dim]")
+                console.print(f"[dim]  ai workflow mark-complete {manifest_path.name}[/dim]")
+            
             if errors > 0:
                 console.print(f"\n[yellow]⚠ Some steps failed. Check the manifest for details.[/yellow]")
             
         except Exception as exc:
             console.print(f"[red]✗[/red] Failed to read manifest: {exc}")
+    
+    def mark_steps_complete(self, manifest_path: Path, step_name: Optional[str] = None) -> None:
+        """
+        Mark workflow steps as complete in the manifest.
+        If step_name is provided, mark only that step. Otherwise, mark all pending steps.
+        """
+        try:
+            data = json.loads(manifest_path.read_text())
+            steps = data.get("steps", [])
+            
+            updated = False
+            for step in steps:
+                if step_name and step.get("name") != step_name:
+                    continue
+                
+                current_status = step.get("output", {}).get("status", "not-run")
+                if current_status == "not-run":
+                    if "output" not in step:
+                        step["output"] = {}
+                    step["output"]["status"] = "ok"
+                    step["output"]["completed_at"] = int(time.time())
+                    step["output"]["result"] = "Marked complete manually"
+                    updated = True
+            
+            if updated:
+                # Update completed_at if all steps are now complete
+                all_complete = all(s.get("output", {}).get("status") == "ok" for s in steps)
+                if all_complete and not data.get("completed_at"):
+                    data["completed_at"] = int(time.time())
+                
+                manifest_path.write_text(json.dumps(data, indent=4))
+                console.print(f"[green]✓[/green] Marked steps as complete in {manifest_path.name}")
+            else:
+                console.print(f"[yellow]⚠[/yellow] No pending steps to mark as complete")
+                
+        except Exception as exc:
+            console.print(f"[red]✗[/red] Failed to update manifest: {exc}")
+
+    def _setup_tool_profile_and_mcp(self, tool_id: str, manifest_path: Path) -> bool:
+        """
+        Set up profile and MCP config for a tool before launching.
+        Returns True if setup succeeded, False otherwise.
+        
+        Note: We ignore the workflow step's 'profile' field as it may contain
+        fictional profile names. Instead, we use the actual active/default profile.
+        """
+        # Ensure directories are initialized
+        if not self.config_manager.is_initialized():
+            self.config_manager.init_directories()
+        
+        # Determine profile to use - use active profile, not workflow step profile
+        # (workflow step profiles are fictional names like "onboarding", "code-surgeon")
+        profile_name = None
+        
+        # Check active profile first
+        if ACTIVE_PROFILE_FILE.exists():
+            profile_name = ACTIVE_PROFILE_FILE.read_text().strip()
+        
+        # Fall back to project-specific profile
+        if not profile_name:
+            project_config_dir = self.config_manager.get_project_config_path(self.project_dir)
+            if project_config_dir:
+                profile_file = project_config_dir / "profile"
+                if profile_file.exists():
+                    profile_name = profile_file.read_text().strip()
+        
+        # Fall back to default profile
+        if not profile_name:
+            profile_name = "default"
+        
+        console.print(f"[cyan]Using profile: {profile_name}[/cyan]")
+        
+        # Load profile
+        loaded_profile = self.profile_manager.load_profile(profile_name)
+        if not loaded_profile:
+            console.print(f"[yellow]⚠[/yellow] Profile '{profile_name}' not found, launching without MCP config")
+            return False
+        
+        # Generate MCP config file for the tool
+        tool_config_path = self.tool_manager.get_tool_config_path(tool_id)
+        try:
+            self.mcp_config_generator.generate_config(tool_id, loaded_profile, tool_config_path)
+            return True
+        except Exception as exc:
+            console.print(f"[yellow]⚠[/yellow] Failed to generate MCP config: {exc}")
+            return False
 
     def _handoff_to_cursor(self, manifest_path: Path) -> None:
         """Handle workflow handoff for Cursor (GUI app without CLI mode)."""
-        tool_manager = ToolManager()
-        cursor_info = tool_manager.detect_tool("cursor")
+        cursor_info = self.tool_manager.detect_tool("cursor")
         
         if not cursor_info.installed:
             console.print(f"[red]✗[/red] Cursor is not installed.")
@@ -509,11 +630,17 @@ class WorkflowEngine:
             console.print(f"[dim]Install Cursor from:[/dim] https://cursor.sh")
             return
         
+        # Set up profile and MCP config before launching
+        self._setup_tool_profile_and_mcp("cursor", manifest_path)
+        
         # Build the complete prompt for Cursor
         instruction = (
             "You are a workflow executor. Read the manifest JSON file and execute the steps sequentially. "
             "Use the system prompt as given and the user prompt/ticket content as input. "
-            "Narrate your actions and produce outputs per step."
+            "Narrate your actions and produce outputs per step.\n\n"
+            "IMPORTANT: After completing each step, update the manifest JSON file by setting "
+            "the step's output.status to 'ok' and output.result to a summary of what was accomplished. "
+            "This allows workflow status tracking to work correctly."
         )
         user_prompt = f"Read and execute the workflow manifest at: {manifest_path}"
         
@@ -550,7 +677,11 @@ Read the manifest file and execute the workflow steps sequentially. Each step in
 For each step:
 1. Read the step's `prompt_text` and `input` fields
 2. Execute the step using the prompt_text as the system instruction and the input as the user content
-3. Move to the next step and repeat
+3. After completing the step, update the manifest JSON file:
+   - Set `output.status` to `"ok"` for successful completion
+   - Set `output.result` to a brief summary of what was accomplished
+   - Add `output.completed_at` with the current timestamp (Unix epoch seconds)
+4. Move to the next step and repeat
 
 Begin by reading the manifest file at the path above.
 
@@ -563,9 +694,12 @@ Begin by reading the manifest file at the path above.
             # Write the prompt file
             prompt_file.write_text(prompt_content)
             
+            # Load environment variables to pass to the tool
+            tool_env = self.config_manager.get_env()
+            
             # Open Cursor with ONLY the prompt file (not the manifest)
             # Cursor will read this file and should execute the prompt
-            tool_manager.launch_tool("cursor", args=[str(prompt_file)], wait=False)
+            self.tool_manager.launch_tool("cursor", args=[str(prompt_file)], env=tool_env, wait=False)
             console.print(f"[cyan]✓[/cyan] Opened Cursor with workflow prompt")
             console.print(f"[dim]Prompt file: {prompt_file}[/dim]")
             console.print(f"[dim]Manifest: {manifest_path}[/dim]")
@@ -653,9 +787,11 @@ Begin by reading the manifest file at the path above.
         return None
 
     def _assistant_env(self, assistant: str) -> Optional[dict[str, str]]:
-        """Return env overrides for assistants to keep state inside workspace."""
-        if assistant in {"claude", "codex", "gemini"}:
-            env = os.environ.copy()
-            env["HOME"] = str(self.project_dir)
-            return env
+        """
+        Return env overrides for assistants.
+        Note: We preserve HOME to maintain authentication state.
+        Tools store auth configs in ~/.cursor/, ~/.codex/, etc.
+        """
+        # Don't override HOME - tools need access to their auth configs
+        # in the user's home directory
         return None

@@ -581,6 +581,41 @@ def workflow(workflow_name: Optional[str], input_value: Optional[str], ticket: O
         
         engine.check_workflow_status(manifest_path)
         return
+    
+    # Support "mark-complete" as a subcommand
+    if workflow_name == "mark-complete":
+        # Use input_value as manifest_file if provided
+        manifest_file = input_value if input_value else None
+        engine = WorkflowEngine(project_dir=Path.cwd())
+        runs_dir = engine.runs_dir()
+        
+        if not runs_dir.exists():
+            console.print("[red]✗[/red] No workflow runs directory found.")
+            return
+        
+        if manifest_file:
+            # User provided a manifest file name or path
+            manifest_path = Path(manifest_file)
+            if not manifest_path.is_absolute():
+                # Try relative to runs directory first
+                manifest_path = runs_dir / manifest_file
+                if not manifest_path.exists():
+                    # Try as full path
+                    manifest_path = Path(manifest_file)
+        else:
+            # Find the most recent manifest
+            manifests = sorted(runs_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+            if not manifests:
+                console.print("[red]✗[/red] No workflow runs found.")
+                return
+            manifest_path = manifests[0]
+        
+        if not manifest_path.exists():
+            console.print(f"[red]✗[/red] Manifest file not found: {manifest_path}")
+            return
+        
+        engine.mark_steps_complete(manifest_path)
+        return
 
     if list_only:
         table = Table(title="Available Workflows", show_header=True, header_style="bold cyan")
