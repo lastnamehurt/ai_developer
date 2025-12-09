@@ -183,8 +183,12 @@ def _launch_tool_with_profile(tool_id: str, profile: str, args: tuple) -> None:
     # Load profile
     loaded_profile = profile_manager.load_profile(profile_name)
     if not loaded_profile:
-        console.print(f"[red]Profile '{profile_name}' not found[/red]")
-        return
+        console.print(f"[yellow]Profile '{profile_name}' not found. Attempting to load 'default' profile.[/yellow]")
+        profile_name = "default" # Fallback to default
+        loaded_profile = profile_manager.load_profile(profile_name)
+        if not loaded_profile:
+            console.print(f"[red]Profile '{profile_name}' not found. Please run 'ai setup' or create a profile.[/red]")
+            return
 
     # Generate MCP config file for the tool
     tool_config_path = tool_manager.get_tool_config_path(tool_id)
