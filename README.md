@@ -53,9 +53,14 @@ ai claude    # or ai cursor, ai codex, ai gemini
 
 ## 📚 Documentation
 
+### Getting Started
+
+- **[System Overview](docs/system_overview.md)** - 🎯 **Start here!** Visual guide to how aidev works
+- **[Features Overview](docs/features.md)** - Complete feature guide
+- **[Commands Reference](docs/commands.md)** - Complete command cheat sheet
+
 ### Core Systems
 
-- **[Features Overview](docs/features.md)** - Complete feature guide
 - **[Profile System](docs/profiles.md)** - Switch AI roles and contexts
 - **[Workflow Orchestration](docs/workflows.md)** - Multi-step AI task automation
 - **[MCP Server Management](docs/mcp_browser.md)** - Extend capabilities with MCP servers
@@ -63,7 +68,6 @@ ai claude    # or ai cursor, ai codex, ai gemini
 
 ### Guides & References
 
-- **[Commands Reference](docs/commands.md)** - Complete command cheat sheet
 - **[Architecture](docs/architecture.md)** - System design and internals
 - **[DX Engineer Workflows](docs/dx-engineer-workflows.md)** - Specialized workflows for developer experience
 - **[Aider & Ollama Integration](docs/aider-ollama-integration.md)** - Local-first AI development with Aider and Ollama

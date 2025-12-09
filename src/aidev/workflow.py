@@ -833,7 +833,13 @@ class WorkflowEngine:
         
         # Check active profile first
         if ACTIVE_PROFILE_FILE.exists():
-            profile_name = ACTIVE_PROFILE_FILE.read_text().strip()
+            candidate_profile = ACTIVE_PROFILE_FILE.read_text().strip()
+            # Validate the profile exists before using it
+            if candidate_profile and self.profile_manager.get_profile_path(candidate_profile):
+                profile_name = candidate_profile
+            else:
+                # Profile doesn't exist, clear the invalid entry
+                ACTIVE_PROFILE_FILE.unlink()
         
         # Fall back to project-specific profile
         if not profile_name:
@@ -841,7 +847,10 @@ class WorkflowEngine:
             if project_config_dir:
                 profile_file = project_config_dir / "profile"
                 if profile_file.exists():
-                    profile_name = profile_file.read_text().strip()
+                    candidate_profile = profile_file.read_text().strip()
+                    # Validate the profile exists before using it
+                    if candidate_profile and self.profile_manager.get_profile_path(candidate_profile):
+                        profile_name = candidate_profile
         
         # Fall back to default profile
         if not profile_name:
