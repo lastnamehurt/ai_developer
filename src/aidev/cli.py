@@ -609,6 +609,41 @@ def workflow(workflow_name: Optional[str], input_value: Optional[str], ticket: O
 
 
 @cli.command()
+@click.argument("manifest_file", required=False)
+def workflow_status(manifest_file: Optional[str]) -> None:
+    """Check the status of a workflow run. If no manifest file is provided, shows the most recent run."""
+    engine = WorkflowEngine(project_dir=Path.cwd())
+    runs_dir = engine.runs_dir()
+    
+    if not runs_dir.exists():
+        console.print("[red]✗[/red] No workflow runs directory found.")
+        return
+    
+    if manifest_file:
+        # User provided a manifest file name or path
+        manifest_path = Path(manifest_file)
+        if not manifest_path.is_absolute():
+            # Try relative to runs directory first
+            manifest_path = runs_dir / manifest_file
+            if not manifest_path.exists():
+                # Try as full path
+                manifest_path = Path(manifest_file)
+    else:
+        # Find the most recent manifest
+        manifests = sorted(runs_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+        if not manifests:
+            console.print("[red]✗[/red] No workflow runs found.")
+            return
+        manifest_path = manifests[0]
+    
+    if not manifest_path.exists():
+        console.print(f"[red]✗[/red] Manifest file not found: {manifest_path}")
+        return
+    
+    engine.check_workflow_status(manifest_path)
+
+
+@cli.command()
 @click.argument("shell", type=click.Choice(["bash", "zsh", "fish"], case_sensitive=False))
 def completion(shell: str) -> None:
     """Generate shell completion script

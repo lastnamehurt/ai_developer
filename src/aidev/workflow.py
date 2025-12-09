@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import shlex
 import time
+from datetime import datetime
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional, Callable
@@ -413,6 +414,10 @@ class WorkflowEngine:
         user_prompt = f"Read and execute the workflow manifest at: {manifest_path}"
         cmd = self._assistant_command(assistant, instruction, user_prompt, user_prompt, interactive=True)
         if not cmd:
+            # Special handling for Cursor (GUI app without CLI mode)
+            if assistant == "cursor":
+                self._handoff_to_cursor(manifest_path)
+                return
             console.print(f"[red]✗[/red] No handoff command available for assistant '{assistant}'. Open the manifest manually: {manifest_path}")
             return
         try:
@@ -428,6 +433,147 @@ class WorkflowEngine:
         except Exception as exc:
             console.print(f"[red]✗[/red] Failed to launch assistant '{assistant}': {exc}")
             console.print(f"[yellow]Manifest:[/yellow] {manifest_path}")
+
+    def check_workflow_status(self, manifest_path: Path) -> None:
+        """Display the current status of a workflow run."""
+        try:
+            data = json.loads(manifest_path.read_text())
+            workflow_name = data.get("workflow", "unknown")
+            workflow_desc = data.get("description", "")
+            steps = data.get("steps", [])
+            completed_at = data.get("completed_at")
+            created_at = data.get("created_at", 0)
+            
+            console.print(f"\n[bold cyan]Workflow:[/bold cyan] {workflow_name}")
+            if workflow_desc:
+                console.print(f"[dim]Description:[/dim] {workflow_desc}")
+            console.print(f"[dim]Manifest:[/dim] {manifest_path}")
+            
+            if created_at:
+                created_time = datetime.fromtimestamp(created_at).strftime("%Y-%m-%d %H:%M:%S")
+                console.print(f"[dim]Created:[/dim] {created_time}")
+            
+            if completed_at:
+                completed_time = datetime.fromtimestamp(completed_at).strftime("%Y-%m-%d %H:%M:%S")
+                console.print(f"[dim]Completed:[/dim] {completed_time}")
+                console.print(f"[bold green]✓ Workflow completed[/bold green]\n")
+            else:
+                console.print(f"[yellow]⏳ Workflow in progress...[/yellow]\n")
+            
+            # Show step status
+            table = Table(show_header=True, header_style="bold cyan")
+            table.add_column("Step", style="cyan", no_wrap=True)
+            table.add_column("Status", style="white")
+            table.add_column("Assistant", style="dim")
+            
+            for step in steps:
+                step_name = step.get("name", "unknown")
+                step_status = step.get("output", {}).get("status", "not-run")
+                assistant = step.get("assistant", "unknown")
+                
+                if step_status == "ok":
+                    status_display = "[green]✓ Complete[/green]"
+                elif step_status == "error":
+                    status_display = "[red]✗ Error[/red]"
+                elif step_status == "not-run":
+                    status_display = "[yellow]⏳ Pending[/yellow]"
+                else:
+                    status_display = f"[dim]{step_status}[/dim]"
+                
+                table.add_row(step_name, status_display, assistant)
+            
+            console.print(table)
+            
+            # Show summary
+            completed = sum(1 for s in steps if s.get("output", {}).get("status") == "ok")
+            errors = sum(1 for s in steps if s.get("output", {}).get("status") == "error")
+            pending = len(steps) - completed - errors
+            
+            console.print(f"\n[dim]Summary:[/dim] {completed} completed, {errors} errors, {pending} pending")
+            
+            if errors > 0:
+                console.print(f"\n[yellow]⚠ Some steps failed. Check the manifest for details.[/yellow]")
+            
+        except Exception as exc:
+            console.print(f"[red]✗[/red] Failed to read manifest: {exc}")
+
+    def _handoff_to_cursor(self, manifest_path: Path) -> None:
+        """Handle workflow handoff for Cursor (GUI app without CLI mode)."""
+        tool_manager = ToolManager()
+        cursor_info = tool_manager.detect_tool("cursor")
+        
+        if not cursor_info.installed:
+            console.print(f"[red]✗[/red] Cursor is not installed.")
+            console.print(f"[yellow]Manifest:[/yellow] {manifest_path}")
+            console.print(f"[dim]Install Cursor from:[/dim] https://cursor.sh")
+            return
+        
+        # Build the complete prompt for Cursor
+        instruction = (
+            "You are a workflow executor. Read the manifest JSON file and execute the steps sequentially. "
+            "Use the system prompt as given and the user prompt/ticket content as input. "
+            "Narrate your actions and produce outputs per step."
+        )
+        user_prompt = f"Read and execute the workflow manifest at: {manifest_path}"
+        
+        # Combine instruction and user prompt for Cursor
+        full_prompt = f"{instruction}\n\n{user_prompt}"
+        
+        # Load manifest to get workflow details
+        try:
+            manifest_data = json.loads(manifest_path.read_text())
+            workflow_name = manifest_data.get("workflow", "workflow")
+            workflow_desc = manifest_data.get("description", "")
+            steps = manifest_data.get("steps", [])
+        except Exception:
+            workflow_name = "workflow"
+            workflow_desc = ""
+            steps = []
+        
+        # Create a prompt file formatted as a direct instruction to Cursor
+        # Format it as a clear, actionable prompt that Cursor can execute
+        prompt_file = manifest_path.parent / f"{manifest_path.stem}-cursor-prompt.md"
+        prompt_content = f"""{full_prompt}
+
+## Workflow Manifest
+
+The workflow manifest JSON file is located at:
+`{manifest_path}`
+
+## Instructions
+
+Read the manifest file and execute the workflow steps sequentially. Each step in the manifest contains:
+- `prompt_text`: The system prompt for that step
+- `input`: Contains `user_prompt` and/or `ticket_text_preview` with the input data
+
+For each step:
+1. Read the step's `prompt_text` and `input` fields
+2. Execute the step using the prompt_text as the system instruction and the input as the user content
+3. Move to the next step and repeat
+
+Begin by reading the manifest file at the path above.
+
+## Workflow Steps ({len(steps)} total)
+
+{chr(10).join(f"- {s.get('name', 'unknown')}" for s in steps)}
+"""
+        
+        try:
+            # Write the prompt file
+            prompt_file.write_text(prompt_content)
+            
+            # Open Cursor with ONLY the prompt file (not the manifest)
+            # Cursor will read this file and should execute the prompt
+            tool_manager.launch_tool("cursor", args=[str(prompt_file)], wait=False)
+            console.print(f"[cyan]✓[/cyan] Opened Cursor with workflow prompt")
+            console.print(f"[dim]Prompt file: {prompt_file}[/dim]")
+            console.print(f"[dim]Manifest: {manifest_path}[/dim]")
+            console.print(f"\n[yellow]💡 Tip:[/yellow] Run [bold]ai workflow status {manifest_path.name}[/bold] to check progress")
+        except Exception as exc:
+            console.print(f"[red]✗[/red] Failed to launch Cursor: {exc}")
+            console.print(f"[yellow]Manifest:[/yellow] {manifest_path}")
+            console.print(f"\n[yellow]Copy and paste this prompt into Cursor:[/yellow]")
+            console.print(f"\n[bold cyan]{full_prompt}[/bold cyan]\n")
 
     def _default_runner(self, step: dict[str, Any]) -> dict[str, Any]:
         """
