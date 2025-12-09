@@ -48,34 +48,39 @@ Workflows are defined in `.aidev/workflows.yaml`:
 
 ```yaml
 workflows:
-  doc_improver:
+  doc_improver:                    # Workflow name (YAML key)
     description: "Improve documentation quality"
-    tool: claude          # Default assistant (optional)
+    tool: claude                    # Default assistant for all steps (optional)
     steps:
-      - name: "Analyze content"
-        prompt: analyze_docs    # References src/aidev/prompts/analyze_docs.txt
-        timeout_sec: 60
-        retries: 1
+      - name: analyze_doc           # Step name (required)
+        prompt: doc_analyzer        # Prompt file ID (required)
+        timeout_sec: 60             # Optional, defaults to 30
+        retries: 1                  # Optional, defaults to 0
 
-      - name: "Generate improvements"
-        prompt: improve_docs
-        tool: gemini        # Override default assistant
+      - name: outline_fix
+        prompt: doc_outline_planner
+        tool: gemini                # Override default assistant (optional)
+
+      - name: draft_ticket
+        prompt: doc_ticket_writer
 ```
 
-### Workflow Fields
+### Workflow Structure
 
-- **name**: Unique workflow identifier
-- **description**: Human-readable description
-- **tool**: Default assistant for all steps (optional)
-- **steps**: Array of workflow steps
+Each workflow is defined as a YAML key-value pair:
+
+- **Workflow name** (YAML key): Unique identifier used to run the workflow (e.g., `doc_improver`)
+- **description** (required): Human-readable description of what the workflow does
+- **tool** (optional): Default assistant for all steps in this workflow
+- **steps** (required): Array of workflow steps
 
 ### Step Fields
 
-- **name**: Step name (for logging and resume)
-- **prompt**: Prompt file ID (from `src/aidev/prompts/`)
-- **tool**: Assistant override for this step (optional, overrides workflow default)
-- **timeout_sec**: Execution timeout in seconds (default: 30)
-- **retries**: Number of retry attempts (default: 0)
+- **name** (required): Step name (used for logging, resume, and step identification)
+- **prompt** (required): Prompt file ID from `src/aidev/prompts/` (without `.txt` extension)
+- **tool** (optional): Assistant override for this step (overrides workflow default)
+- **timeout_sec** (optional): Execution timeout in seconds (default: 30)
+- **retries** (optional): Number of retry attempts on failure (default: 0)
 
 **Note:** The following fields are **no longer supported** (removed in schema v1.1):
 - ~~`profile`~~ - Uses active profile at runtime instead
