@@ -118,7 +118,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "AI Tools",
-            "commands": ["cursor", "claude", "codex", "gemini", "ollama", "tool", "review"],
+            "commands": ["cursor", "claude", "codex", "gemini", "ollama", "aider", "tool", "review"],
         },
         {
             "name": "Utilities",
@@ -982,6 +982,81 @@ def gemini(profile: str, args: tuple) -> None:
 def ollama(profile: str, args: tuple) -> None:
     """Launch Ollama with aidev configuration"""
     _launch_tool_with_profile("ollama", profile, args)
+
+
+@cli.command()
+@click.option("--profile", default="aider", help="Profile to use (default: aider)")
+@click.option("--model", help="Model to use (e.g., claude-sonnet-4-5, ollama/codellama)")
+@click.option("--yes", is_flag=True, help="Auto-accept changes")
+@click.argument("args", nargs=-1)
+def aider(profile: str, model: str, yes: bool, args: tuple) -> None:
+    """Launch Aider AI pair programming tool with aidev configuration
+    
+    Examples:
+      ai aider                                    # Launch with aider profile
+      ai aider --model claude-sonnet-4-5         # Use Claude model
+      ai aider --model ollama/codellama          # Use local Ollama model
+      ai aider --yes                              # Auto-accept changes
+      ai aider --profile web                      # Use web profile instead
+    """
+    # Use aider profile by default if not specified
+    profile_name = profile or "aider"
+    
+    # Ensure directories are initialized
+    if not config_manager.is_initialized():
+        config_manager.init_directories()
+    
+    # Determine profile to use
+    if not profile_name:
+        # Check for active profile
+        if ACTIVE_PROFILE_FILE.exists():
+            profile_name = ACTIVE_PROFILE_FILE.read_text().strip()
+        # Fall back to project-specific profile
+        if not profile_name:
+            project_config_dir = config_manager.get_project_config_path()
+            if project_config_dir:
+                profile_file = project_config_dir / "profile"
+                if profile_file.exists():
+                    profile_name = profile_file.read_text().strip()
+        # Fall back to aider profile
+        if not profile_name:
+            profile_name = "aider"
+    
+    console.print(f"[cyan]Using profile: {profile_name}[/cyan]")
+    
+    # Load profile
+    loaded_profile = profile_manager.load_profile(profile_name)
+    if not loaded_profile:
+        console.print(f"[yellow]Profile '{profile_name}' not found, using default[/yellow]")
+        loaded_profile = profile_manager.load_profile("default")
+        if not loaded_profile:
+            console.print("[red]No profiles available. Run 'ai setup' first.[/red]")
+            return
+    
+    # Load environment variables to pass to Aider
+    tool_env = config_manager.get_env()
+    
+    # Build Aider arguments (tool_manager will prepend the binary name)
+    aider_args = []
+    
+    # Add model if specified
+    if model:
+        aider_args.extend(["--model", model])
+    
+    # Add auto-accept flag
+    if yes:
+        aider_args.append("--yes")
+    
+    # Add any additional arguments
+    if args:
+        aider_args.extend(args)
+    
+    # Launch Aider
+    try:
+        tool_manager.launch_tool("aider", args=aider_args if aider_args else None, env=tool_env)
+    except Exception as e:
+        console.print(f"[red]Failed to launch Aider: {e}[/red]")
+        console.print("[yellow]Make sure Aider is installed: pip install aider-chat[/yellow]")
 
 
 @cli.command()

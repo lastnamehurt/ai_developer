@@ -270,3 +270,35 @@ workflows:
       - name: force_push
         profile: pair-programmer
         prompt: git_rebase_resolver
+
+  implement_with_aider:
+    description: "Use Aider to implement code changes from a ticket, feature request, or task description. Supports both local (Ollama) and cloud (Claude) models."
+    input:
+      kind: text
+      allow_file: true
+    steps:
+      - name: understand_requirements
+        profile: pair-programmer
+        prompt: ticket_understander
+      - name: plan_implementation
+        profile: pair-programmer
+        prompt: implementation_planner
+      - name: implement_with_aider
+        profile: aider
+        prompt: aider_implementer
+      - name: verify_changes
+        profile: pair-programmer
+        prompt: test_author
+
+  quick_refactor:
+    description: "Quick refactoring task using Aider with local Ollama model. Perfect for proprietary code or cost-sensitive refactoring."
+    input:
+      kind: text
+      allow_file: true
+    steps:
+      - name: analyze_code
+        profile: code-surgeon
+        prompt: refactor_analyzer
+      - name: refactor_with_aider
+        profile: aider
+        prompt: aider_implementer

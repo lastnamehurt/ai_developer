@@ -72,6 +72,28 @@ ollama pull deepseek-coder # Strong code understanding
 
 ### Basic Usage
 
+**Using aidev's `ai aider` command (recommended):**
+
+```bash
+# Launch Aider with aider profile (default)
+ai aider
+
+# Use specific model
+ai aider --model claude-sonnet-4-5
+ai aider --model ollama/codellama
+
+# Auto-accept changes
+ai aider --yes
+
+# Use different profile
+ai aider --profile web
+
+# Combine options
+ai aider --model ollama/codellama --yes
+```
+
+**Direct Aider usage (still supported):**
+
 ```bash
 # Use Aider with your active profile's environment
 ai use aider
@@ -91,9 +113,14 @@ aidev includes an Aider-optimized profile:
 # Switch to Aider profile
 ai use aider
 
-# Launch Aider with profile environment
+# Launch Aider using aidev command (recommended)
+ai aider --model claude-sonnet-4-5
+
+# Or launch directly
 aider --model claude-sonnet-4-5
 ```
+
+**Note:** The `ai aider` command automatically uses the `aider` profile by default, so you don't need to switch profiles first.
 
 **Profile features:**
 - Auto-commits enabled (`AIDER_AUTO_COMMITS=true`)
@@ -176,13 +203,14 @@ ollama run codellama "Explain this Python function..."
 
 ```bash
 # Morning: Use Ollama + Aider for quick fixes
-ai use aider
-export OLLAMA_MODEL=codellama
-aider --model ollama/codellama
+ai aider --model ollama/codellama
 
 # Afternoon: Use Claude for complex features
 ai use web
 ai claude
+
+# Or use Aider with Claude for complex features
+ai aider --model claude-sonnet-4-5
 
 # Evening: Use Ollama for code review
 ai review --all --provider ollama
@@ -192,10 +220,24 @@ ai review --all --provider ollama
 
 ```bash
 # Use Ollama for routine tasks
-aider --model ollama/codellama "Refactor this function"
+ai aider --model ollama/codellama
+# Then in Aider: "Refactor this function"
 
 # Use Claude for complex tasks
-aider --model claude-sonnet-4-5 "Design a new authentication system"
+ai aider --model claude-sonnet-4-5
+# Then in Aider: "Design a new authentication system"
+```
+
+### Workflow Integration
+
+aidev includes workflows that leverage Aider:
+
+```bash
+# Implement code changes from a ticket using Aider
+ai workflow implement_with_aider "Add user authentication"
+
+# Quick refactoring with local Ollama model
+ai workflow quick_refactor "Refactor UserService class"
 ```
 
 ## 🎨 Aider Profile Configuration

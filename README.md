@@ -115,16 +115,18 @@ ai env validate                               # Check for missing vars
 ### Local AI Development (Aider + Ollama)
 
 ```bash
-# Use Aider for terminal-first pair programming
-ai use aider
-aider --model claude-sonnet-4-5
+# Launch Aider with aidev (recommended)
+ai aider                                    # Default aider profile
+ai aider --model claude-sonnet-4-5         # Use Claude
+ai aider --model ollama/codellama          # Use local Ollama (free!)
+ai aider --yes                              # Auto-accept changes
 
 # Use Ollama for local, private code review
 ai review --staged --provider ollama
 
-# Combine: Local development with Ollama, complex tasks with Claude
-aider --model ollama/codellama  # Free, private
-aider --model claude-sonnet-4-5  # Powerful, cloud-based
+# Workflows that use Aider
+ai workflow implement_with_aider "Add user authentication"
+ai workflow quick_refactor "Refactor UserService"
 ```
 
 👉 **[Aider & Ollama Integration Guide →](docs/aider-ollama-integration.md)**

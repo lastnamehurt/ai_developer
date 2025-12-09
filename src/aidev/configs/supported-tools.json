@@ -40,5 +40,12 @@
     "app_name": "Ollama",
     "config_path": "~/.ollama/config.json",
     "install_url": "https://ollama.com"
+  },
+  "aider": {
+    "name": "Aider",
+    "binary": "aider",
+    "app_name": "Aider",
+    "config_path": "~/.aider.conf",
+    "install_url": "https://aider.chat"
   }
 }

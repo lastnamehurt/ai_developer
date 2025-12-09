@@ -115,7 +115,7 @@ class ToolManager:
 
         # Determine if this is an interactive CLI tool or GUI app
         # Treat Cursor as interactive CLI so its prompts stay attached to the user's terminal
-        interactive_cli_tools = ["cursor", "claude", "codex", "gemini"]
+        interactive_cli_tools = ["cursor", "claude", "codex", "gemini", "aider", "ollama"]
         is_interactive_cli = tool_id in interactive_cli_tools
 
         try:
