@@ -61,8 +61,20 @@ configs/local_*
 
 .aidev/
 .claude
+.claude.json
+.claude.json.backup
 .cursor
 .codex
 .gemini
 .zed
 .aider
+.cache
+.mcp
+.mcp.json
+
+# Dependency lock files
+uv.lock
+
+# Temporary documentation/debugging files
+MCP_AUTHENTICATION_ISSUE.md
+PR_DESCRIPTION.md
