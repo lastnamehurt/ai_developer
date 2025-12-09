@@ -151,6 +151,10 @@ def _launch_tool_with_profile(tool_id: str, profile: str, args: tuple) -> None:
         profile: Profile name to use (or None to use active profile)
         args: Additional arguments to pass to the tool
     """
+    # Ensure directories are initialized
+    if not config_manager.is_initialized():
+        config_manager.init_directories()
+
     # Determine profile to use
     profile_name = profile
     if not profile_name:
@@ -186,31 +190,15 @@ def _launch_tool_with_profile(tool_id: str, profile: str, args: tuple) -> None:
     tool_config_path = tool_manager.get_tool_config_path(tool_id)
     mcp_config_generator.generate_config(tool_id, loaded_profile, tool_config_path)
 
-    # For Claude, create a symlink from .mcp.json to ~/.claude.json in the current directory
-    # This ensures Claude Code finds the profile-specific config as a project-level override
-    if tool_id == "claude":
-        local_mcp_link = Path(".mcp.json")
-        global_mcp_path = Path.home() / ".claude.json"
-        try:
-            # Remove existing symlink or file if it exists
-            if local_mcp_link.exists() or local_mcp_link.is_symlink():
-                local_mcp_link.unlink()
-            # Create symlink to global config
-            local_mcp_link.symlink_to(global_mcp_path)
-            console.print(f"[dim]Created .mcp.json symlink → {global_mcp_path}[/dim]")
-        except Exception as e:
-            console.print(f"[yellow]Warning: Could not create .mcp.json symlink: {e}[/yellow]")
-
     # Build arguments
     tool_args = list(args) if args else []
 
-    # For Cursor, pass the current directory as an argument
-    # For Claude, it uses the current working directory automatically
-    if tool_id == "cursor" and not args:
-        tool_args = ["."]
-
-    # Claude Code reads MCP config from .mcp.json (symlink) or ~/.claude.json
-    # The symlink ensures the project sees the global profile-specific config
+    # MCP config is written directly to the tool's config location:
+    # - Claude Code: .mcp.json (in current directory)
+    # - Cursor: ~/.cursor/mcp.json
+    # - Codex: ~/.codex/config.toml
+    # - Gemini: ~/.gemini/settings.json
+    # Tools read their respective MCP configs from these locations
 
     # Load environment variables to pass to the tool
     tool_env = config_manager.get_env()
@@ -555,10 +543,19 @@ def workflow(workflow_name: Optional[str], input_value: Optional[str], ticket: O
         for w in warnings:
             console.print(f"  - {w}")
 
+    # Support "list" as a workflow name to trigger listing (for convenience)
+    if workflow_name == "list" and not list_only:
+        list_only = True
+
     if list_only:
-        console.print("[bold]Available workflows[/bold]")
-        for name, spec in workflows.items():
-            console.print(f"• {name}: {spec.description}")
+        table = Table(title="Available Workflows", show_header=True, header_style="bold cyan")
+        table.add_column("Name", style="cyan", no_wrap=True)
+        table.add_column("Description", style="white", overflow="fold")
+        
+        for name, spec in sorted(workflows.items()):
+            table.add_row(name, spec.description)
+        
+        console.print(table)
         return
 
     # Interpret positional input if provided: prefer file if path exists, else treat as free-form prompt

@@ -3,7 +3,7 @@
   "description": "Persistent memory bank for long-term context",
   "type": "stdio",
   "command": "npx",
-  "args": ["-y", "@allpepper/memory-bank-mcp"],
+  "args": ["-y", "@allpepper/memory-bank-mcp@latest"],
   "repository": "https://github.com/alioshr/memory-bank-mcp",
   "env": {
     "MEMORY_BANK_ROOT": "${MEMORY_BANK_ROOT:-${HOME}/.aidev/memory-banks}"

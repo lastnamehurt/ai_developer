@@ -167,12 +167,36 @@ class WorkflowEngine:
         return target
 
     def load_workflows(self) -> tuple[dict[str, WorkflowSpec], list[str]]:
-        """Load workflows from YAML (project-local with template fallback) with validation warnings."""
-        path = self.ensure_workflows_file()
-        data = yaml.safe_load(path.read_text()) or {}
+        """Load workflows from YAML (template + project-local merge) with validation warnings.
+        
+        Template workflows are always loaded and available globally. Project workflows
+        can override or extend template workflows. Project workflows take precedence.
+        """
+        # Load template workflows first (always available)
+        template_data = {}
+        if WORKFLOWS_TEMPLATE.exists():
+            try:
+                template_data = yaml.safe_load(WORKFLOWS_TEMPLATE.read_text()) or {}
+            except Exception:
+                pass
+        
+        # Load project workflows (if they exist)
+        project_data = {}
+        project_path = self.workflows_path()
+        if project_path.exists():
+            try:
+                project_data = yaml.safe_load(project_path.read_text()) or {}
+            except Exception:
+                pass
+        
+        # Merge: template first, then project (project overrides template)
+        merged_workflows = {}
+        merged_workflows.update(template_data.get("workflows", {}))
+        merged_workflows.update(project_data.get("workflows", {}))
+        
         workflows: dict[str, WorkflowSpec] = {}
         warnings: list[str] = []
-        for name, spec in (data.get("workflows") or {}).items():
+        for name, spec in merged_workflows.items():
             try:
                 steps = []
                 for s in spec.get("steps", []):
