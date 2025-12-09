@@ -24,6 +24,7 @@ from aidev.constants import (
 )
 from aidev.tools import ToolManager
 from aidev.utils import console, ensure_dir, load_json
+from rich.table import Table
 
 PROPOSAL_EXEC_SUFFIX = """
 
