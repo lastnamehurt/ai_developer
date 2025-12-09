@@ -73,7 +73,7 @@ ai env unlock
 ---
 
 ### Tool Launcher
-Seamlessly launch integrated AI tools (Claude, Cursor, Codex, Gemini) with all relevant configurations injected automatically.
+Seamlessly launch integrated AI tools (Claude, Cursor, Codex, Gemini, Ollama) with all relevant configurations injected automatically.
 
 **Supported Tools:**
 - Claude Code (`ai claude`)
@@ -81,12 +81,22 @@ Seamlessly launch integrated AI tools (Claude, Cursor, Codex, Gemini) with all r
 - Codex (`ai codex`)
 - Gemini (`ai gemini`)
 - Zed (`ai zed`)
+- Ollama (`ai ollama`) - Local LLM support
 
 **Features:**
 - Automatic MCP config generation
 - Profile-aware tool launching
 - Environment variable injection
 - Tool detection and health checks
+- Local-first development with Ollama integration
+
+**Aider Integration:**
+- Built-in Aider profile for AI pair programming
+- Terminal-first workflow complementing IDE tools
+- Git-aware automatic commits
+- Works with Ollama for fully local development
+
+👉 **[Aider & Ollama Integration Guide →](aider-ollama-integration.md)**
 
 ---
 
@@ -131,13 +141,17 @@ Lightweight, heuristic-based code review directly from the CLI.
 - Review staged files, all tracked files, or specific files
 - External reviewer integration (Aider, Ollama)
 - Quick feedback on code quality
+- Local LLM support via Ollama for private code review
 
 **Usage:**
 ```bash
 ai review --staged
 ai review --all
 ai review file1.py file2.py
+ai review --staged --provider ollama  # Use local LLM
 ```
+
+👉 **[Aider & Ollama Integration Guide →](aider-ollama-integration.md)**
 
 ---
 
@@ -206,6 +220,7 @@ ai restore backup.tar.gz
 - [MCP Browser](mcp_browser.md) - MCP server management
 - [Memory Bank](memory_server_docs.md) - Persistent project memory
 - [DX Engineer Workflows](dx-engineer-workflows.md) - Specialized workflows
+- [Aider & Ollama Integration](aider-ollama-integration.md) - Local-first AI development
 
 ---
 

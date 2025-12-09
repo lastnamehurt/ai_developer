@@ -13,7 +13,8 @@
 - **🔌 MCP Server Management** - Discover, install, and manage Model Context Protocol servers
 - **🔐 Environment Management** - Centralized, encrypted storage for API keys and secrets
 - **🚀 Smart Quickstart** - Auto-detect project stack and configure optimal profiles
-- **🛠️ Tool Launcher** - Launch Claude, Cursor, Codex, Gemini with automatic config injection
+- **🛠️ Tool Launcher** - Launch Claude, Cursor, Codex, Gemini, Ollama with automatic config injection
+- **🤖 Local AI Development** - Aider + Ollama integration for cost-effective, private coding
 - **📊 Interactive TUI** - Visual configuration management
 - **🔍 Health Checks** - Diagnose setup issues with actionable fixes
 - **📝 Code Review** - Lightweight code review directly from CLI
@@ -65,6 +66,7 @@ ai claude    # or ai cursor, ai codex, ai gemini
 - **[Commands Reference](docs/commands.md)** - Complete command cheat sheet
 - **[Architecture](docs/architecture.md)** - System design and internals
 - **[DX Engineer Workflows](docs/dx-engineer-workflows.md)** - Specialized workflows for developer experience
+- **[Aider & Ollama Integration](docs/aider-ollama-integration.md)** - Local-first AI development with Aider and Ollama
 
 ## 💡 Common Workflows
 
@@ -109,6 +111,23 @@ ai env set KEY value [--project] [--encrypt]  # Set variable
 ai env list                                   # List all variables
 ai env validate                               # Check for missing vars
 ```
+
+### Local AI Development (Aider + Ollama)
+
+```bash
+# Use Aider for terminal-first pair programming
+ai use aider
+aider --model claude-sonnet-4-5
+
+# Use Ollama for local, private code review
+ai review --staged --provider ollama
+
+# Combine: Local development with Ollama, complex tasks with Claude
+aider --model ollama/codellama  # Free, private
+aider --model claude-sonnet-4-5  # Powerful, cloud-based
+```
+
+👉 **[Aider & Ollama Integration Guide →](docs/aider-ollama-integration.md)**
 
 ## 🛠️ Troubleshooting
 
