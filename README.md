@@ -2,9 +2,34 @@
 
 **One command to configure all your AI development tools across any project or machine.**
 
+> **Status: Active Alpha** - This project is in active development. Core features are stable and production-ready, with new capabilities being added regularly.
+
+## 🎯 Who is this for?
+
+**For engineers juggling multiple AI development tools** (Claude Code, Cursor, Codex, Gemini, Ollama) across different projects and machines.
+
+### The Pain Points aidev Removes
+
+- **Scattered Configurations**: No more manually editing JSON/TOML configs for each tool in each project
+- **Manual MCP Setup**: Stop copy-pasting MCP server configs and environment variables
+- **Context Switching Overhead**: Switch between web dev, infrastructure, and QA contexts instantly
+- **Secret Management Chaos**: Centralized, encrypted storage for API keys and tokens
+- **Onboarding Friction**: New projects require zero setup—just run `ai quickstart`
+
+### What You Get
+
+- **🎭 Profile System** - Switch AI roles instantly (web dev → infrastructure → QA)
+- **🔄 Workflow Orchestration** - Multi-step AI tasks across different assistants
+- **🔌 MCP Server Management** - Discover, install, and manage Model Context Protocol servers
+- **🔐 Encrypted Secrets** - Centralized environment variable management
+- **🚀 Smart Quickstart** - Auto-detect project stack and configure optimal profiles
+- **🛠️ Tool Launcher** - Launch any AI tool with automatic config injection
+
 ## ❓What is aidev?
 
-`aidev` is a unified command-line interface that simplifies managing AI development tools (Claude Code, Cursor, Codex, Gemini) across projects and machines. Stop juggling API keys, MCP server configs, and tool-specific settings—`aidev` centralizes everything.
+`aidev` is a unified command-line interface that simplifies managing AI development tools (Claude Code, Cursor, Codex, Gemini, Ollama) across projects and machines. Stop juggling API keys, MCP server configs, and tool-specific settings—`aidev` centralizes everything.
+
+**Entry Points**: Both `ai` and `aidev` commands are available (aliases).
 
 ## ✨ Key Features
 
@@ -51,6 +76,60 @@ ai quickstart
 ai claude    # or ai cursor, ai codex, ai gemini
 ```
 
+## ⭐ Hero Workflows
+
+These workflows showcase the power of `aidev`—try them to see immediate value:
+
+### 1. DX Engineer Debugging Pipelines
+
+**Problem**: CI/CD pipeline failures need investigation with full repo context.
+
+```bash
+# Switch to infrastructure profile (includes GitLab, K8s MCP servers)
+ai use infra
+
+# Launch Claude with full repo context via MCP servers
+ai claude
+
+# In Claude: "Analyze why the deployment pipeline failed in PR #42"
+# Claude automatically has access to GitLab issues, K8s clusters, and repo files
+```
+
+**What happens**: Claude uses GitLab MCP to fetch PR details, K8s MCP to check deployment status, and filesystem MCP to analyze code changes—all automatically configured.
+
+### 2. Documentation Improvement Workflow
+
+**Problem**: Need to improve documentation quality with structured analysis.
+
+```bash
+# Run the doc_improver workflow on any markdown file
+ai workflow doc_improver README.md
+
+# Or improve multiple files
+ai workflow doc_improver docs/architecture.md
+```
+
+**What happens**: The workflow analyzes the doc, creates an improvement plan, and generates a ticket-ready summary—all orchestrated across multiple AI assistants.
+
+### 3. Onboarding New Team Members
+
+**Problem**: New developers need to understand project architecture quickly.
+
+```bash
+# 1. Switch to web profile (includes GitHub, memory-bank MCP servers)
+ai use web
+
+# 2. Launch Claude with full project context
+ai claude
+
+# 3. Ask architecture questions:
+# "Explain the authentication flow in this codebase"
+# "What are the main components and how do they interact?"
+# "Show me the database schema and relationships"
+```
+
+**What happens**: Claude uses GitHub MCP to read issues/PRs, memory-bank MCP to access project knowledge, and filesystem MCP to navigate code—providing comprehensive answers with full context.
+
 ## 📚 Documentation
 
 ### Getting Started
@@ -96,6 +175,34 @@ ai workflow status                            # Check workflow status
 ```
 
 👉 **[Workflow Guide →](docs/workflows.md)**
+
+### Example Workflow Definition
+
+Workflows are defined in `.aidev/workflows.yaml`. Here's a simple 2-step workflow that switches assistants:
+
+```yaml
+workflows:
+  doc_improver:
+    description: "Improve documentation quality"
+    tool: claude                    # Default assistant for all steps
+    steps:
+      - name: analyze_doc
+        prompt: doc_analyzer         # References src/aidev/prompts/doc_analyzer.txt
+        timeout_sec: 60
+        retries: 1
+
+      - name: draft_improvements
+        prompt: doc_outline_planner
+        tool: gemini                 # Override: use Gemini for this step
+```
+
+**Key Features**:
+- **Assistant Switching**: Use Claude for analysis, Gemini for drafting
+- **Automatic Issue Detection**: Detects Jira/GitHub/GitLab issues from input
+- **File Handling**: Automatically accepts files when provided
+- **Profile-Agnostic**: Uses active profile at runtime
+
+👉 **[Full Workflow Documentation →](docs/workflows.md)**
 
 ### MCP Server Management
 
@@ -167,18 +274,41 @@ Configuration is stored in:
 
 ## 🧑‍💻 Development
 
+### Setup
+
 ```bash
 # Clone and setup
 git clone https://github.com/lastnamehurt/ai_developer.git
 cd ai_developer
 pip install -e ".[dev]"
+```
 
-# Run tests
+### Testing
+
+```bash
+# Run all tests
 pytest
 
-# Code quality
+# Run with coverage report
+pytest --cov=aidev --cov-report=term-missing
+
+# Run specific test file
+pytest tests/unit/test_profiles.py
+
+# Run specific test function
+pytest tests/unit/test_profiles.py::TestProfileManager::test_create_profile
+```
+
+### Code Quality
+
+```bash
+# Format code (required before commits)
 black src/ tests/
+
+# Lint
 ruff check src/ tests/
+
+# Type check
 mypy src/
 ```
 

@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [
-    {name = "Your Name", email = "your.email@example.com"}
+    {name = "Courtney Hurt", email = "clhurt1@gmail.com"}
 ]
 keywords = ["ai", "development", "mcp", "cursor", "claude", "cli"]
 classifiers = [
@@ -50,9 +50,9 @@ aidev = "aidev.cli:main"
 ai = "aidev.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/lastnamehurt/aidev"
-Repository = "https://github.com/lastnamehurt/aidev"
-Issues = "https://github.com/lastnamehurt/aidev/issues"
+Homepage = "https://github.com/lastnamehurt/ai_developer"
+Repository = "https://github.com/lastnamehurt/ai_developer"
+Issues = "https://github.com/lastnamehurt/ai_developer/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
