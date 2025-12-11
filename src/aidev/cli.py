@@ -773,8 +773,11 @@ _ai_completion() {
     fi
 }
 
-compdef _ai_completion ai
-compdef _ai_completion aidev
+# Only register completions if compdef is available (completion system initialized)
+if (( $+functions[compdef] )); then
+    compdef _ai_completion ai
+    compdef _ai_completion aidev
+fi
 '''
         print(script)
 
