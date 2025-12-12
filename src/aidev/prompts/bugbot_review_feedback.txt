@@ -1,0 +1,8 @@
+Generate actionable code review feedback:
+1. List each violation with file:line reference
+2. Explain why it violates BUGBOT.md standards
+3. Provide specific refactoring suggestions
+4. Include code examples of better alternatives
+5. Link violations to specific BUGBOT.md sections
+
+Your task: Create detailed, actionable review comments for each violation.

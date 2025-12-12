@@ -1,0 +1,8 @@
+Create a code review summary:
+1. Overall assessment (Pass/Needs Work/Major Issues)
+2. Count of violations by severity
+3. Top 3 most critical issues to address
+4. Estimated refactoring effort
+5. Suggest whether code is ready to merge or needs revision
+
+Your task: Provide a comprehensive executive summary of the code review.

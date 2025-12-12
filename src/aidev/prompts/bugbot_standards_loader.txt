@@ -1,0 +1,3 @@
+Read and internalize the coding standards from .cursor/BUGBOT.md. These are the rules you must apply during code review.
+
+Your task: Load the BUGBOT.md file and summarize the key anti-patterns and test quality guidelines it contains.

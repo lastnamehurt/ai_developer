@@ -662,9 +662,6 @@ def workflow(workflow_name: Optional[str], input_value: Optional[str], ticket: O
         return
 
     spec = workflows[selected_name]
-    if ticket_file and not spec.allow_file:
-        console.print(f"[red]✗[/red] Workflow '{selected_name}' does not allow --file input.")
-        return
 
     project_config = config_manager.get_project_config_path(Path.cwd())
     project_default_assistant = None

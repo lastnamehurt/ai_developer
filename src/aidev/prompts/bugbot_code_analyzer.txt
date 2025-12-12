@@ -1,0 +1,8 @@
+Analyze the provided code to:
+1. Detect the programming language
+2. Translate BUGBOT.md guidelines to language-specific anti-patterns
+3. Identify violations of metaprogramming guidelines (e.g., eval, reflection, monkey patching)
+4. Check test quality against the Test Quality Guidelines
+5. Look for language-specific equivalents of the Ruby anti-patterns listed in BUGBOT.md
+
+Your task: Perform a thorough code analysis and identify all violations of the BUGBOT.md standards.

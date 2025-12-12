@@ -1,0 +1,7 @@
+Categorize all findings by severity:
+- Critical: Security risks, breaks tooling, global conflicts
+- High: Readability issues, maintainability problems
+- Medium: Test quality issues, minor anti-patterns
+- Low: Style suggestions, potential improvements
+
+Your task: Organize the violations found in the previous step by severity level.
