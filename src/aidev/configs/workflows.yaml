@@ -17,7 +17,7 @@ workflows:
         prompt: ticket_comment_summarizer
 
   refactor_scout:
-    description: "Inspect a file for refactoring opportunities and draft an issue/ticket summary."
+    description: "Inspect a file, directory, or branch for refactoring opportunities and draft an issue/ticket summary. For branches, analyzes all changed files compared to the base branch."
     steps:
       - name: analyze_refactor
         prompt: refactor_analyzer
@@ -215,3 +215,17 @@ workflows:
         prompt: improvement_suggester
       - name: draft_review_comments
         prompt: review_comment_drafter
+
+  bugbot_code_reviewer:
+    description: "Review code against BUGBOT.md standards. Automatically translates Ruby guidelines to the project's language (Python, JS, Java, Go, etc.) and provides severity-categorized feedback with refactoring suggestions."
+    steps:
+      - name: load_standards
+        prompt: bugbot_standards_loader
+      - name: analyze_code
+        prompt: bugbot_code_analyzer
+      - name: categorize_violations
+        prompt: bugbot_violation_categorizer
+      - name: generate_feedback
+        prompt: bugbot_review_feedback
+      - name: create_summary
+        prompt: bugbot_review_summary
