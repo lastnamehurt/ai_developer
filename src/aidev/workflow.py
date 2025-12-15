@@ -659,8 +659,13 @@ class WorkflowEngine:
         Launch assistant CLI with an instruction to execute the manifest interactively.
         This opens the assistant; user can watch/drive the steps.
         """
+        # Special handling for Cursor (GUI app without CLI mode) - handle early to avoid double setup
+        if assistant == "cursor":
+            self._handoff_to_cursor(manifest_path)
+            return
+
         # Set up profile and MCP config before launching (for tools that support it)
-        if assistant in {"cursor", "claude", "codex", "gemini", "zed"}:
+        if assistant in {"claude", "codex", "gemini", "zed"}:
             self._setup_tool_profile_and_mcp(assistant, manifest_path)
 
         instruction = (
@@ -679,10 +684,6 @@ class WorkflowEngine:
         user_prompt = f"Read and execute the workflow manifest at: {manifest_path}"
         cmd = self._assistant_command(assistant, instruction, user_prompt, user_prompt, interactive=True)
         if not cmd:
-            # Special handling for Cursor (GUI app without CLI mode)
-            if assistant == "cursor":
-                self._handoff_to_cursor(manifest_path)
-                return
             console.print(f"[red]✗[/red] No handoff command available for assistant '{assistant}'. Open the manifest manually: {manifest_path}")
             return
         try:
