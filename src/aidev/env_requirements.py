@@ -204,6 +204,14 @@ ENV_VAR_METADATA = {
         "required_by": [],
         "optional": True,
     },
+    "LEETCODE_SESSION": {
+        "description": "LeetCode session cookie (for authenticated API access)",
+        "short": "LEETCODE_SESSION",
+        "url": "https://leetcode.com",
+        "help": "Login to LeetCode, then copy the 'LEETCODE_SESSION' cookie from your browser",
+        "encrypt": True,
+        "required_by": ["leetcode"],
+    },
 }
 
 # Mapping of MCP server names to required env vars
@@ -220,6 +228,8 @@ MCP_SERVER_REQUIREMENTS = {
     "memory-bank": [],
     "redis": [],
     "docker": [],
+    "log-intelligence": [],  # No env vars needed
+    "leetcode": ["LEETCODE_SESSION"],
     # Add more as needed
 }
 

@@ -55,6 +55,8 @@ BUILTIN_PROFILES: Final[list[str]] = [
     "qa",
     "work",
     "infra",
+    "code_practice",
+    "k8s-debug",
 ]
 
 def _load_supported_tools() -> dict[str, dict[str, str]]:

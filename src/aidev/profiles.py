@@ -434,6 +434,43 @@ class ProfileManager:
                 },
             ),
             Profile(
+                name="k8s-debug",
+                description="Kubernetes debugging expert - troubleshoot clusters, pods, services, and deployments",
+                tags=["kubernetes", "k8s", "debugging", "infra", "devops", "containers"],
+                mcp_servers=[
+                    MCPServerConfig(name="k8s", enabled=True),
+                    MCPServerConfig(name="filesystem", enabled=True),
+                    MCPServerConfig(name="git", enabled=True),
+                    MCPServerConfig(name="docker", enabled=True),
+                    MCPServerConfig(name="log-intelligence", enabled=True),
+                    MCPServerConfig(name="gitlab", enabled=True),
+                    MCPServerConfig(name="memory-bank", enabled=True),
+                    MCPServerConfig(name="duckduckgo", enabled=True),
+                ],
+                environment={
+                    "KUBECONFIG": "${KUBECONFIG:-${HOME}/.kube/config}",
+                    "GITLAB_PERSONAL_ACCESS_TOKEN": "${GITLAB_PERSONAL_ACCESS_TOKEN}",
+                    "GITLAB_URL": "${GITLAB_URL:-https://gitlab.com}",
+                },
+            ),
+            Profile(
+                name="code_practice",
+                description="Coding interview prep (LeetCode, GitHub, search)",
+                tags=["learning", "practice", "interview"],
+                mcp_servers=[
+                    MCPServerConfig(name="leetcode", enabled=True),
+                    MCPServerConfig(name="filesystem", enabled=True),
+                    MCPServerConfig(name="git", enabled=True),
+                    MCPServerConfig(name="github", enabled=True),
+                    MCPServerConfig(name="duckduckgo", enabled=True),
+                    MCPServerConfig(name="memory-bank", enabled=True),
+                ],
+                environment={
+                    "LEETCODE_SESSION": "${LEETCODE_SESSION}",
+                    "LEETCODE_SITE": "global",
+                },
+            ),
+            Profile(
                 name="default",
                 description="Default profile (alias of web)",
                 tags=["default", "web"],

@@ -17,7 +17,7 @@ workflows:
         prompt: ticket_comment_summarizer
 
   refactor_scout:
-    description: "Inspect a file, directory, or branch for refactoring opportunities and draft an issue/ticket summary. For branches, analyzes all changed files compared to the base branch."
+    description: "Analyze code for refactoring opportunities. Pass a file path (src/foo.py), directory (src/), or branch name (main) to compare against HEAD. Drafts an issue/ticket summary."
     steps:
       - name: analyze_refactor
         prompt: refactor_analyzer
@@ -215,6 +215,24 @@ workflows:
         prompt: improvement_suggester
       - name: draft_review_comments
         prompt: review_comment_drafter
+
+  branch_critic:
+    description: "Deep-critique a branch's changes before opening an MR. Familiarizes with all changed files, fetches linked Jira tickets, critiques across seven lenses (security, correctness, tests, consistency, docs, opportunities, scope), surfaces decisions, produces CRITIQUE.md and CRITIQUE_IMPLEMENTATION_TRACKER.md, then implements approved fixes."
+    steps:
+      - name: familiarize_branch
+        prompt: branch_familiarizer
+      - name: fetch_jira_context
+        prompt: jira_scope_fetcher
+      - name: critique_changes
+        prompt: branch_critique_analyzer
+      - name: surface_decisions
+        prompt: critique_decision_surfacer
+      - name: write_critique_doc
+        prompt: critique_doc_writer
+      - name: build_tracker
+        prompt: critique_tracker_writer
+      - name: implement_fixes
+        prompt: critique_implementer
 
   bugbot_code_reviewer:
     description: "Review code against BUGBOT.md standards. Automatically translates Ruby guidelines to the project's language (Python, JS, Java, Go, etc.) and provides severity-categorized feedback with refactoring suggestions."

@@ -562,6 +562,10 @@ def workflow(workflow_name: Optional[str], input_value: Optional[str], ticket: O
         for w in warnings:
             console.print(f"  - {w}")
 
+    # Default to listing when no workflow name is given
+    if not workflow_name:
+        list_only = True
+
     # Support "list" as a workflow name to trigger listing (for convenience)
     if workflow_name == "list" and not list_only:
         list_only = True
@@ -656,7 +660,7 @@ def workflow(workflow_name: Optional[str], input_value: Optional[str], ticket: O
         else:
             user_prompt = input_value
 
-    selected_name = workflow_name or ("implement_ticket" if "implement_ticket" in workflows else next(iter(workflows)))
+    selected_name = workflow_name or next(iter(workflows))
     if selected_name not in workflows:
         console.print(f"[red]✗[/red] Workflow '{selected_name}' not found. Use --list to see options.")
         return

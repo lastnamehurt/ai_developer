@@ -1,0 +1,16 @@
+{
+  "name": "leetcode",
+  "description": "LeetCode problem browser and solver for coding interview preparation",
+  "type": "stdio",
+  "command": "npx",
+  "args": ["-y", "@jinzcdev/leetcode-mcp-server"],
+  "env": {
+    "LEETCODE_SITE": "global",
+    "LEETCODE_SESSION": "${LEETCODE_SESSION}"
+  },
+  "notes": {
+    "installation": "Requires Node.js and npm/npx",
+    "session_cookie": "Get LEETCODE_SESSION from your browser cookies after logging into leetcode.com",
+    "setup": "ai env set LEETCODE_SESSION <your_session_cookie> --encrypt"
+  }
+}

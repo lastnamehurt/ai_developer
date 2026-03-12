@@ -30,7 +30,7 @@ Workflows enable you to:
 
 ```bash
 # List available workflows
-ai workflow list
+ai workflow
 
 # Run a workflow with a ticket/input
 ai workflow doc_improver README.md
@@ -125,7 +125,7 @@ ai workflow implement_ticket "PROJ-123: Add user authentication"
 ai workflow code_reviewer "owner/repo#42"
 
 # GitLab MR
-ai workflow address_pr_feedback "https://gitlab.com/team/project/-/merge_requests/99"
+ai workflow address_mr_feedback "https://gitlab.com/team/project/-/merge_requests/99"
 ```
 
 The detected issue context is automatically included in each step's input, so prompts can reference it without any special configuration.

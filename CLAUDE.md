@@ -407,6 +407,7 @@ pytest tests/unit/test_profiles.py::TestProfileManager::test_profile_inheritance
 - **default**: Alias of `web`
 - **web**: Web/app development (filesystem, git, github, memory-bank)
 - **qa**: QA/testing (filesystem, git, duckduckgo, memory-bank)
+- **code_practice**: Coding interview prep (leetcode, filesystem, git, github, duckduckgo, memory-bank)
 - **infra**: Infrastructure/DevOps (filesystem, git, gitlab, k8s, atlassian)
 
 Profiles use tags for quickstart matching (e.g., `["web", "javascript"]` for web profile).

@@ -54,6 +54,9 @@
 # Recommended: Install with pipx (isolated, no venv activation needed)
 pipx install "git+https://github.com/lastnamehurt/ai_developer.git@main"
 
+# Reinstall from local source (pick up latest changes)
+pipx install --force /path/to/ai_developer
+
 # Verify installation
 ai --version
 ```
@@ -111,7 +114,20 @@ ai workflow doc_improver docs/architecture.md
 
 **What happens**: The workflow analyzes the doc, creates an improvement plan, and generates a ticket-ready summary—all orchestrated across multiple AI assistants.
 
-### 3. Onboarding New Team Members
+### 3. Pre-MR Branch Critique
+
+**Problem**: Catch security issues, bugs, and test gaps before code review.
+
+```bash
+# Run the branch_critic workflow on your current branch
+ai workflow branch_critic
+
+# Produces CRITIQUE.md and CRITIQUE_IMPLEMENTATION_TRACKER.md, then implements approved fixes
+```
+
+**What happens**: The workflow reads every changed file, fetches all linked Jira tickets via the Atlassian MCP, critiques across 7 lenses (security, correctness, tests, consistency, docs, opportunities, scope), surfaces decisions for human review, writes structured docs, then implements all approved fixes.
+
+### 4. Onboarding New Team Members
 
 **Problem**: New developers need to understand project architecture quickly.
 
@@ -167,11 +183,11 @@ ai status                    # Show current profile and config
 ### Workflow Execution
 
 ```bash
-ai workflow list                              # Show available workflows
-ai workflow sync_branch                       # Rebase branch onto main
+ai workflow                                   # Show available workflows
+ai workflow branch_critic                     # Critique branch before opening MR
 ai workflow doc_improver README.md            # Improve documentation
 ai workflow onboarding_guide                  # Create onboarding guide
-ai workflow status                            # Check workflow status
+ai workflow bug_triage TICKET-123             # Triage a bug ticket
 ```
 
 👉 **[Workflow Guide →](docs/workflows.md)**
@@ -252,7 +268,8 @@ Common issues:
 - **Command not found**: Ensure pipx/pip bin directory is on `PATH` (`pipx ensurepath`)
 - **Missing secrets**: Add with `ai env set KEY value` and unlock with `ai env unlock`
 - **MCP connectivity**: Test with `ai mcp test <server-name>`
-- **Upgrade**: `pipx upgrade aidev`
+- **Upgrade from remote**: `pipx upgrade aidev`
+- **Reinstall from local source**: `pipx install --force /path/to/ai_developer`
 
 ## 🏗️ Architecture
 

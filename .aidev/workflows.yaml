@@ -252,6 +252,34 @@ workflows:
         profile: documentation-writer
         prompt: doc_ticket_writer
 
+  branch_critic:
+    description: "Deep-critique a branch's changes before opening an MR. Familiarizes with all changed files, fetches linked Jira tickets, critiques across seven lenses (security, correctness, tests, consistency, docs, opportunities, scope), surfaces decisions, produces CRITIQUE.md and CRITIQUE_IMPLEMENTATION_TRACKER.md, then implements approved fixes."
+    input:
+      kind: text
+      allow_file: false
+    steps:
+      - name: familiarize_branch
+        profile: code-surgeon
+        prompt: branch_familiarizer
+      - name: fetch_jira_context
+        profile: pair-programmer
+        prompt: jira_scope_fetcher
+      - name: critique_changes
+        profile: code-surgeon
+        prompt: branch_critique_analyzer
+      - name: surface_decisions
+        profile: pair-programmer
+        prompt: critique_decision_surfacer
+      - name: write_critique_doc
+        profile: documentation-writer
+        prompt: critique_doc_writer
+      - name: build_tracker
+        profile: pair-programmer
+        prompt: critique_tracker_writer
+      - name: implement_fixes
+        profile: code-surgeon
+        prompt: critique_implementer
+
   # Code Review & Feedback Workflows
   bugbot_code_reviewer:
     description: "Review code against BUGBOT.md programming best practices. Detects language-specific anti-patterns (metaprogramming, dynamic evaluation) and test quality issues. Translates guidelines to project's language."
